@@ -1,5 +1,5 @@
 <div class="container-fluid">
-    @if(session()->has('message'))
+    @if (session()->has('message'))
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             {{ session('message') }}
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
@@ -8,7 +8,7 @@
 
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h4 class="mb-0">Package Management</h4>
-        <a class="btn btn-primary" href="{{route('admin.packages.create')}}">
+        <a class="btn btn-primary" href="{{ route('admin.packages.create') }}">
             <i class="fas fa-plus mr-2"></i>Create Package
         </a>
     </div>
@@ -28,11 +28,15 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($packages as $package)
+                        @foreach ($packages as $package)
                             @php
                                 $today = \Carbon\Carbon::now();
-                                $expirationDate = $package->expiration_date ? \Carbon\Carbon::parse($package->expiration_date) : null;
-                                $isExpired = $package->status === 'expired' || ($expirationDate && $today->greaterThanOrEqualTo($expirationDate));
+                                $expirationDate = $package->expiration_date
+                                    ? \Carbon\Carbon::parse($package->expiration_date)
+                                    : null;
+                                $isExpired =
+                                    $package->status === 'expired' ||
+                                    ($expirationDate && $today->greaterThanOrEqualTo($expirationDate));
                             @endphp
                             <tr class="{{ $isExpired ? 'table-danger' : '' }}">
                                 <td>{{ $package->id }}</td>
@@ -57,46 +61,63 @@
                                     </div>
                                 </td>
                                 <td>
-                                    @if($package->bookings->isEmpty())
+                                    @if ($package->bookings->isEmpty())
                                         <span class="text-muted">No current bookings</span>
                                     @else
                                         <div class="d-flex flex-column">
-                                            @foreach($package->bookings->take(2) as $booking)
-                                                <small class="mb-1">
-                                                    <i class="fas fa-user-circle mr-1"></i>
-                                                    {{ $booking->user->name }}
-                                                    <span class="text-muted">
-                                                        ({{ \Carbon\Carbon::parse($booking->from_date)->format('d M') }} -
-                                                        {{ \Carbon\Carbon::parse($booking->to_date)->format('d M') }})
-                                                    </span>
-                                                </small>
+                                            @foreach ($package->bookings->take(2) as $booking)
+                                                <div class="mb-2 border-bottom pb-2">
+                                                    <div class="d-flex align-items-center mb-1">
+                                                        <i class="fas fa-user-circle text-primary me-1"></i>
+                                                        <strong>{{ $booking->user->name }}</strong>
+                                                    </div>
+                                                    <div class="small text-muted ms-3">
+                                                        <i class="fas fa-calendar-alt me-1"></i>
+                                                        {{ \Carbon\Carbon::parse($booking->from_date)->format('d M') }}
+                                                        -
+                                                        {{ \Carbon\Carbon::parse($booking->to_date)->format('d M') }}
+                                                    </div>
+                                                    <div class="ms-3 mt-1">
+                                                        @php
+                                                            $roomIds = json_decode($booking->room_ids, true) ?? [];
+                                                            $rooms = \App\Models\Room::whereIn('id', $roomIds)->get();
+                                                        @endphp
+                                                        @foreach ($rooms as $room)
+                                                            <span class="badge bg-info me-1">
+                                                                <i class="fas fa-bed me-1"></i>
+                                                                {{ $room->name }}
+                                                            </span>
+                                                        @endforeach
+                                                    </div>
+                                                </div>
                                             @endforeach
-                                            @if($package->bookings->count() > 2)
+                                            @if ($package->bookings->count() > 2)
                                                 <small class="text-primary">
-                                                    +{{ $package->bookings->count() - 2 }} more
+                                                    <i class="fas fa-plus-circle me-1"></i>
+                                                    {{ $package->bookings->count() - 2 }} more bookings
                                                 </small>
                                             @endif
                                         </div>
                                     @endif
                                 </td>
                                 <td>
-                                    @if(!$isExpired)
+                                    @if (!$isExpired)
                                         <div class="btn-group">
                                             <a href="{{ route('packages.show', ['packageId' => $package->id]) }}"
-                                               class="btn btn-sm btn-outline-primary" title="View">
+                                                class="btn btn-sm btn-outline-primary" title="View">
                                                 <i class="fas fa-eye"></i>
                                             </a>
                                             <a href="{{ route('admin.package.edit', ['packageId' => $package->id]) }}"
-                                               class="btn btn-sm btn-outline-info" title="Edit">
+                                                class="btn btn-sm btn-outline-info" title="Edit">
                                                 <i class="fas fa-edit"></i>
                                             </a>
                                             <button wire:click="delete({{ $package->id }})"
-                                                    class="btn btn-sm btn-outline-danger" title="Delete">
+                                                class="btn btn-sm btn-outline-danger" title="Delete">
                                                 <i class="fas fa-trash-alt"></i>
                                             </button>
                                             @role('Super Admin')
                                                 <button wire:click="openAssignModal({{ $package->id }})"
-                                                        class="btn btn-sm btn-outline-warning" title="Assign User">
+                                                    class="btn btn-sm btn-outline-warning" title="Assign User">
                                                     <i class="fas fa-user-plus"></i>
                                                 </button>
                                             @endrole
@@ -113,7 +134,7 @@
         </div>
     </div>
 
-    @if($showAssignModal)
+    @if ($showAssignModal)
         <div class="modal fade show" style="display: block;" tabindex="-1">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
@@ -127,7 +148,7 @@
                                 <label class="form-label">Select User</label>
                                 <select wire:model="selectedUserId" class="form-select">
                                     <option value="">Choose a user...</option>
-                                    @foreach($users as $user)
+                                    @foreach ($users as $user)
                                         <option value="{{ $user->id }}">{{ $user->name }}</option>
                                     @endforeach
                                 </select>
@@ -149,15 +170,17 @@
 </div>
 
 @push('styles')
-<style>
-    .table th {
-        font-weight: 600;
-    }
-    .btn-group .btn {
-        padding: 0.25rem 0.5rem;
-    }
-    .modal {
-        background-color: rgba(0, 0, 0, 0.5);
-    }
-</style>
+    <style>
+        .table th {
+            font-weight: 600;
+        }
+
+        .btn-group .btn {
+            padding: 0.25rem 0.5rem;
+        }
+
+        .modal {
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+    </style>
 @endpush

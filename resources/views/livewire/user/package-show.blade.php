@@ -22,10 +22,6 @@
         </div>
         <div>
 
-            <a href="{{ route('admin.bookings.create', $package->id) }}" class="btn btn-primary">
-                Create Booking
-            </a>
-
 
             <div class="container mt-4">
                 <!-- Main Image with Lightbox Link -->
@@ -472,7 +468,7 @@
                                             @endunless
                                             <div class="card shadow-sm">
                                                 <div class="card-body p-2">
-                                                    <h6 class="card-title mb-2"><i class="fas fa-bed me-2 text-primary"></i>Select Room</h6>
+                                                    <h6 class="card-title mb-2"><i class="fas fa-bed mr-2 text-primary"></i>Select Room</h6>
 
                                                     @if ($package->rooms->count() > 0)
                                                         <div class="room-list">
@@ -489,7 +485,7 @@
                                                         </div>
                                                     @else
                                                         <div class="text-muted small py-2">
-                                                            <i class="fas fa-info-circle me-1"></i>No rooms available
+                                                            <i class="fas fa-info-circle mr-1"></i>No rooms available
                                                         </div>
                                                     @endif
                                                 </div>

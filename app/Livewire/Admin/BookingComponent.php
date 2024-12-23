@@ -4,6 +4,7 @@ namespace App\Livewire\Admin;
 
 use App\Models\Booking;
 use App\Models\Package;
+use App\Models\Room;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
@@ -23,13 +24,21 @@ class BookingComponent extends Component
         $user = Auth::user();
 
         if ($user->hasRole('Super Admin')) {
-            $this->bookings = Booking::with(['user', 'package'])->get();
+            $bookings = Booking::with(['user', 'package'])->get();
         } else {
             $packageIds = Package::where('user_id', $user->id)->pluck('id');
-            $this->bookings = Booking::with(['user', 'package'])
+            $bookings = Booking::with(['user', 'package'])
                 ->whereIn('package_id', $packageIds)
                 ->get();
         }
+
+        // Load room information for each booking
+        foreach ($bookings as $booking) {
+            $roomIds = json_decode($booking->room_ids, true) ?? [];
+            $booking->rooms = Room::whereIn('id', $roomIds)->get();
+        }
+
+        $this->bookings = $bookings;
     }
 
     public function confirmDelete($bookingId)

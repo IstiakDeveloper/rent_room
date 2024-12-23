@@ -21,10 +21,11 @@
                     <th>ID</th>
                     <th>User</th>
                     <th>Package</th>
+                    <th>Booked Rooms</th>
                     <th>From Date</th>
                     <th>To Date</th>
                     <th>Number of Days</th>
-                    <th>Price</th>
+                    <th>Room Price</th>
                     <th>Booking Price</th>
                     <th>Total Amount</th>
                     <th>Payment Status</th>
@@ -37,6 +38,13 @@
                         <td>{{ $booking->id }}</td>
                         <td>{{ $booking->user->name }}</td>
                         <td>{{ $booking->package->name }}</td>
+                        <td>
+                            @if($booking->rooms)
+                                @foreach($booking->rooms as $room)
+                                    <span class="badge bg-info me-1">{{ $room->name }}</span>
+                                @endforeach
+                            @endif
+                        </td>
                         <td>{{ \Carbon\Carbon::parse($booking->from_date)->format('d M Y') }}</td>
                         <td>{{ \Carbon\Carbon::parse($booking->to_date)->format('d M Y') }}</td>
                         <td>{{ $booking->number_of_days }}</td>
@@ -44,7 +52,22 @@
                         <td>£{{ number_format($booking->booking_price, 2) }}</td>
                         <td>£{{ number_format($booking->total_amount, 2) }}</td>
                         <td>
-                            <span class="badge bg-{{ $booking->payment_status === 'paid' ? 'success' : 'warning' }}">
+                            @php
+                                $statusColor = match(strtolower($booking->payment_status)) {
+                                    'pending' => 'warning',
+                                    'approved', 'paid' => 'success',
+                                    'cancelled' => 'danger',
+                                    default => 'secondary'
+                                };
+                                $statusIcon = match(strtolower($booking->payment_status)) {
+                                    'pending' => 'clock',
+                                    'approved', 'paid' => 'check-circle',
+                                    'cancelled' => 'x-circle',
+                                    default => 'info-circle'
+                                };
+                            @endphp
+                            <span class="badge bg-{{ $statusColor }}">
+                                <i class="fas fa-{{ $statusIcon }} me-1"></i>
                                 {{ ucfirst($booking->payment_status) }}
                             </span>
                         </td>

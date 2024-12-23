@@ -1,141 +1,223 @@
 <div class="container my-5">
-    <h1 class="mb-4">Booking Details</h1>
-
-    <div class="card shadow-sm mb-4">
-        <div class="card-header bg-primary text-white">
-            <h5 class="card-title mb-0">Booking Information</h5>
-        </div>
-        @if (session()->has('message'))
-            <div class="alert alert-success">{{ session('message') }}</div>
-        @endif
-        <div class="card-body">
-            <div class="row mb-3">
-                <div class="col-md-6"><strong>ID:</strong> {{ $booking->id }}</div>
-                <div class="col-md-6"><strong>User ID:</strong> {{ $booking->user_id }}</div>
-            </div>
-            <div class="row mb-3">
-                <div class="col-md-6"><strong>Package ID:</strong> {{ $booking->package_id }}</div>
-                <div class="col-md-6"><strong>Package Name:</strong> {{ $booking->package->name }}</div>
-            </div>
-            <div class="row mb-3">
-                <div class="col-md-6"><strong>From Date:</strong> {{ $booking->from_date }}</div>
-                <div class="col-md-6"><strong>To Date:</strong> {{ $booking->to_date }}</div>
-            </div>
-            <div class="row mb-3">
-                <div class="col-md-6"><strong>Number of Days:</strong> {{ $booking->number_of_days }}</div>
-                <div class="col-md-6"><strong>Price Type:</strong> {{ ucfirst($booking->price_type) }}</div>
-            </div>
-            <div class="row mb-3">
-                <div class="col-md-6"><strong>Total Price:</strong> £{{ $booking->price + $booking->booking_price }}</div>
-                <div class="col-md-6"><strong>Booking Price:</strong> £{{ $booking->booking_price }}</div>
-            </div>
-            <div class="row mb-3">
-                <div class="col-md-6"><strong>Total Paid:</strong> <span class="text-success">£{{ $booking->total_amount }}</span></div>
-                <div class="col-md-6"><strong>Payment Option:</strong> {{ ucfirst($booking->payment_option) }}</div>
-            </div>
-            <div class="row mb-3">
-                <div class="col-md-6"><strong>Rents Status:</strong> <span class="{{ $booking->payment_status === 'paid' ? 'text-success' : 'text-danger' }}">{{ ucfirst($booking->payment_status) }}</span></div>
-            </div>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <button wire:click="generateInvoice" class="btn btn-primary">
+                <i class="fas fa-file-pdf mr-2"></i>Download Invoice
+            </button>
+            <button wire:click="sendInvoiceEmail" class="btn btn-secondary ms-2">
+                <i class="fas fa-envelope mr-2"></i>Email Invoice
+            </button>
         </div>
     </div>
 
-    <div class="card shadow-sm">
-        <div class="card-header bg-secondary text-white">
-            <h5 class="card-title mb-0">Payment Information</h5>
+    @if (session()->has('message'))
+        <div class="alert alert-success alert-dismissible fade show">
+            {{ session('message') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
-        <div class="card-body">
-            @if ($booking->payments->count() > 0)
-                <ul class="list-unstyled">
-                    @foreach ($booking->payments as $payment)
-                        <li class="d-flex justify-content-between lh-22 mb-2">
-                            <p class="text-gray-light mb-0">Payment Method:</p>
-                            <p class="font-weight-500 text-heading mb-0">{{ ucfirst($payment->payment_method) }}</p>
-                        </li>
-                        <li class="d-flex justify-content-between lh-22 mb-2">
-                            <p class="text-gray-light mb-0">Amount:</p>
-                            <p class="font-weight-500 text-heading mb-0">£{{ $payment->amount }}</p>
-                        </li>
-                        <li class="d-flex justify-content-between lh-22 mb-2">
-                            <p class="text-gray-light mb-0">Transaction ID:</p>
-                            <p class="font-weight-500 text-heading mb-0">{{ $payment->transaction_id ?? 'N/A' }}</p>
-                        </li>
-                        <li class="d-flex justify-content-between lh-22 mb-2">
-                            <p class="text-gray-light mb-0">Status:</p>
-                            <p class="font-weight-500 text-heading mb-0 {{ $payment->status === 'completed' ? 'text-success' : 'text-warning' }}">{{ ucfirst($payment->status) }}</p>
-                        </li>
-                        <div class="d-flex justify-content-end">
-                            @if($payment->status == 'pending')
-                                <div>
-                                    <button wire:click="approvePayment({{ $payment->id }})" class="btn btn-success btn-sm">Approve</button>
-                                    <button wire:click="rejectPayment({{ $payment->id }})" class="btn btn-danger btn-sm">Reject</button>
+    @endif
+
+    <div class="row">
+        <!-- Booking Information -->
+        <div class="col-md-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-info-circle mr-2"></i>Booking Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="p-3 bg-light rounded">
+                                <small class="text-muted d-block">Booking ID</small>
+                                <strong>{{ $booking->id }}</strong>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="p-3 bg-light rounded">
+                                <small class="text-muted d-block">Package</small>
+                                <strong>{{ $booking->package->name }}</strong>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="p-3 bg-light rounded">
+                                <small class="text-muted d-block">Check In</small>
+                                <strong>{{ \Carbon\Carbon::parse($booking->from_date)->format('d M Y') }}</strong>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="p-3 bg-light rounded">
+                                <small class="text-muted d-block">Check Out</small>
+                                <strong>{{ \Carbon\Carbon::parse($booking->to_date)->format('d M Y') }}</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Booked Rooms Section -->
+                    <div class="mt-4">
+                        <h6 class="mb-3">Booked Rooms</h6>
+                        <div class="row g-3">
+                            @php
+                                $roomIds = json_decode($booking->room_ids, true) ?? [];
+                                $rooms = \App\Models\Room::whereIn('id', $roomIds)->get();
+                            @endphp
+                            @foreach ($rooms as $room)
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <h6 class="card-title">{{ $room->name }}</h6>
+                                            <div class="d-flex justify-content-between">
+                                                <small class="text-muted">Type: {{ $room->type }}</small>
+                                                <span class="badge bg-info">{{ $booking->price_type }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                            @endif
+                            @endforeach
+                        </div>
+                    </div>
+
+                    <!-- Price Summary -->
+                    <div class="mt-4 p-3 bg-light rounded">
+                        <h6 class="mb-3">Price Summary</h6>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Room Price:</span>
+                            <strong>£{{ number_format($booking->price, 2) }}</strong>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Booking Fee:</span>
+                            <strong>£{{ number_format($booking->booking_price, 2) }}</strong>
                         </div>
                         <hr>
-                    @endforeach
-                </ul>
-            @else
-                <p class="text-danger">No payments made yet.</p>
-            @endif
-
-            <div class="mt-4 p-3 bg-light rounded">
-                <h5 class="text-dark">Due Bill:</h5>
-                <p class="font-weight-bold text-primary">£{{ $dueBill }}</p>
-            </div>
-        </div>
-
-        <div class="card mt-4">
-            {{-- <div class="card-header bg-light">
-                <h5 class="card-title mb-0">Change Status</h5>
-            </div>
-            <div class="card-body">
-                <form wire:submit.prevent="updateStatus">
-                    <div class="form-group">
-                        <label for="status">Select Status:</label>
-                        <select wire:model="selectedStatus" class="form-control" id="status">
-                            <option value="approve">Approve</option>
-                            <option value="pending">Pending</option>
-                            <option value="decline">Decline</option>
-                        </select>
-                        @error('selectedStatus') <span class="text-danger">{{ $message }}</span> @enderror
+                        <div class="d-flex justify-content-between">
+                            <span>Total Amount:</span>
+                            <strong
+                                class="text-primary">£{{ number_format($booking->price + $booking->booking_price, 2) }}</strong>
+                        </div>
                     </div>
-                    <button type="submit" class="btn btn-primary">Update Status</button>
-                </form>
-            </div> --}}
-            <!-- Generate Invoice and Send Email Buttons -->
-            <div class="card-body">
-                <button wire:click="generateInvoice" class="btn btn-primary">Generate & Download Invoice</button>
-                <button wire:click="sendInvoiceEmail" class="btn btn-secondary">Send Invoice Email</button>
+                </div>
             </div>
         </div>
 
-        <!-- Cancellation Card -->
-    <div class="card shadow-sm mb-4">
-        <div class="card-header bg-danger text-white">
-            <h5 class="card-title mb-0">Cancellation</h5>
-        </div>
-        <div class="card-body">
-            @php
-                $currentDate = \Carbon\Carbon::today();
-                $fromDate = \Carbon\Carbon::parse($booking->from_date);
-            @endphp
-            <button
-                wire:click="cancelBooking"
-                class="btn btn-danger"
-                {{ $booking->payment_status === 'cancelled' ? 'disabled' : '' }}>
-                Cancel Booking
-            </button>
-            @if ($fromDate->lessThan($currentDate))
-                <div class="mt-4 p-3 text-danger rounded">
-                    <p>You can only cancel a booking that is set to start today or in the future.</p>
+        <!-- Payment Information Sidebar -->
+        <div class="col-md-4">
+            <!-- Payment Status Card -->
+            <div class="card shadow-sm mb-4">
+                <div
+                    class="card-header bg-{{ $booking->payment_status === 'paid' ? 'success' : 'warning' }} text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-credit-card mr-2"></i>Payment Status
+                    </h5>
                 </div>
-            @endif
-            @if ($booking->payment_status === 'cancelled')
-                <div class="mt-4 p-3 text-danger rounded">
-                    <p>This booking has already been cancelled.</p>
-                </div>
-            @endif
-        </div>
+                <div class="card-body">
+                    <div class="text-center mb-3">
+                        @php
+                            $statusColor = match ($booking->payment_status) {
+                                'approved', 'paid' => 'success',
+                                'pending' => 'warning',
+                                'cancelled' => 'danger',
+                                'rejected' => 'danger',
+                                default => 'secondary',
+                            };
+                        @endphp
+                        <span class="badge bg-{{ $statusColor }} p-2">
+                            {{ ucfirst($booking->payment_status) }}
+                        </span>
+                    </div>
 
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Total Paid:</span>
+                        <strong class="text-success">£{{ number_format($booking->total_amount, 2) }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-3">
+                        <span>Due Amount:</span>
+                        <strong class="text-danger">£{{ number_format($dueBill, 2) }}</strong>
+                    </div>
+
+                    @if (
+                        $booking->payment_status !== 'cancelled' &&
+                            $booking->payment_status !== 'approved' &&
+                            $booking->payment_status !== 'rejected')
+                        <div class="d-grid gap-2">
+                            <button wire:click="approveBooking" class="btn btn-success">
+                                <i class="fas fa-check mr-2"></i>Approve
+                            </button>
+                            <button wire:click="rejectBooking" class="btn btn-danger">
+                                <i class="fas fa-times mr-2"></i>Reject
+                            </button>
+                        </div>
+                    @endif
+                </div>
+            </div>
+
+            <!-- Payment History -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-history mr-2"></i>Payment History
+                    </h5>
+                </div>
+                <div class="card-body">
+                    @if ($booking->payments->count() > 0)
+                        @foreach ($booking->payments as $payment)
+                            <div class="border-bottom mb-3 pb-3">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="text-muted">Amount</span>
+                                    <strong>£{{ number_format($payment->amount, 2) }}</strong>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="text-muted">Method</span>
+                                    <span>{{ ucfirst($payment->payment_method) }}</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="text-muted">Status</span>
+                                    <span
+                                        class="badge bg-{{ $payment->status === 'completed' ? 'success' : 'warning' }}">
+                                        {{ ucfirst($payment->status) }}
+                                    </span>
+                                </div>
+                                @if ($payment->status == 'pending')
+                                    <div class="d-flex justify-content-end gap-2 mt-2">
+                                        <button wire:click="approvePayment({{ $payment->id }})"
+                                            class="btn btn-success btn-sm">
+                                            <i class="fas fa-check mr-1"></i>Approve
+                                        </button>
+                                        <button wire:click="rejectPayment({{ $payment->id }})"
+                                            class="btn btn-danger btn-sm">
+                                            <i class="fas fa-times mr-1"></i>Reject
+                                        </button>
+                                    </div>
+                                @endif
+                            </div>
+                        @endforeach
+                    @else
+                        <p class="text-muted mb-0">No payments recorded yet.</p>
+                    @endif
+                </div>
+            </div>
+
+            <!-- Cancellation Card -->
+            @if ($booking->payment_status !== 'cancelled')
+                <div class="card shadow-sm">
+                    <div class="card-header bg-danger text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-ban mr-2"></i>Cancellation
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <button wire:click="cancelBooking" class="btn btn-danger w-100"
+                            {{ \Carbon\Carbon::parse($booking->from_date)->isPast() ? 'disabled' : '' }}>
+                            <i class="fas fa-times mr-2"></i>Cancel Booking
+                        </button>
+                        @if (\Carbon\Carbon::parse($booking->from_date)->isPast())
+                            <small class="text-muted d-block mt-2">
+                                Past bookings cannot be cancelled.
+                            </small>
+                        @endif
+                    </div>
+                </div>
+            @endif
+        </div>
     </div>
 </div>

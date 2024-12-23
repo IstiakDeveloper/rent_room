@@ -110,35 +110,36 @@ class PackageShow extends Component
 
     private function calculateMonthlyBreakdown($startDate, $endDate)
     {
-        // Get the first day of the next month for start date
-        $nextMonthStart = $startDate->copy()->firstOfMonth()->addMonth();
-        // Get the first day of the month for end date
-        $lastMonthStart = $endDate->copy()->firstOfMonth();
+        $startDate = $startDate instanceof Carbon ? $startDate : Carbon::parse($startDate);
+        $endDate = $endDate instanceof Carbon ? $endDate : Carbon::parse($endDate);
 
-        $months = 0;
+        // Get total days
+        $totalDays = $startDate->diffInDays($endDate);
 
-        // Count full months between the dates
-        if ($nextMonthStart->lt($lastMonthStart)) {
-            $months = $nextMonthStart->diffInMonths($lastMonthStart);
+        // Get days in first month
+        $daysInFirstMonth = $startDate->daysInMonth;
+
+        // If total days is less than or equal to days in first month, return 1 month
+        if ($totalDays <= $daysInFirstMonth) {
+            return [
+                'Month' => 1,
+                'Week' => 0,
+                'Day' => 0
+            ];
         }
 
-        // Add one month if there are days in the first month
-        if ($startDate->day !== 1) {
-            $months++;
-        }
-
-        // Add one month if there are days in the last month
-        if ($endDate->day !== 1) {
-            $months++;
-        }
-
-        // If the total days span into another month, add an extra month
-        if ($endDate->day > 1) {
-            $months++;
+        // If days exceed first month, calculate how many months are needed
+        // Example: 35 days with 31 days in month = 2 months (31 + 4 days = 2 months)
+        $extraDays = $totalDays - $daysInFirstMonth;
+        if ($extraDays > 0) {
+            // Add 1 for first month plus any additional months needed
+            $months = 1 + ceil($extraDays / $endDate->daysInMonth);
+        } else {
+            $months = 1;
         }
 
         return [
-            'Month' => $months,
+            'Month' => (int)$months,
             'Week' => 0,
             'Day' => 0
         ];

@@ -66,7 +66,7 @@
                         <div class="card shadow-sm">
                             <div class="card-body p-2">
                                 <h6 class="card-title mb-2">
-                                    <i class="fas fa-bed me-2 text-primary"></i>Select Room
+                                    <i class="fas fa-bed mr-2 text-primary"></i>Select Room
                                 </h6>
 
                                 @if ($packages->find($packageId)->rooms->count() > 0)
@@ -89,7 +89,7 @@
                                     </div>
                                 @else
                                     <div class="text-muted small py-2">
-                                        <i class="fas fa-info-circle me-1"></i>No rooms available
+                                        <i class="fas fa-info-circle mr-1"></i>No rooms available
                                     </div>
                                 @endif
                             </div>
@@ -164,19 +164,19 @@
                                 <!-- Dates and Basic Info -->
                                 <div class="row mb-4">
                                     <div class="col-md-6">
-                                        <p><strong><i class="far fa-calendar-alt me-2"></i>From:</strong>
+                                        <p><strong><i class="far fa-calendar-alt mr-2"></i>From:</strong>
                                             {{ Carbon\Carbon::parse($fromDate)->format('d M Y') }}</p>
-                                        <p><strong><i class="far fa-calendar-alt me-2"></i>To:</strong>
+                                        <p><strong><i class="far fa-calendar-alt mr-2"></i>To:</strong>
                                             {{ Carbon\Carbon::parse($toDate)->format('d M Y') }}</p>
-                                        <p><strong><i class="far fa-clock me-2"></i>Duration:</strong>
+                                        <p><strong><i class="far fa-clock mr-2"></i>Duration:</strong>
                                             {{ Carbon\Carbon::parse($fromDate)->diffInDays(Carbon\Carbon::parse($toDate)) }}
                                             days
                                         </p>
                                     </div>
                                     <div class="col-md-6">
-                                        <p><strong><i class="fas fa-tag me-2"></i>Price Type:</strong>
+                                        <p><strong><i class="fas fa-tag mr-2"></i>Price Type:</strong>
                                             {{ $priceType }} Rate</p>
-                                        <p><strong><i class="fas fa-money-bill me-2"></i>Payment Option:</strong>
+                                        <p><strong><i class="fas fa-money-bill mr-2"></i>Payment Option:</strong>
                                             {{ $paymentOption === 'full' ? 'Full Payment' : 'Booking Price Only' }}</p>
                                     </div>
                                 </div>
@@ -187,7 +187,7 @@
                                         <tbody>
                                             <tr class="table-light">
                                                 <td colspan="2">
-                                                    <strong><i class="fas fa-calendar me-1"></i>Initial Charges</strong>
+                                                    <strong><i class="fas fa-calendar mr-1"></i>Initial Charges</strong>
                                                 </td>
                                             </tr>
                                             <tr>
@@ -202,7 +202,7 @@
                                             <!-- Milestone Breakdown -->
                                             <tr class="table-light">
                                                 <td colspan="2">
-                                                    <strong><i class="fas fa-clock me-1"></i>Payment Schedule
+                                                    <strong><i class="fas fa-clock mr-1"></i>Payment Schedule
                                                         ({{ $priceType }})</strong>
                                                 </td>
                                             </tr>
@@ -245,7 +245,7 @@
 
                                     <!-- Payment Schedule Info -->
                                     <div class="alert alert-info mt-3 mb-0">
-                                        <i class="fas fa-info-circle me-2"></i>
+                                        <i class="fas fa-info-circle mr-2"></i>
                                         @if ($priceType === 'Month')
                                             Monthly payments are due at the start of each month
                                         @elseif($priceType === 'Week')

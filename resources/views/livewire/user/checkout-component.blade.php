@@ -21,7 +21,7 @@
             <!-- Room Details -->
             <div class="card shadow-sm mb-4">
                 <div class="card-header">
-                    <h6 class="mb-0">Room Details</h6>
+                    <h6 class="mb-0">Details</h6>
                 </div>
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center mb-3">
@@ -33,33 +33,6 @@
                         <p class="mb-0"><i class="fas fa-bath mr-2"></i>{{ $selectedRoom->number_of_bathrooms }}
                             Bathrooms</p>
                     </div>
-                </div>
-            </div>
-
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h5>{{ $selectedRoom->name }}</h5>
-                    <div>
-                        <span class="badge badge-info">
-                            @if ($priceType == 'Month')
-                                Monthly Rate
-                            @elseif($priceType == 'Week')
-                                Weekly Rate
-                            @else
-                                Daily Rate
-                            @endif
-                        </span>
-                        <span class="badge badge-primary ml-2">£{{ number_format($totalAmount, 2) }}</span>
-                    </div>
-                </div>
-                <div class="small text-muted">
-                    @if ($priceType == 'Month')
-                        Rate automatically selected for bookings of 28 days or more
-                    @elseif($priceType == 'Week')
-                        Rate automatically selected for bookings of 7-27 days
-                    @else
-                        Rate automatically selected for bookings up to 6 days
-                    @endif
                 </div>
             </div>
 
@@ -115,7 +88,7 @@
                 <div class="card-body">
                     <div class="price-breakdown">
                         <!-- Room Price Breakdown -->
-                        <h6 class="mb-3">Room Charges</h6>
+                        <h6 class="mb-3">Charges</h6>
                         @foreach ($priceBreakdown as $item)
                             <div class="d-flex justify-content-between mb-2">
                                 <span>
@@ -136,7 +109,7 @@
                             </div>
                         @endforeach
                         <div class="d-flex justify-content-between mb-3 font-weight-bold">
-                            <span>Room Subtotal</span>
+                            <span>Subtotal</span>
                             <span>£{{ number_format($totalAmount, 2) }}</span>
                         </div>
 
@@ -165,7 +138,7 @@
                         <!-- Total -->
                         <hr>
                         <div class="d-flex justify-content-between font-weight-bold">
-                            <span>Total Amount</span>
+                            <span>Total</span>
                             <span>£{{ number_format($totalAmount + $amenitiesTotal + $maintainsTotal + $bookingPrice, 2) }}</span>
                         </div>
 
