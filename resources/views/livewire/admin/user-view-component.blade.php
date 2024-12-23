@@ -126,30 +126,6 @@
                                         </div>
                                     @endif
 
-                                    {{-- Payment Link Display Section --}}
-                                    @if (isset($paymentLinks[$booking['id']]) && $booking['payment_status'] !== 'cancelled')
-                                        <div class="alert alert-info">
-                                            <div class="d-flex align-items-center justify-content-between">
-                                                <div>
-                                                    <strong>Payment Link:</strong>
-                                                    <a href="{{ route('payment.page', $paymentLinks[$booking['id']]) }}"
-                                                        id="paymentLink-{{ $booking['id'] }}" target="_blank"
-                                                        class="ms-2">
-                                                        {{ route('payment.page', $paymentLinks[$booking['id']]) }}
-                                                    </a>
-                                                </div>
-                                                <button type="button" class="btn btn-outline-primary btn-sm"
-                                                    onclick="copyToClipboard({{ $booking['id'] }})">
-                                                    <i class="fas fa-copy me-1"></i> Copy Link
-                                                </button>
-                                            </div>
-                                            <span id="copySuccess-{{ $booking['id'] }}" class="text-success mt-2"
-                                                style="display: none;">
-                                                <i class="fas fa-check"></i> Link copied to clipboard!
-                                            </span>
-                                        </div>
-                                    @endif
-
                                     {{-- Booking Details Section --}}
                                     <div class="mb-4">
                                         <h6 class="text-muted border-bottom pb-2">Booking Details</h6>

@@ -122,41 +122,81 @@ class UserViewComponent extends Component
     public function updatePaymentStatusForPayment($paymentId, $status)
     {
         try {
-            // Find the payment record
-            $payment = Payment::findOrFail($paymentId);
+            DB::beginTransaction();
+
+            // Find the payment with its relationships
+            $payment = Payment::with(['booking'])->findOrFail($paymentId);
+            $booking = $payment->booking;
 
             // Update payment status
             $payment->update(['status' => $status]);
 
-            // Find the corresponding booking payment
-            $bookingPayment = BookingPayment::where('id', $payment->booking_payment_id)->first();
+            // Find the corresponding booking payment based on amount and due date
+            $bookingPayment = BookingPayment::where('booking_id', $booking->id)
+                ->where('amount', $payment->amount)
+                // Match booking payment that hasn't been paid yet
+                ->where('payment_status', '!=', 'paid')
+                // Order by due date to get the earliest unpaid payment
+                ->orderBy('due_date', 'asc')
+                ->first();
 
             if ($bookingPayment) {
-                // Update booking payment status based on the payment status
+                // Update booking payment status
                 $bookingPayment->update([
-                    'payment_status' => $status === 'Paid' ? 'paid' : 'pending'
+                    'payment_status' => $status === 'Paid' ? 'paid' : 'pending',
+                    'payment_id' => $paymentId // Link the payment to this booking payment
                 ]);
             }
 
-            // Update the booking's overall payment status
-            $this->updateBookingPaymentStatus($payment->booking_id);
+            // Update the overall booking status
+            $this->updateBookingStatus($booking);
+
+            DB::commit();
 
             // Reload bookings to refresh the UI
             $this->loadBookings();
 
-            // Flash a success message
             flash()->success('Payment status updated successfully!');
         } catch (\Exception $e) {
-            // Log the error
+            DB::rollBack();
+
             \Log::error('Error updating payment status', [
                 'payment_id' => $paymentId,
                 'status' => $status,
                 'error' => $e->getMessage()
             ]);
 
-            // Flash an error message
             flash()->error('Failed to update payment status: ' . $e->getMessage());
         }
+    }
+
+    protected function updateBookingStatus($booking)
+    {
+        // Get total amount that should be paid
+        $totalAmount = $booking->price + $booking->booking_price;
+
+        // Get total paid amount
+        $paidAmount = $booking->payments()
+            ->where('status', 'Paid')
+            ->sum('amount');
+
+        // Count paid booking payments
+        $totalBookingPayments = $booking->bookingPayments()->count();
+        $paidBookingPayments = $booking->bookingPayments()
+            ->where('payment_status', 'paid')
+            ->count();
+
+        // Determine booking status
+        if ($paidAmount >= $totalAmount && $paidBookingPayments === $totalBookingPayments) {
+            $status = 'paid';
+        } elseif ($paidAmount > 0) {
+            $status = 'partially_paid';
+        } else {
+            $status = 'pending';
+        }
+
+        // Update booking status
+        $booking->update(['payment_status' => $status]);
     }
 
 
@@ -540,15 +580,6 @@ class UserViewComponent extends Component
                 'status' => 'pending'
             ]);
 
-            // Optionally, create a preliminary payment record
-            $payment = Payment::create([
-                'booking_id' => $this->currentBookingId,
-                'booking_payment_id' => $milestoneId,
-                'amount' => $milestone->amount,
-                'status' => 'Pending',
-                'payment_method' => 'Payment Link',
-                'payment_link_id' => $paymentLink->id
-            ]);
 
             // Refresh the milestones to update the view
             $this->generatePaymentLink($this->currentBookingId);
