@@ -19,6 +19,7 @@ class ProfileComponent extends Component
 {
     use WithFileUploads;
 
+    public $bookings;
     public $proof_type_1;
     public $proof_path_1;
     public $proof_type_2;
@@ -89,13 +90,36 @@ class ProfileComponent extends Component
         $this->loadUserDetail();
         $this->loadBankDetail();
         $this->packages = Package::all();
-        // $this->payments = PackagePayment::where('user_id', $user->id)->get(); // Fetch all payments for the user
+        $this->loadBookings();
+
     }
 
 
     public function toggleEdit()
     {
         $this->isDetailEditing = !$this->isDetailEditing;
+    }
+
+    private function loadBookings()
+    {
+        $this->bookings = $this->user->bookings->map(function ($booking) {
+            $totalPrice = (float)$booking->price + (float)$booking->booking_price;
+            $totalPaid = $booking->payments->where('status', 'Paid')->sum('amount');
+            $remainingBalance = $totalPrice - $totalPaid;
+            $paymentPercentage = $totalPrice > 0 ? ($totalPaid / $totalPrice * 100) : 0;
+
+            return array_merge($booking->toArray(), [
+                'payments' => $booking->payments,
+                'package' => $booking->package,
+                'bookingPayments' => $booking->bookingPayments, // Add this
+                'payment_summary' => [
+                    'total_price' => $totalPrice,
+                    'total_paid' => $totalPaid,
+                    'remaining_balance' => $remainingBalance,
+                    'payment_percentage' => $paymentPercentage
+                ]
+            ]);
+        });
     }
 
     public function loadAgreementDetail()
