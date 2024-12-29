@@ -198,6 +198,9 @@
                                                                     @elseif($milestone['milestone_type'] === 'Week')
                                                                         Week {{ $milestone['milestone_number'] }}
                                                                         Payment
+                                                                    @elseif($milestone['milestone_type'] === 'Booking Fee')
+                                                                        Booking Fee {{ $milestone['milestone_number'] }}
+                                                                        Payment
                                                                     @else
                                                                         Day {{ $milestone['milestone_number'] }}
                                                                         Payment
@@ -287,6 +290,7 @@
                                                             <th>#</th>
                                                             <th>Amount</th>
                                                             <th>Payment Method</th>
+                                                            <th>Reference Number</th>
                                                             <th>Status</th>
                                                             <th class="text-end">Actions</th>
                                                         </tr>
@@ -298,6 +302,7 @@
                                                                 <td>{{ $index + 1 }}</td>
                                                                 <td>£{{ number_format($payment['amount'], 2) }}</td>
                                                                 <td>{{ ucfirst($payment['payment_method']) }}</td>
+                                                                <td>{{ ucfirst($payment['transaction_id']) }}</td>
                                                                 <td>{{ ucfirst($payment['status']) }}</td>
                                                                 <td class="text-end">
                                                                     <!-- Update Payment Status Buttons -->
@@ -637,49 +642,7 @@
 
 <div class="mt-5">
     @if ($user->hasRole('User'))
-        {{-- <div class="mt-5">
-            <h4>Uploaded Documents</h4>
-            <table class="table table-striped table-bordered">
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Person Name</th>
-                        <th>Passport</th>
-                        <th>NID/Other</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($user->documents as $index => $document)
-                        <tr>
-                            <td>{{ $index + 1 }}</td>
-                            <td>{{ $document->person_name }}</td>
-                            <td>
-                                @if ($document->passport)
-                                    <a href="{{ Storage::url($document->passport) }}" class="btn btn-sm btn-outline-info" target="_blank">Download Passport</a>
-                                @else
-                                    N/A
-                                @endif
-                            </td>
-                            <td>
-                                @if ($document->nid_or_other)
-                                    <a href="{{ Storage::url($document->nid_or_other) }}" class="btn btn-sm btn-outline-info" target="_blank">Download NID/Other</a>
-                                @else
-                                    N/A
-                                @endif
-                            </td>
-                            <td>
-                                <button type="button" class="btn btn-sm btn-danger" wire:click="deleteDocument({{ $document->id }})">Delete</button>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="5" class="text-center">No documents uploaded yet.</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div> --}}
+
     @endif
 
     @if ($user->hasRole('Partner'))

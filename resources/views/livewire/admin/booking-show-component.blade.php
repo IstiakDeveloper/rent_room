@@ -206,15 +206,11 @@
                         </h5>
                     </div>
                     <div class="card-body">
+
                         <button wire:click="cancelBooking" class="btn btn-danger w-100"
-                            {{ \Carbon\Carbon::parse($booking->from_date)->isPast() ? 'disabled' : '' }}>
+                        >
                             <i class="fas fa-times mr-2"></i>Cancel Booking
                         </button>
-                        @if (\Carbon\Carbon::parse($booking->from_date)->isPast())
-                            <small class="text-muted d-block mt-2">
-                                Past bookings cannot be cancelled.
-                            </small>
-                        @endif
                     </div>
                 </div>
             @endif

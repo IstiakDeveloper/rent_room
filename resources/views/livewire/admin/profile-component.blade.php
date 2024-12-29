@@ -207,40 +207,7 @@
             </div>
         @endif
 
-        {{-- <div class="col-12 col-md-6 col-lg-4">
-                <div class="card shadow-sm p-4">
-                    <div class="d-flex justify-content-between">
-                        <h4>Payment Details</h4>
-                    </div>
 
-                    <table class="table table-bordered mt-2">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Details</th>
-                                <th>Amount</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($payments as $payment)
-                                <tr
-                                    class="{{ $payment->payment_status === 'Paid' ? 'table-success' : ($payment->payment_status === 'Pending' ? 'table-warning' : '') }}">
-                                    <td>{{ $payment->payment_date }}</td>
-                                    <td>{{ $payment->details }}</td>
-                                    <td>{{ $payment->amount }}</td>
-                                    <td>{{ $payment->payment_status }}</td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="4">No payments found.</td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-
-            </div> --}}
         <div class="row g-4">
             <div class="col-12 col-lg-4">
                 <div class="card shadow-sm p-4">
