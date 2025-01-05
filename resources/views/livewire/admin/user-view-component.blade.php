@@ -199,7 +199,8 @@
                                                                         Week {{ $milestone['milestone_number'] }}
                                                                         Payment
                                                                     @elseif($milestone['milestone_type'] === 'Booking Fee')
-                                                                        Booking Fee {{ $milestone['milestone_number'] }}
+                                                                        Booking Fee
+                                                                        {{ $milestone['milestone_number'] }}
                                                                         Payment
                                                                     @else
                                                                         Day {{ $milestone['milestone_number'] }}
@@ -356,9 +357,6 @@
                 }
             </script>
         </div>
-
-
-
 
         <div class="col-12 col-lg-6">
             <div class="card shadow-sm p-4">
@@ -641,10 +639,6 @@
 </div>
 
 <div class="mt-5">
-    @if ($user->hasRole('User'))
-
-    @endif
-
     @if ($user->hasRole('Partner'))
         <div class="mt-5 shadow-sm p-2">
             <h4>Uploaded Documents</h4>
@@ -739,37 +733,33 @@
                                             @switch($milestone['status'])
                                                 @case('paid')
                                                     <span class="badge bg-success">Paid</span>
-                                                    @break
+                                                @break
+
                                                 @case('pending')
                                                     <span class="badge bg-warning">Pending</span>
-                                                    @break
+                                                @break
+
                                                 @default
-                                                    <span class="badge bg-secondary">{{ ucfirst($milestone['status']) }}</span>
+                                                    <span
+                                                        class="badge bg-secondary">{{ ucfirst($milestone['status']) }}</span>
                                             @endswitch
                                         </td>
                                         <td>
                                             @if ($milestone['status'] === 'pending')
                                                 @if ($milestone['payment_link'])
                                                     <div class="btn-group">
-                                                        <a
-                                                            href="{{ $milestone['payment_link'] }}"
-                                                            class="btn btn-info btn-sm"
-                                                            target="_blank"
-                                                        >
+                                                        <a href="{{ $milestone['payment_link'] }}"
+                                                            class="btn btn-info btn-sm" target="_blank">
                                                             View Link
                                                         </a>
-                                                        <button
-                                                            class="btn btn-primary btn-sm"
-                                                            wire:click="createPaymentLinkForMilestone({{ $milestone['id'] }})"
-                                                        >
+                                                        <button class="btn btn-primary btn-sm"
+                                                            wire:click="createPaymentLinkForMilestone({{ $milestone['id'] }})">
                                                             Regenerate Link
                                                         </button>
                                                     </div>
                                                 @else
-                                                    <button
-                                                        class="btn btn-primary btn-sm"
-                                                        wire:click="createPaymentLinkForMilestone({{ $milestone['id'] }})"
-                                                    >
+                                                    <button class="btn btn-primary btn-sm"
+                                                        wire:click="createPaymentLinkForMilestone({{ $milestone['id'] }})">
                                                         Generate Link
                                                     </button>
                                                 @endif
@@ -780,126 +770,126 @@
                                             @endif
                                         </td>
                                     </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="5" class="text-center">
-                                            No milestones found.
-                                        </td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary"
-                        wire:click="$set('showMilestoneSelectionModal', false)">
-                        Close
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-@endif
-
-@if ($isEditModalOpen)
-    <!-- Modal Overlay -->
-    <div class="modal-backdrop fade show"></div>
-
-    <!-- Modal -->
-    <div class="modal fade show d-block" tabindex="-1" role="dialog" style="display: block;">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Edit User Information</h5>
-                    <button type="button" class="close" wire:click="closeEditModal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <form wire:submit.prevent="updateUser">
-                    <div class="modal-body">
-                        <div class="form-group">
-                            <label for="name">Name</label>
-                            <input type="text" class="form-control" id="name" wire:model="userData.name"
-                                required>
-                        </div>
-                        <div class="form-group">
-                            <label for="email">Email</label>
-                            <input type="email" class="form-control" id="email" wire:model="userData.email"
-                                required>
-                        </div>
-                        <div class="form-group">
-                            <label for="phone">Phone</label>
-                            <input type="text" class="form-control" id="phone" wire:model="userData.phone"
-                                required>
+                                    @empty
+                                        <tr>
+                                            <td colspan="5" class="text-center">
+                                                No milestones found.
+                                            </td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" wire:click="closeEditModal">Close</button>
-                        <button type="submit" class="btn btn-primary">Save changes</button>
+                        <button type="button" class="btn btn-secondary"
+                            wire:click="$set('showMilestoneSelectionModal', false)">
+                            Close
+                        </button>
                     </div>
-                </form>
+                </div>
             </div>
         </div>
+    @endif
+
+    @if ($isEditModalOpen)
+        <!-- Modal Overlay -->
+        <div class="modal-backdrop fade show"></div>
+
+        <!-- Modal -->
+        <div class="modal fade show d-block" tabindex="-1" role="dialog" style="display: block;">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Edit User Information</h5>
+                        <button type="button" class="close" wire:click="closeEditModal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <form wire:submit.prevent="updateUser">
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label for="name">Name</label>
+                                <input type="text" class="form-control" id="name" wire:model="userData.name"
+                                    required>
+                            </div>
+                            <div class="form-group">
+                                <label for="email">Email</label>
+                                <input type="email" class="form-control" id="email" wire:model="userData.email"
+                                    required>
+                            </div>
+                            <div class="form-group">
+                                <label for="phone">Phone</label>
+                                <input type="text" class="form-control" id="phone" wire:model="userData.phone"
+                                    required>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" wire:click="closeEditModal">Close</button>
+                            <button type="submit" class="btn btn-primary">Save changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    @endif
+
+
+    <style>
+        .card {
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        }
+
+        .table> :not(caption)>*>* {
+            padding: 0.75rem;
+        }
+
+        .badge {
+            font-weight: 500;
+        }
+
+        .progress {
+            border-radius: 0.5rem;
+        }
+
+        .alert {
+            border-left: 4px solid;
+        }
+
+        .alert-success {
+            border-left-color: #198754;
+        }
+
+        .alert-danger {
+            border-left-color: #dc3545;
+        }
+
+        .alert-info {
+            border-left-color: #0dcaf0;
+        }
+
+        i {
+            margin-right: 10px;
+        }
+
+        .btn-group .btn {
+            min-width: 100px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-group .btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .fa-spin {
+            animation-duration: 1s;
+        }
+
+        .alert {
+            margin-top: 1rem;
+            margin-bottom: 0;
+        }
+    </style>
+
     </div>
-@endif
-
-
-<style>
-    .card {
-        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-    }
-
-    .table> :not(caption)>*>* {
-        padding: 0.75rem;
-    }
-
-    .badge {
-        font-weight: 500;
-    }
-
-    .progress {
-        border-radius: 0.5rem;
-    }
-
-    .alert {
-        border-left: 4px solid;
-    }
-
-    .alert-success {
-        border-left-color: #198754;
-    }
-
-    .alert-danger {
-        border-left-color: #dc3545;
-    }
-
-    .alert-info {
-        border-left-color: #0dcaf0;
-    }
-
-    i {
-        margin-right: 10px;
-    }
-
-    .btn-group .btn {
-        min-width: 100px;
-        transition: all 0.2s ease;
-    }
-
-    .btn-group .btn:disabled {
-        cursor: not-allowed;
-        opacity: 0.7;
-    }
-
-    .fa-spin {
-        animation-duration: 1s;
-    }
-
-    .alert {
-        margin-top: 1rem;
-        margin-bottom: 0;
-    }
-</style>
-
-</div>

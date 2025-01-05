@@ -1,14 +1,4 @@
 <div class="container my-5">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <button wire:click="generateInvoice" class="btn btn-primary">
-                <i class="fas fa-file-pdf mr-2"></i>Download Invoice
-            </button>
-            <button wire:click="sendInvoiceEmail" class="btn btn-secondary ms-2">
-                <i class="fas fa-envelope mr-2"></i>Email Invoice
-            </button>
-        </div>
-    </div>
 
     @if (session()->has('message'))
         <div class="alert alert-success alert-dismissible fade show">
@@ -26,51 +16,68 @@
                         <i class="fas fa-info-circle mr-2"></i>Booking Information
                     </h5>
                 </div>
+
                 <div class="card-body">
-                    <div class="row g-3">
+                    <div class="row">
+                        <div class="col-md-6 bg-light p-3 rounded">
+                            <p class="mb-2"><i class="fas fa-building mr-2"></i> <strong>Name:</strong>
+                                {{ $booking->package->name }}</p>
+                            <p class="mb-2"><i class="fas fa-map-marker-alt mr-2"></i>
+                                <strong>Address:</strong> {{ $booking->package->address }}</p>
+
+                        </div>
+
                         <div class="col-md-6">
-                            <div class="p-3 bg-light rounded">
-                                <small class="text-muted d-block">Booking ID</small>
-                                <strong>{{ $booking->id }}</strong>
+                            <div class="bg-light p-3 rounded">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span><i class="fas fa-calendar-check mr-2"></i>Check In:</span>
+                                    <strong>{{ \Carbon\Carbon::parse($booking->from_date)->format('M d, Y') }}</strong>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span><i class="fas fa-calendar-times mr-2"></i>Check Out:</span>
+                                    <strong>{{ \Carbon\Carbon::parse($booking->to_date)->format('M d, Y') }}</strong>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <span><i class="fas fa-clock mr-2"></i>Duration:</span>
+                                    <strong>{{ $booking->number_of_days }} Days
+                                       </strong>
+                                </div>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="p-3 bg-light rounded">
-                                <small class="text-muted d-block">Package</small>
-                                <strong>{{ $booking->package->name }}</strong>
+
+                        @if ($booking->package->description)
+                            <div class="col-12 mt-3">
+                                <p class="mb-0"><i class="fas fa-info-circle mr-2"></i>
+                                    {{ $booking->package->description }}</p>
                             </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="p-3 bg-light rounded">
-                                <small class="text-muted d-block">Check In</small>
-                                <strong>{{ \Carbon\Carbon::parse($booking->from_date)->format('d M Y') }}</strong>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="p-3 bg-light rounded">
-                                <small class="text-muted d-block">Check Out</small>
-                                <strong>{{ \Carbon\Carbon::parse($booking->to_date)->format('d M Y') }}</strong>
-                            </div>
-                        </div>
+                        @endif
                     </div>
 
                     <!-- Booked Rooms Section -->
                     <div class="mt-4">
-                        <h6 class="mb-3">Booked Rooms</h6>
                         <div class="row g-3">
                             @php
                                 $roomIds = json_decode($booking->room_ids, true) ?? [];
                                 $rooms = \App\Models\Room::whereIn('id', $roomIds)->get();
                             @endphp
                             @foreach ($rooms as $room)
-                                <div class="col-md-6">
-                                    <div class="card">
+                                <div class="col-md-4">
+                                    <div class="card h-100 border">
                                         <div class="card-body">
-                                            <h6 class="card-title">{{ $room->name }}</h6>
-                                            <div class="d-flex justify-content-between">
-                                                <small class="text-muted">Type: {{ $room->type }}</small>
-                                                <span class="badge bg-info">{{ $booking->price_type }}</span>
+                                            <h6 class="card-title d-flex justify-content-between align-items-center">
+                                                {{ $room->name }}
+                                            </h6>
+                                            <div class="text-muted mb-2">
+                                                <small>
+                                                    <i class="fas fa-bed mr-1"></i> {{ $room->number_of_beds }}
+                                                    Beds
+                                                    <i class="fas fa-bath ms-2 mr-1"></i>
+                                                    {{ $room->number_of_bathrooms }} Bath
+                                                </small>
                                             </div>
+                                            @if ($room->description)
+                                                <small class="text-muted">{{ $room->description }}</small>
+                                            @endif
                                         </div>
                                     </div>
                                 </div>
@@ -78,7 +85,6 @@
                         </div>
                     </div>
 
-                    <!-- Price Summary -->
                     <div class="mt-4 p-3 bg-light rounded">
                         <h6 class="mb-3">Price Summary</h6>
                         <div class="d-flex justify-content-between mb-2">
@@ -107,7 +113,7 @@
                 <div
                     class="card-header bg-{{ $booking->payment_status === 'paid' ? 'success' : 'warning' }} text-white">
                     <h5 class="card-title mb-0">
-                        <i class="fas fa-credit-card mr-2"></i>Payment Status
+                        <i class="fas fa-credit-card mr-2"></i>Booking Status
                     </h5>
                 </div>
                 <div class="card-body">
@@ -177,18 +183,7 @@
                                         {{ ucfirst($payment->status) }}
                                     </span>
                                 </div>
-                                @if ($payment->status == 'pending')
-                                    <div class="d-flex justify-content-end gap-2 mt-2">
-                                        <button wire:click="approvePayment({{ $payment->id }})"
-                                            class="btn btn-success btn-sm">
-                                            <i class="fas fa-check mr-1"></i>Approve
-                                        </button>
-                                        <button wire:click="rejectPayment({{ $payment->id }})"
-                                            class="btn btn-danger btn-sm">
-                                            <i class="fas fa-times mr-1"></i>Reject
-                                        </button>
-                                    </div>
-                                @endif
+
                             </div>
                         @endforeach
                     @else
@@ -207,8 +202,7 @@
                     </div>
                     <div class="card-body">
 
-                        <button wire:click="cancelBooking" class="btn btn-danger w-100"
-                        >
+                        <button wire:click="cancelBooking" class="btn btn-danger w-100">
                             <i class="fas fa-times mr-2"></i>Cancel Booking
                         </button>
                     </div>

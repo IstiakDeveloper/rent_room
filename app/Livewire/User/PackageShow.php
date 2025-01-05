@@ -58,7 +58,6 @@ class PackageShow extends Component
         }
     }
 
-
     private function determineOptimalPriceType($room, $startDate, $endDate)
     {
         $availableTypes = collect($room->roomPrices)->pluck('type')->unique();
@@ -147,7 +146,6 @@ class PackageShow extends Component
 
     private function calculateWeeklyBreakdown($totalDays)
     {
-        // Calculate full weeks and round up to next week if there are remaining days
         $fullWeeks = ceil($totalDays / 7);
 
         return [

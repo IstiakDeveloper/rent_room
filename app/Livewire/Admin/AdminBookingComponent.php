@@ -88,54 +88,6 @@ class AdminBookingComponent extends Component
         return $this->totalAmount;
     }
 
-    private function determineOptimalPriceType($room, $startDate, $endDate)
-    {
-        $availableTypes = collect($room->roomPrices)->pluck('type')->unique();
-        $startDate = Carbon::parse($startDate);
-        $endDate = Carbon::parse($endDate);
-        $totalDays = $startDate->diffInDays($endDate);
-
-        $priceBreakdown = [
-            'Month' => 0,
-            'Week' => 0,
-            'Day' => 0
-        ];
-
-        // First check if duration is over a month (28 days)
-        if ($totalDays >= 28) {
-            if (!$availableTypes->contains('Month')) {
-                throw new \Exception("Monthly pricing is required for bookings of 28 days or more.");
-            }
-            return $this->calculateMonthlyBreakdown($startDate, $endDate);
-        }
-
-        // Then check if duration is 7 days or more
-        if ($totalDays >= 7) {
-            if (!$availableTypes->contains('Week')) {
-                if ($availableTypes->contains('Month')) {
-                    return $this->calculateMonthlyBreakdown($startDate, $endDate);
-                }
-                throw new \Exception("Weekly pricing is required for bookings of 7 days or more.");
-            }
-            return $this->calculateWeeklyBreakdown($totalDays);
-        }
-
-        // Finally, check for daily bookings
-        if (!$availableTypes->contains('Day')) {
-            if ($availableTypes->contains('Week')) {
-                return $this->calculateWeeklyBreakdown($totalDays);
-            } elseif ($availableTypes->contains('Month')) {
-                return $this->calculateMonthlyBreakdown($startDate, $endDate);
-            }
-            throw new \Exception("Daily pricing is required for bookings less than 7 days.");
-        }
-
-        return [
-            'Month' => 0,
-            'Week' => 0,
-            'Day' => $totalDays
-        ];
-    }
 
     private function createBookingRoomPrices($booking)
     {
@@ -400,12 +352,14 @@ class AdminBookingComponent extends Component
 
     public function fetchDisabledDates()
     {
-        if (!$this->selectedRoom) {
+        if (!$this->packageId || !$this->selectedRoom) {
             return [];
         }
 
         try {
             return Booking::where('package_id', $this->packageId)
+                // Filter out cancelled bookings
+                ->whereNotIn('payment_status', ['cancelled', 'refunded'])
                 ->whereRaw('JSON_CONTAINS(REPLACE(REPLACE(room_ids, "\\\", ""), "\"", ""), ?)', ["[$this->selectedRoom]"])
                 ->get()
                 ->flatMap(function ($booking) {
@@ -426,6 +380,43 @@ class AdminBookingComponent extends Component
             \Log::error('Error fetching disabled dates: ' . $e->getMessage());
             return [];
         }
+    }
+
+    public function fetchAvailableRooms()
+    {
+        if (!$this->fromDate || !$this->toDate || !$this->packageId) {
+            $this->reset(['availableRooms', 'disabledDates']);
+            return [];
+        }
+
+        $package = Package::find($this->packageId);
+        if (!$package) {
+            $this->addError('package', 'Invalid package selected.');
+            return [];
+        }
+
+        $bookedRoomIds = Booking::where('package_id', $this->packageId)
+            ->where(function ($query) {
+                $query->whereBetween('from_date', [$this->fromDate, $this->toDate])
+                    ->orWhereBetween('to_date', [$this->fromDate, $this->toDate])
+                    ->orWhere(function ($subQuery) {
+                        $subQuery->where('from_date', '<=', $this->fromDate)
+                            ->where('to_date', '>=', $this->toDate);
+                    });
+            })
+            ->get()
+            ->flatMap(function ($booking) {
+                return json_decode($booking->room_ids, true) ?: [];
+            })
+            ->unique()
+            ->toArray();
+
+        $allRooms = Room::where('package_id', $this->packageId)->get();
+        $this->availableRooms = $allRooms->filter(function ($room) use ($bookedRoomIds) {
+            return !in_array($room->id, $bookedRoomIds);
+        });
+
+        return $this->availableRooms;
     }
 
     public function getPriceBreakdown()
@@ -508,7 +499,55 @@ class AdminBookingComponent extends Component
         ];
     }
 
-    // Also add these helper methods if not already present
+    private function determineOptimalPriceType($room, $startDate, $endDate)
+    {
+        $availableTypes = collect($room->roomPrices)->pluck('type')->unique();
+        $startDate = Carbon::parse($startDate);
+        $endDate = Carbon::parse($endDate);
+        $totalDays = $startDate->diffInDays($endDate);
+
+        $priceBreakdown = [
+            'Month' => 0,
+            'Week' => 0,
+            'Day' => 0
+        ];
+
+        // First check if duration is over a month (28 days)
+        if ($totalDays >= 28) {
+            if (!$availableTypes->contains('Month')) {
+                throw new \Exception("Monthly pricing is required for bookings of 28 days or more.");
+            }
+            return $this->calculateMonthlyBreakdown($startDate, $endDate);
+        }
+
+        // Then check if duration is 7 days or more
+        if ($totalDays >= 7) {
+            if (!$availableTypes->contains('Week')) {
+                if ($availableTypes->contains('Month')) {
+                    return $this->calculateMonthlyBreakdown($startDate, $endDate);
+                }
+                throw new \Exception("Weekly pricing is required for bookings of 7 days or more.");
+            }
+            return $this->calculateWeeklyBreakdown($totalDays);
+        }
+
+        // Finally, check for daily bookings (less than 7 days)
+        if (!$availableTypes->contains('Day')) {
+            if ($availableTypes->contains('Week')) {
+                return $this->calculateWeeklyBreakdown($totalDays);
+            } elseif ($availableTypes->contains('Month')) {
+                return $this->calculateMonthlyBreakdown($startDate, $endDate);
+            }
+            throw new \Exception("Daily pricing is required for bookings less than 7 days.");
+        }
+
+        return [
+            'Month' => 0,
+            'Week' => 0,
+            'Day' => $totalDays
+        ];
+    }
+
     private function calculateMonthlyBreakdown($startDate, $endDate)
     {
         $startDate = $startDate instanceof Carbon ? $startDate : Carbon::parse($startDate);
@@ -548,7 +587,6 @@ class AdminBookingComponent extends Component
 
     private function calculateWeeklyBreakdown($totalDays)
     {
-        // Calculate full weeks and round up to next week if there are remaining days
         $fullWeeks = ceil($totalDays / 7);
 
         return [
@@ -557,6 +595,9 @@ class AdminBookingComponent extends Component
             'Day' => 0
         ];
     }
+
+    // Also add these helper methods if not already present
+
 
     public function render()
     {

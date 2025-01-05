@@ -29,11 +29,9 @@
                             <a class="btn btn-primary" href="{{ route('bookings.show', ['id' => $booking->id]) }}">
                                 <i class="fas fa-eye"></i>
                             </a>
-                            {{-- @if ($toDate->isSameDay($currentDate) || $toDate->isBefore($currentDate) && $booking->payment_status != 'finished') --}}
                                 <a class="btn btn-secondary ml-2" href="{{ route('bookings.show', ['id' => $booking->id]) }}">
                                     <i class="fas fa-redo"></i>
                                 </a>
-                            {{-- @endif --}}
                         </td>
                     </tr>
                 @endforeach

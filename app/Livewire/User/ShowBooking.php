@@ -21,6 +21,8 @@ class ShowBooking extends Component
     public $bankDetails = 'Bank: ABC Bank, Account Number: 12345678, Sort Code: 12-34-56';
     public $newFromDate;
     public $newToDate;
+    public $paymentPercentage;
+    public $currentMilestone;
 
     protected $rules = [
         'bankTransferReference' => 'required_if:paymentMethod,bank_transfer',
@@ -30,20 +32,105 @@ class ShowBooking extends Component
 
     public function mount($id)
     {
-        $this->booking = Booking::findOrFail($id);
-        
+        $this->booking = Booking::with(['package', 'payments', 'bookingPayments'])->findOrFail($id);
+        $this->payments = $this->booking->payments ?? collect(); // Initialize payments
 
-        $this->payments = Payment::where('booking_id', $id)->get();
-        $this->paymentsDue = Payment::where('booking_id', $this->booking->id)
-            ->where('status', '!=', 'rejected')
-            ->get();
-        // Calculate due bill
-        $this->dueBill = $this->booking->price + $this->booking->booking_price - $this->paymentsDue->sum('amount');
+        // Calculate payment summaries
+        $totalPrice = (float)$this->booking->price + (float)$this->booking->booking_price;
+        $totalPaid = $this->payments->where('status', 'Paid')->sum('amount');
+        $this->dueBill = $totalPrice - $totalPaid;
+        $this->paymentPercentage = $totalPrice > 0 ? ($totalPaid / $totalPrice * 100) : 0;
     }
 
     public function render()
     {
         return view('livewire.user.show-booking');
+    }
+
+    public function calculatePayments()
+    {
+        $totalPrice = (float)$this->booking->price + (float)$this->booking->booking_price;
+        $totalPaid = $this->booking->payments->where('status', 'Paid')->sum('amount');
+        $this->dueBill = $totalPrice - $totalPaid;
+        $this->paymentPercentage = $totalPrice > 0 ? ($totalPaid / $totalPrice * 100) : 0;
+
+        // Get current milestone
+        $this->currentMilestone = $this->booking->bookingPayments
+            ->where('is_paid', false)
+            ->sortBy('due_date')
+            ->first();
+    }
+
+    public function proceedPayment()
+    {
+        try {
+            if ($this->paymentMethod === 'card') {
+                return $this->handleStripePayment();
+            }
+
+            // Create payment record
+            $payment = Payment::create([
+                'booking_id' => $this->booking->id,
+                'payment_method' => $this->paymentMethod,
+                'amount' => $this->dueBill,
+                'status' => 'pending',
+                'transaction_id' => $this->bankTransferReference,
+                'booking_payment_id' => $this->currentMilestone->id
+            ]);
+
+            // Update booking payment status
+            $this->currentMilestone->update([
+                'status' => 'pending'
+            ]);
+
+            // Update booking status
+            $this->booking->payment_status = 'pending';
+            $this->booking->save();
+
+            $this->showPaymentModal = false;
+            $this->resetValidation();
+
+            flash()->success('Payment initiated successfully!');
+
+            return redirect()->route('bookings.show', ['id' => $this->booking->id]);
+        } catch (\Exception $e) {
+            session()->flash('error', 'Payment failed: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    protected function handleStripePayment()
+    {
+        $stripe = new StripeClient(config('stripe.stripe_sk'));
+
+        try {
+            $session = $stripe->checkout->sessions->create([
+                'payment_method_types' => ['card'],
+                'line_items' => [[
+                    'price_data' => [
+                        'currency' => 'gbp',
+                        'product_data' => [
+                            'name' => "Booking Payment #" . $this->booking->id,
+                            'description' => "Payment for " . $this->currentMilestone->milestone_type . " " . $this->currentMilestone->milestone_number,
+                        ],
+                        'unit_amount' => (int)($this->currentMilestone->amount * 100),
+                    ],
+                    'quantity' => 1,
+                ]],
+                'mode' => 'payment',
+                'success_url' => route('user.bookings.index') . '?session_id={CHECKOUT_SESSION_ID}',
+                'cancel_url' => route('user.bookings.index'),
+                'metadata' => [
+                    'booking_id' => $this->booking->id,
+                    'booking_payment_id' => $this->currentMilestone->id
+                ],
+            ]);
+
+            return redirect($session->url);
+        } catch (\Exception $e) {
+            session()->flash('error', 'Stripe Error: ' . $e->getMessage());
+            return redirect()->back();
+        }
     }
 
     public function cancelBooking()
@@ -129,30 +216,30 @@ class ShowBooking extends Component
 
 
 
-    
+
     protected function calculateNumberOfDays($fromDate, $toDate)
     {
         $from = \Carbon\Carbon::parse($fromDate);
         $to = \Carbon\Carbon::parse($toDate);
-        
+
         // Ensure the 'to' date is always after the 'from' date
         return $from->diffInDays($to) + 1;
     }
-    
+
 
     public function showPaymentM()
     {
         // Fetch the latest booking details
         $this->booking = Booking::findOrFail($this->booking->id);
-        
+
         // Fetch the latest payment details for the booking, excluding rejected payments
         $this->payments = Payment::where('booking_id', $this->booking->id)
-                                ->where('status', '!=', 'rejected')
-                                ->get();
-                                
+            ->where('status', '!=', 'rejected')
+            ->get();
+
         // Calculate the due bill
         $this->dueBill = $this->booking->price + $this->booking->booking_price - $this->payments->sum('amount');
-        
+
         // Show the payment modal
         $this->showPaymentModal = true;
     }
@@ -161,84 +248,14 @@ class ShowBooking extends Component
     {
         // Fetch the latest booking details
         $this->booking = Booking::findOrFail($this->booking->id);
-    
+
         // Compute the default dates
         $toDate = \Carbon\Carbon::parse($this->booking->to_date);
         $this->newFromDate = $toDate->addDay()->format('Y-m-d'); // Default to the day after the current toDate
         $this->newToDate = $toDate->addDay(2)->format('Y-m-d'); // Default to two days after the new from date
-    
+
         // Show the renewal modal
         $this->showRenewalModal = true;
-    }
-
-    public function proceedPayment()
-    {
-        // $this->validate();
-
-        $paymentAmount = $this->dueBill;
-
-        if ($this->paymentMethod === 'card') {
-            return $this->handleStripePayment($paymentAmount);
-        } elseif ($this->paymentMethod === 'bank_transfer') {
-            Payment::create([
-                'booking_id' => $this->booking->id,
-                'payment_method' => $this->paymentMethod,
-                'amount' => $paymentAmount,
-                'status' => 'pending',
-                'transaction_id' => $this->bankTransferReference
-            ]);
-
-            $this->booking->payment_status = 'pending';
-            $this->booking->save();
-
-            flash()->success('Payment successful! Due bill paid.');
-            $this->showPaymentModal = false;
-    } elseif ($this->paymentMethod === 'cash') {
-            Payment::create([
-                'booking_id' => $this->booking->id,
-                'payment_method' => $this->paymentMethod,
-                'amount' => $paymentAmount,
-                'status' => 'pending'
-            ]);
-
-            $this->booking->payment_status = 'pending';
-            $this->booking->save();
-
-            flash()->success('Payment successful! Due bill paid.');
-            $this->showPaymentModal = false;
-        }
-    }
-
-    protected function handleStripePayment($paymentAmount)
-    {
-        $stripe = new StripeClient(config('stripe.stripe_sk'));
-
-        try {
-            $session = $stripe->checkout->sessions->create([
-                'payment_method_types' => ['card'],
-                'line_items' => [[
-                    'price_data' => [
-                        'currency' => 'gbp',
-                        'product_data' => [
-                            'name' => 'Booking Payment',
-                        ],
-                        'unit_amount' => $paymentAmount * 100, // Amount in cents
-                    ],
-                    'quantity' => 1,
-                ]],
-                'mode' => 'payment',
-                'success_url' => route('user.bookings.index') . '?session_id={CHECKOUT_SESSION_ID}',
-                'cancel_url' => route('user.bookings.index'),
-                'metadata' => [
-                    'booking_id' => $this->booking->id,
-                ],
-            ]);
-
-            return redirect($session->url);
-
-        } catch (\Stripe\Exception\ApiErrorException $e) {
-            return redirect()->back()->with('error', 'Stripe Error: ' . $e->getMessage());
-        }
     }
 
     public function success(Request $request)
@@ -259,7 +276,6 @@ class ShowBooking extends Component
             } else {
                 return redirect()->route('booking.cancel')->with('error', 'Payment unsuccessful.');
             }
-
         } catch (\Stripe\Exception\ApiErrorException $e) {
             return redirect()->route('booking.cancel')->with('error', 'Stripe Error: ' . $e->getMessage());
         }
@@ -269,5 +285,4 @@ class ShowBooking extends Component
     {
         return redirect()->route('booking.details', $this->booking->id)->with('error', 'Payment canceled.');
     }
-
 }

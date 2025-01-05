@@ -86,7 +86,8 @@
             border: 1px solid #dee2e6;
             transition: all 0.2s;
             cursor: pointer;
-        }
+            background: #585858;
+       }
 
         .room-item {
             border: 1px solid #dee2e6;
@@ -478,7 +479,7 @@
                                                             <use xlink:href="#icon-my-package"></use>
                                                         </svg>
                                                     </span>
-                                                    <span class="sidebar-item-text">My Package</span>
+                                                    <span class="sidebar-item-text">My Booking</span>
                                                     <span
                                                         class="sidebar-item-number ml-auto text-primary fs-15 font-weight-bold">
                                                         @php

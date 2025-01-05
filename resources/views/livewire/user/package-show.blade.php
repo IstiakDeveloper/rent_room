@@ -93,58 +93,76 @@
                                         target="_blank">View Map</a>
                                 </p>
                             </div>
+
+
+                            <!-- Price display with dropdown -->
                             <div class="mb-2">
                                 @php
                                     $roomPrices = $package->rooms->flatMap(function ($room) {
-                                        return $room->prices;
+                                        return $room->roomPrices;
                                     });
 
-                                    $roomPriceData = $this->getFirstAvailablePrice($roomPrices);
-                                    $roomPrice = $roomPriceData['price'] ?? null;
-                                    $roomPriceType = $roomPriceData['type'] ?? null;
-                                    $roomPriceIndicator = $roomPriceType
-                                        ? $this->getPriceIndicator($roomPriceType)
-                                        : '';
-
-                                    $propertyPrices = $package->entireProperty->prices ?? [];
-                                    $propertyPriceData = $this->getFirstAvailablePrice($propertyPrices);
-                                    $propertyPrice = $propertyPriceData['price'] ?? null;
-                                    $propertyPriceType = $propertyPriceData['type'] ?? null;
-                                    $propertyPriceIndicator = $propertyPriceType
-                                        ? $this->getPropertyPriceIndicator($propertyPriceType)
-                                        : '';
+                                    $firstPrice = $roomPrices->first();
+                                    $priceType = $firstPrice ? $firstPrice->type : null;
+                                    $priceIndicator = $priceType ? $this->getPriceIndicator($priceType) : '';
                                 @endphp
 
-                                @if ($roomPrice)
-                                    @if ($roomPrice->discount_price)
-                                        <p class="fs-17 font-weight-bold text-heading mb-0 lh-16">
-                                            <del class="text-muted mr-2"> £{{ $roomPrice->fixed_price }}</del>
-                                            <span class="fs-17 font-weight-bold text-heading mb-0 lh-16">
-                                                £{{ $roomPrice->discount_price }}</span>
-                                            <span class="price-indicate">{{ $roomPriceIndicator }}</span>
-                                        </p>
-                                    @else
-                                        <p class="fs-17 font-weight-bold text-heading mb-0 lh-16">
-                                            £{{ $roomPrice->fixed_price }}<span
-                                                class="price-indicate">{{ $roomPriceIndicator }}</span></p>
-                                    @endif
+                                <!-- Default Price Display -->
+                                @if ($firstPrice)
+                                    <p class="fs-17 font-weight-bold text-heading mb-0 lh-16">
+                                        @if ($firstPrice->discount_price)
+                                            <del class="text-muted mr-2">£{{ $firstPrice->fixed_price }}</del>
+                                            <span>£{{ $firstPrice->discount_price }}</span>
+                                        @else
+                                            <span>£{{ $firstPrice->fixed_price }}</span>
+                                        @endif
+                                        <span class="price-indicate">{{ $priceIndicator }}</span>
+                                    </p>
                                 @endif
 
-                                @if ($propertyPrice)
-                                    @if ($propertyPrice->discount_price)
-                                        <p class="fs-17 font-weight-bold text-heading mb-0 lh-16">
-                                            <del class="text-muted mr-2"> £{{ $propertyPrice->fixed_price }}</del>
-                                            <span class="fs-17 font-weight-bold text-heading mb-0 lh-16">
-                                                £{{ $propertyPrice->discount_price }}</span>
-                                            <span class="price-indicate">{{ $propertyPriceIndicator }}</span>
-                                        </p>
-                                    @else
-                                        <p class="fs-17 font-weight-bold text-heading mb-0 lh-16">
-                                            £{{ $propertyPrice->fixed_price }}<span
-                                                class="price-indicate">{{ $propertyPriceIndicator }}</span></p>
-                                    @endif
-                                @endif
+                                <!-- Dropdown for all prices -->
+                                <div class="dropdown mt-2">
+                                    <button class="btn btn-link p-0 text-decoration-none" type="button"
+                                        id="priceDropdown" data-toggle="dropdown">
+                                        View All Prices <i class="fas fa-chevron-down ml-1"></i>
+                                    </button>
+                                    <div class="dropdown-menu p-3" aria-labelledby="priceDropdown"
+                                        style="min-width: 300px;">
+                                        @foreach ($package->rooms as $room)
+                                            <div class="mb-3">
+                                                <h6 class="dropdown-header">{{ $room->name }}</h6>
+                                                @php
+                                                    $pricesByType = $room->roomPrices->groupBy('type');
+                                                @endphp
+                                                @foreach ($pricesByType as $type => $prices)
+                                                    <div class="px-3 py-1">
+                                                        <small class="text-muted">{{ ucfirst($type) }}</small>
+                                                        @foreach ($prices as $price)
+                                                            <div
+                                                                class="d-flex justify-content-between align-items-center">
+                                                                <span>
+                                                                    @if ($price->discount_price)
+                                                                        <del
+                                                                            class="text-muted">£{{ number_format($price->fixed_price, 2) }}</del>
+                                                                        <span
+                                                                            class="text-primary">£{{ number_format($price->discount_price, 2) }}</span>
+                                                                    @else
+                                                                        <span>£{{ number_format($price->fixed_price, 2) }}</span>
+                                                                    @endif
+                                                                </span>
+                                                                <small class="text-muted">Booking:
+                                                                    £{{ number_format($price->booking_price, 2) }}</small>
+                                                            </div>
+                                                        @endforeach
+                                                    </div>
+                                                @endforeach
+                                                <div class="dropdown-divider"></div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
                             </div>
+
                         </div>
                         <h4 class="text-heading mt-3 mb-2">Description</h4>
                         <p class="mb-0 lh-214">
@@ -341,7 +359,7 @@
                                     </div>
                                 </div>
 
-                                @if (!$propertyPrice)
+                                {{-- @if (!$propertyPrice)
                                     <div class="panel panel-default">
                                         <div class="panel-heading active" role="tab" id="headingFour">
                                             <h4 class="panel-title">
@@ -432,7 +450,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                @endif
+                                @endif --}}
 
                             </div>
                         </div>
@@ -445,7 +463,7 @@
                             <ul class="nav nav-tabs d-flex" role="tablist">
                                 <li class="nav-item">
                                     <a class="nav-link active px-3" data-toggle="tab" href="#schedule"
-                                        role="tab" aria-selected="true">Book Your Place</a>
+                                        role="tab" aria-selected="true">Select Your Room</a>
                                 </li>
                             </ul>
                             <div class="card-body px-sm-6 shadow-xxs-2 pb-5 pt-0">
@@ -468,17 +486,20 @@
                                             @endunless
                                             <div class="card shadow-sm">
                                                 <div class="card-body p-2">
-                                                    <h6 class="card-title mb-2"><i class="fas fa-bed mr-2 text-primary"></i>Select Room</h6>
-
                                                     @if ($package->rooms->count() > 0)
                                                         <div class="room-list">
-                                                            @foreach($package->rooms as $room)
+                                                            @foreach ($package->rooms as $room)
                                                                 <div wire:key="room-{{ $room->id }}"
-                                                                     wire:click="selectRoom({{ $room->id }})"
-                                                                     class="room-item d-flex justify-content-between align-items-center p-2 mb-2 rounded-2 {{ $selectedRoom == $room->id ? 'selected' : '' }}">
-                                                                    <span class="fw-medium">{{ $room->name }} • <i class="fas fa-bed small"></i> {{ $room->number_of_beds }} • <i class="fas fa-bath small"></i> {{ $room->number_of_bathrooms }}</span>
-                                                                    @if($selectedRoom == $room->id)
-                                                                        <i class="fas fa-check-circle text-success"></i>
+                                                                    wire:click="selectRoom({{ $room->id }})"
+                                                                    class="room-item d-flex justify-content-between align-items-center p-2 mb-2 rounded-2 {{ $selectedRoom == $room->id ? 'selected' : '' }}">
+                                                                    <span class="fw-medium">{{ $room->name }} • <i
+                                                                            class="fas fa-bed small"></i>
+                                                                        {{ $room->number_of_beds }} • <i
+                                                                            class="fas fa-bath small"></i>
+                                                                        {{ $room->number_of_bathrooms }}</span>
+                                                                    @if ($selectedRoom == $room->id)
+                                                                        <i
+                                                                            class="fas fa-check-circle text-success"></i>
                                                                     @endif
                                                                 </div>
                                                             @endforeach
@@ -492,114 +513,113 @@
                                             </div>
 
 
-                                                @if ($selectedRoom && $calendarView)
-                                                    <div x-data="datePickerComponent({{ json_encode($disabledDates) }})" wire:ignore.self class="mt-6">
-                                                        <label class="block mb-2">Select Check-in and Check-out
-                                                            Dates</label>
-                                                        <input x-ref="dateRangePicker" type="text"
-                                                            class="form-control w-full" placeholder="Select dates"
-                                                            readonly {{ !Auth::check() ? 'disabled' : '' }}>
+                                            @if ($selectedRoom && $calendarView)
+                                                <div x-data="datePickerComponent({{ json_encode($disabledDates) }})" wire:ignore.self class="mt-6">
+                                                    <label class="block mb-2">Select Check-in and Check-out
+                                                        Dates</label>
+                                                    <input x-ref="dateRangePicker" type="text"
+                                                        class="form-control w-full" placeholder="Select dates"
+                                                        readonly {{ !Auth::check() ? 'disabled' : '' }}>
 
-                                                        @error('dateRange')
-                                                            <span class="text-red-500 text-sm">{{ $message }}</span>
-                                                        @enderror
-                                                    </div>
-                                                @endif
-
-
-
-                                                <script>
-                                                    function datePickerComponent(disabledDates) {
-                                                        return {
-                                                            disabledDates: disabledDates,
-                                                            init() {
-                                                                const picker = flatpickr(this.$refs.dateRangePicker, {
-                                                                    mode: 'range',
-                                                                    dateFormat: 'Y-m-d',
-                                                                    minDate: 'today',
-                                                                    disable: this.disabledDates.map(date => new Date(date)),
-                                                                    onChange: (selectedDates) => {
-                                                                        if (selectedDates.length === 2) {
-                                                                            // Call Livewire method with selected dates
-                                                                            @this.call('selectDates', {
-                                                                                start: selectedDates[0].toISOString().split('T')[0],
-                                                                                end: selectedDates[1].toISOString().split('T')[0]
-                                                                            });
-                                                                        }
-                                                                    }
-                                                                });
-
-                                                                // Watch for changes in disabled dates and update picker
-                                                                this.$watch('disabledDates', (newValue) => {
-                                                                    picker.set('disable', newValue.map(date => new Date(date)));
-                                                                });
-                                                            }
-                                                        };
-                                                    }
-                                                </script>
-
-
-
-                                                <!-- Phone Number -->
-                                                <div class="form-group mb-2">
-                                                    <label for="phone">Phone Number</label><span
-                                                        class="text-danger">*</span>
-                                                    <div class="position-relative">
-                                                        <input type="text" id="phone"
-                                                            class="form-control form-control-lg border-0"
-                                                            wire:model="phone" placeholder="Your Phone" required
-                                                            {{ !Auth::check() ? 'disabled' : '' }}>
-                                                        @if (!Auth::check())
-                                                            <div class="overlay auth-overlay"
-                                                                wire:click="showAuthMessage('phone')"
-                                                                style="position: absolute; top: 0; left: 0; right: 0; bottom: 0;">
-                                                            </div>
-                                                        @endif
-                                                    </div>
-                                                    @error('phone')
-                                                        <span class="error text-danger">{{ $message }}</span>
+                                                    @error('dateRange')
+                                                        <span class="text-red-500 text-sm">{{ $message }}</span>
                                                     @enderror
-                                                    @if ($showAuthWarning === 'phone')
-                                                        <span class="text-danger">Please sign in or sign up
-                                                            first.</span>
+                                                </div>
+                                            @endif
+
+
+
+                                            <script>
+                                                function datePickerComponent(disabledDates) {
+                                                    return {
+                                                        disabledDates: disabledDates,
+                                                        init() {
+                                                            const picker = flatpickr(this.$refs.dateRangePicker, {
+                                                                mode: 'range',
+                                                                dateFormat: 'Y-m-d',
+                                                                minDate: 'today',
+                                                                disable: this.disabledDates.map(date => new Date(date)),
+                                                                onChange: (selectedDates) => {
+                                                                    if (selectedDates.length === 2) {
+                                                                        // Call Livewire method with selected dates
+                                                                        @this.call('selectDates', {
+                                                                            start: selectedDates[0].toISOString().split('T')[0],
+                                                                            end: selectedDates[1].toISOString().split('T')[0]
+                                                                        });
+                                                                    }
+                                                                }
+                                                            });
+
+                                                            // Watch for changes in disabled dates and update picker
+                                                            this.$watch('disabledDates', (newValue) => {
+                                                                picker.set('disable', newValue.map(date => new Date(date)));
+                                                            });
+                                                        }
+                                                    };
+                                                }
+                                            </script>
+
+
+
+                                            <!-- Phone Number -->
+                                            <div class="form-group mb-2">
+                                                <label for="phone">Phone Number</label><span
+                                                    class="text-danger">*</span>
+                                                <div class="position-relative">
+                                                    <input type="text" id="phone"
+                                                        class="form-control form-control-lg border-0"
+                                                        wire:model="phone" placeholder="Your Phone" required
+                                                        {{ !Auth::check() ? 'disabled' : '' }}>
+                                                    @if (!Auth::check())
+                                                        <div class="overlay auth-overlay"
+                                                            wire:click="showAuthMessage('phone')"
+                                                            style="position: absolute; top: 0; left: 0; right: 0; bottom: 0;">
+                                                        </div>
                                                     @endif
                                                 </div>
-
-                                                <!-- Terms & Conditions -->
-                                                <div class="form-group form-check mt-2 mb-4">
-                                                    <input type="checkbox" class="form-check-input"
-                                                        id="exampleCheck1" wire:model="terms" required
-                                                        {{ !Auth::check() ? 'disabled' : '' }}>
-                                                    <label class="form-check-label fs-13" for="exampleCheck1">I agree
-                                                        to
-                                                        the</label>
-                                                    <a href="#" class="text-danger" id="openModal">Terms &
-                                                        Conditions</a>
-                                                    @error('terms')
-                                                        <span
-                                                            class="error text-danger d-block mt-1">{{ $message }}</span>
-                                                    @enderror
-                                                </div>
-
-                                                <!-- Error Messages -->
-                                                @if ($errors->any())
-                                                    <div class="alert alert-danger">
-                                                        <ul class="mb-0">
-                                                            @foreach ($errors->all() as $error)
-                                                                <li>{{ $error }}</li>
-                                                            @endforeach
-                                                        </ul>
-                                                    </div>
+                                                @error('phone')
+                                                    <span class="error text-danger">{{ $message }}</span>
+                                                @enderror
+                                                @if ($showAuthWarning === 'phone')
+                                                    <span class="text-danger">Please sign in or sign up
+                                                        first.</span>
                                                 @endif
-
-                                                <!-- Submit Button -->
-                                                <button type="submit"
-                                                    class="btn btn-primary btn-lg btn-block rounded"
-                                                    {{ !Auth::check() ? 'disabled' : '' }}>
-                                                    Proceed to Checkout
-                                                </button>
                                             </div>
+
+                                            <!-- Terms & Conditions -->
+                                            <div class="form-group form-check mt-2 mb-4">
+                                                <input type="checkbox" class="form-check-input" id="exampleCheck1"
+                                                    wire:model="terms" required
+                                                    {{ !Auth::check() ? 'disabled' : '' }}>
+                                                <label class="form-check-label fs-13" for="exampleCheck1">I agree
+                                                    to
+                                                    the</label>
+                                                <a href="#" class="text-danger" id="openModal">Terms &
+                                                    Conditions</a>
+                                                @error('terms')
+                                                    <span
+                                                        class="error text-danger d-block mt-1">{{ $message }}</span>
+                                                @enderror
+                                            </div>
+
+                                            <!-- Error Messages -->
+                                            @if ($errors->any())
+                                                <div class="alert alert-danger">
+                                                    <ul class="mb-0">
+                                                        @foreach ($errors->all() as $error)
+                                                            <li>{{ $error }}</li>
+                                                        @endforeach
+                                                    </ul>
+                                                </div>
+                                            @endif
+
+                                            <!-- Submit Button -->
+                                            <button type="submit" class="btn btn-primary btn-lg btn-block rounded"
+                                                {{ !Auth::check() ? 'disabled' : '' }}>
+                                                Proceed to Checkout
+                                            </button>
                                         </div>
+                                    </div>
                                 </form>
                             </div>
                         </div>

@@ -80,7 +80,7 @@
         </div>
 
         <!-- Payment Summary -->
-        <div class="col-lg-4">
+        <div class="col-lg-4 mb-6">
             <div class="card shadow-sm">
                 <div class="card-header bg-light">
                     <h6 class="mb-0">Payment Summary</h6>
@@ -131,7 +131,7 @@
 
                         <!-- Booking Price -->
                         <div class="d-flex justify-content-between mb-2">
-                            <span>Booking Price</span>
+                            <span>Booking</span>
                             <span>£{{ number_format($bookingPrice, 2) }}</span>
                         </div>
 
@@ -155,9 +155,9 @@
                     <div class="form-group mt-4">
                         <label>Payment Option</label>
                         <select class="form-control" wire:model.live="paymentOption">
-                            <option value="booking_only">Pay Booking Price Only
+                            <option value="booking_only">Booking
                                 (£{{ number_format($bookingPrice, 2) }})</option>
-                            <option value="full">Pay Full Amount
+                            <option value="full">Full Amount
                                 (£{{ number_format($totalAmount + $amenitiesTotal + $maintainsTotal + $bookingPrice, 2) }})
                             </option>
                         </select>

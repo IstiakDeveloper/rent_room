@@ -74,8 +74,6 @@ class UserViewComponent extends Component
     public $milestoneOptions = [];
     public array $paymentLinks = [];
 
-
-
     public function mount($userId)
     {
         $this->userId = $userId;
@@ -232,7 +230,6 @@ class UserViewComponent extends Component
             ]);
         });
     }
-
 
     private function initializeUserData()
     {
@@ -415,6 +412,7 @@ class UserViewComponent extends Component
         flash()->success('User document is saved.');
         return redirect()->back();
     }
+
     public function editDocument($documentId)
     {
         $document = $this->user->documents()->findOrFail($documentId);
@@ -424,6 +422,7 @@ class UserViewComponent extends Component
         $this->editNidOrOther = null;
         $this->showEditModal = true;  // Show the modal
     }
+
     public function updateDocument()
     {
         $this->validate([
@@ -603,8 +602,6 @@ class UserViewComponent extends Component
             default => "Payment {$formattedDate}",
         };
     }
-
-
 
     private function createInitialMilestonePayments($booking)
     {
@@ -852,7 +849,6 @@ class UserViewComponent extends Component
 
         flash()->success(message: 'Package removed successfully.');
     }
-
     public function updateUser()
     {
         $this->validate([

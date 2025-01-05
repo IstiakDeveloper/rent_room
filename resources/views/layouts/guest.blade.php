@@ -94,6 +94,7 @@
             border: 1px solid #dee2e6;
             transition: all 0.2s;
             cursor: pointer;
+            background: #dfdede;
         }
 
         .room-item:hover {
