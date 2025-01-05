@@ -5,7 +5,7 @@
             <div class="card shadow-lg mb-4">
                 <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                     <div>
-                        <h5 class="mb-0">Reference: #{{ $booking->id }}</h5>
+                        <h5 class="mb-0">Booking Ref: #{{ $booking->id }}</h5>
                         <small>{{ $booking->package->name }}</small>
                     </div>
                     <span class="badge badge-{{ $booking->payment_status === 'paid' ? 'success' : 'warning' }}">
@@ -27,7 +27,8 @@
                                     <p class="mb-2"><i class="fas fa-building mr-2"></i> <strong>Name:</strong>
                                         {{ $booking->package->name }}</p>
                                     <p class="mb-2"><i class="fas fa-map-marker-alt mr-2"></i>
-                                        <strong>Address:</strong> {{ $booking->package->address }}</p>
+                                        <strong>Address:</strong> {{ $booking->package->address }}
+                                    </p>
 
                                 </div>
 
@@ -44,7 +45,7 @@
                                         <div class="d-flex justify-content-between">
                                             <span><i class="fas fa-clock mr-2"></i>Duration:</span>
                                             <strong>{{ $booking->number_of_days }} Days
-                                               </strong>
+                                            </strong>
                                         </div>
                                     </div>
                                 </div>
@@ -62,7 +63,7 @@
                     <!-- Rooms Section -->
                     <div class="card shadow-sm mb-4">
                         <div class="card-header bg-light">
-                            <h6 class="mb-0">Booked Rooms</h6>
+                            <h6 class="mb-0">Rooms</h6>
                         </div>
                         <div class="card-body">
                             <div class="row g-3">
@@ -153,7 +154,7 @@
                     <!-- Payment Schedule -->
                     <div class="card shadow-sm mb-4">
                         <div class="card-header bg-light">
-                            <h6 class="mb-0">Payment Schedule</h6>
+                            <h6 class="mb-0">Schedule</h6>
                         </div>
                         <div class="card-body">
                             @php
@@ -184,10 +185,6 @@
                                         <div class="text-end">
                                             <h5 class="mb-1">£{{ number_format($currentMilestone->amount, 2) }}</h5>
                                             @if ($dueBill > 0)
-                                                <button class="btn btn-sm btn-{{ $hasOverdue ? 'danger' : 'primary' }}"
-                                                    wire:click="showPaymentM">
-                                                    Pay Now
-                                                </button>
                                             @endif
                                         </div>
                                     </div>
@@ -231,7 +228,7 @@
                                                 <td class="text-end">£{{ number_format($milestone->amount, 2) }}</td>
                                                 <td class="text-end">
                                                     <span
-                                                        class="badge bg-{{ $milestone->is_paid ? 'success' : ($isOverdue ? 'danger' : 'warning') }}">
+                                                        class="badge bg-{{ $milestone->is_paid ? 'success' : ($isOverdue ? 'danger text-white' : 'warning') }}">
                                                         {{ $milestone->is_paid ? 'Paid' : ($isOverdue ? 'Overdue' : 'Pending') }}
                                                     </span>
                                                 </td>
@@ -269,16 +266,23 @@
 
                                     <button wire:click="showRenewModal"
                                         class="btn btn-{{ $canRenew ? 'outline-primary' : 'secondary' }}"
-                                        {{ !$canRenew ? 'disabled' : '' }}>
+                                        {{ !$canRenew ? 'disabled' : '' }} data-toggle="tooltip" data-placement="top"
+                                        title="{{ !$canRenew ? 'Package can be renewed after ' . $toDate->format('M d, Y') : '' }}">
                                         <i class="fas fa-sync-alt mr-2"></i>Renew Package
                                     </button>
-
-                                    @if (!$canRenew)
-                                        <small class="text-muted">
-                                            Package can be renewed after {{ $toDate->format('M d, Y') }}
-                                        </small>
-                                    @endif
                                 @endif
+                                <script>
+                                    document.addEventListener('livewire:load', function() {
+                                        $(function() {
+                                            $('[data-toggle="tooltip"]').tooltip();
+                                        });
+
+                                        // Reinitialize tooltips after Livewire updates
+                                        Livewire.on('contentChanged', function() {
+                                            $('[data-toggle="tooltip"]').tooltip();
+                                        });
+                                    });
+                                </script>
                             </div>
                         </div>
                     </div>
@@ -287,7 +291,7 @@
                     @if ($payments->isNotEmpty())
                         <div class="card shadow-lg">
                             <div class="card-header bg-secondary text-white">
-                                <h5 class="mb-0">Payment History</h5>
+                                <h5 class="mb-0 text-white">Payment History</h5>
                             </div>
                             <div class="card-body p-0">
                                 <div class="table-responsive">
@@ -336,7 +340,24 @@
                                         wire:click="$set('showPaymentModal', false)">×</button>
                                 </div>
                                 <form wire:submit.prevent="proceedPayment">
+                                    <!-- In the payment modal -->
                                     <div class="modal-body">
+                                        @if (session()->has('error'))
+                                            <div class="alert alert-danger">
+                                                {{ session('error') }}
+                                            </div>
+                                        @endif
+
+                                        @if ($errors->any())
+                                            <div class="alert alert-danger">
+                                                <ul class="mb-0">
+                                                    @foreach ($errors->all() as $error)
+                                                        <li>{{ $error }}</li>
+                                                    @endforeach
+                                                </ul>
+                                            </div>
+                                        @endif
+
                                         <div class="alert {{ $hasOverdue ? 'alert-danger' : 'alert-info' }}">
                                             <div class="d-flex justify-content-between align-items-center">
                                                 <span>Payment Amount:</span>
@@ -348,20 +369,27 @@
 
                                         <div class="form-group">
                                             <label>Payment Method</label>
-                                            <select class="form-control" wire:model.live="paymentMethod">
-                                                <option value="card">Card Payment</option>
+                                            <select class="form-control @error('paymentMethod') is-invalid @enderror"
+                                                wire:model.live="paymentMethod">
                                                 <option value="bank_transfer">Bank Transfer</option>
-                                                <option value="cash">Cash</option>
+                                                <option value="card">Card Payment</option>
                                             </select>
+                                            @error('paymentMethod')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
                                         </div>
 
                                         @if ($paymentMethod === 'bank_transfer')
                                             <div class="alert alert-secondary mt-3">
                                                 <small class="d-block mb-2">{{ $bankDetails }}</small>
                                                 <div class="form-group mb-0">
-                                                    <input type="text" class="form-control"
+                                                    <input type="text"
+                                                        class="form-control @error('bankTransferReference') is-invalid @enderror"
                                                         placeholder="Enter transfer reference"
-                                                        wire:model.live="bankTransferReference" required>
+                                                        wire:model.live="bankTransferReference">
+                                                    @error('bankTransferReference')
+                                                        <div class="invalid-feedback">{{ $message }}</div>
+                                                    @enderror
                                                 </div>
                                             </div>
                                         @endif
@@ -417,4 +445,16 @@
                     </div>
                 @endif
             </div>
+            <style>
+                .tooltip-inner {
+                    max-width: 200px;
+                    padding: 8px 12px;
+                    background-color: #333;
+                    font-size: 13px;
+                }
+
+                .tooltip.bs-tooltip-top .arrow::before {
+                    border-top-color: #333;
+                }
+            </style>
         </div>

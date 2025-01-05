@@ -33,7 +33,7 @@ class CheckoutComponent extends Component
     public $selectedMaintains = [];
     public $selectedAmenities = [];
     public $paymentOption = 'booking_only';
-    public $paymentMethod = 'cash';
+    public $paymentMethod = 'bank_transfer';
     public $bankTransferReference;
     public $showPaymentModal = false;
     public $bankDetails;
@@ -226,7 +226,7 @@ class CheckoutComponent extends Component
                     'updated_at' => now()
                 ]);
         }
-        // If full payment, mark all milestones as pending payment
+
         else {
             DB::table('booking_payments')
                 ->where('booking_id', $booking->id)
@@ -241,7 +241,7 @@ class CheckoutComponent extends Component
         return $payment;
     }
 
-    // Add this method to handle successful payments
+
     private function updatePaymentStatus($booking, $paymentAmount)
     {
         if ($this->paymentOption === 'booking_only') {

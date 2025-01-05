@@ -11,6 +11,7 @@ class BookingComplete extends Component
     public $booking;
     public $payment;
 
+
     public function mount($bookingId)
     {
         $this->booking = Booking::findOrFail($bookingId);

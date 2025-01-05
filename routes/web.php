@@ -209,7 +209,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/admin/bookings/create', AdminBookingComponent::class)
     ->name('admin.bookings.create');
 
-    Route::get('/admin', DashboardComponent::class)->name('dashboard')->middleware('can:dashboard');
+    Route::get('/dashboard/main', DashboardComponent::class)->name('dashboard')->middleware('can:dashboard');
 
     Route::get('/checkout', CheckoutComponent::class)->name('checkout');
 
