@@ -41,74 +41,59 @@
                 <div class="row">
                     @foreach ($bookings as $booking)
                         <div class="col-md-6 mb-4">
-                            <div class="card">
+                            <div class="card booking-card">
+                                <!-- Card Header -->
                                 <div
-                                    class="card-header
-                                {{ $booking['payment_status'] === 'cancelled'
-                                    ? 'bg-danger'
-                                    : ($booking['payment_status'] === 'pending'
-                                        ? 'bg-warning'
-                                        : 'bg-primary') }}
-                                text-white d-flex justify-content-between align-items-center">
-                                    <h5 class="mb-0">
-                                        Booking #{{ $booking['id'] }} - {{ $booking['package']['name'] }}
-                                        @if ($booking['payment_status'] === 'cancelled')
-                                            <span class="badge bg-light text-danger ms-2">Cancelled</span>
-                                        @endif
-                                    </h5>
-                                    <div class="btn-group">
+                                    class="card-header {{ $booking['payment_status'] === 'cancelled' ? 'bg-danger' : ($booking['payment_status'] === 'pending' ? 'bg-warning' : 'bg-primary') }} text-white d-flex justify-content-between align-items-center py-3">
+                                    <div>
+                                        <h5 class="mb-0">
+                                            <i class="fas fa-bookmark mr-2"></i>
+                                            Booking #{{ $booking['id'] }}
+                                        </h5>
+                                        <small class="opacity-75">{{ $booking['package']['name'] }}</small>
+                                    </div>
+
+                                    <!-- Action Buttons -->
+                                    <div class="btn-group invoice-actions">
                                         @if ($booking['payment_status'] !== 'cancelled')
                                             @if ($booking['payment_summary']['remaining_balance'] > 0)
                                                 <button wire:click="generatePaymentLink({{ $booking['id'] }})"
-                                                    wire:loading.attr="disabled" class="btn btn-light btn-sm">
+                                                    wire:loading.attr="disabled"
+                                                    class="btn btn-light btn-sm btn-action">
                                                     <div wire:loading.remove
                                                         wire:target="generatePaymentLink({{ $booking['id'] }})">
-                                                        <i class="fas fa-link me-1"></i> Generate Link
+                                                        <i class="fas fa-link mr-1"></i> Payment Link
                                                     </div>
                                                     <div wire:loading
-                                                        wire:target="generatePaymentLink({{ $booking['id'] }})"
-                                                        style="display: none;">
-                                                        <i class="fas fa-spinner fa-spin me-1"></i> Generating...
+                                                        wire:target="generatePaymentLink({{ $booking['id'] }})">
+                                                        <i class="fas fa-spinner fa-spin mr-1"></i> Processing...
                                                     </div>
                                                 </button>
                                             @endif
 
                                             <button wire:click="downloadInvoice({{ $booking['id'] }})"
-                                                wire:loading.attr="disabled" class="btn btn-info btn-sm ms-2">
-                                                <div wire:loading.remove
-                                                    wire:target="downloadInvoice({{ $booking['id'] }})">
-                                                    <i class="fas fa-download me-1"></i> Download
-                                                </div>
-                                                <div wire:loading wire:target="downloadInvoice({{ $booking['id'] }})"
-                                                    style="display: none;">
-                                                    <i class="fas fa-spinner fa-spin me-1"></i> Preparing...
-                                                </div>
+                                                class="btn btn-info btn-sm btn-action text-white">
+                                                <i class="fas fa-download mr-1"></i> Invoice
                                             </button>
 
                                             <button wire:click="emailInvoice({{ $booking['id'] }})"
-                                                wire:loading.attr="disabled" class="btn btn-success btn-sm ms-2">
-                                                <div wire:loading.remove
-                                                    wire:target="emailInvoice({{ $booking['id'] }})">
-                                                    <i class="fas fa-envelope me-1"></i> Email
-                                                </div>
-                                                <div wire:loading wire:target="emailInvoice({{ $booking['id'] }})"
-                                                    style="display: none;">
-                                                    <i class="fas fa-spinner fa-spin me-1"></i> Sending...
-                                                </div>
+                                                class="btn btn-success btn-sm btn-action">
+                                                <i class="fas fa-envelope mr-1"></i> Email
                                             </button>
                                         @else
-                                            <button class="btn btn-light btn-sm" disabled>
-                                                <i class="fas fa-ban me-1"></i> Booking Cancelled
-                                            </button>
+                                            <span class="badge badge-light text-danger">
+                                                <i class="fas fa-ban mr-1"></i> Cancelled
+                                            </span>
                                         @endif
                                     </div>
                                 </div>
 
                                 <div class="card-body">
+                                    <!-- Cancelled Alert -->
                                     @if ($booking['payment_status'] === 'cancelled')
-                                        <div class="alert alert-danger mb-4">
+                                        <div class="alert alert-modern alert-danger mb-4">
                                             <div class="d-flex align-items-center">
-                                                <i class="fas fa-exclamation-circle fs-4 me-2"></i>
+                                                <i class="fas fa-exclamation-circle h4 mb-0 mr-3"></i>
                                                 <div>
                                                     <h6 class="alert-heading mb-1">Booking Cancelled</h6>
                                                     <p class="mb-0 small">This booking has been cancelled and is no
@@ -118,156 +103,136 @@
                                         </div>
                                     @endif
 
-                                    @if (session()->has('error'))
-                                        <div class="alert alert-danger alert-dismissible fade show">
-                                            {{ session('error') }}
-                                            <button type="button" class="btn-close" data-bs-dismiss="alert"
-                                                aria-label="Close"></button>
-                                        </div>
-                                    @endif
-
-                                    {{-- Booking Details Section --}}
+                                    <!-- Booking Details Section -->
                                     <div class="mb-4">
-                                        <h6 class="text-muted border-bottom pb-2">Booking Details</h6>
-                                        <div class="row mt-3">
+                                        <h6 class="section-header">
+                                            <i class="fas fa-info-circle mr-2"></i>Booking Details
+                                        </h6>
+                                        <div class="row">
                                             <div class="col-md-6">
-                                                <p class="mb-2">
-                                                    <strong><i class="far fa-calendar-alt me-2"></i>From:</strong>
-                                                    {{ \Carbon\Carbon::parse($booking['from_date'])->format('M d, Y') }}
-                                                </p>
-                                                <p class="mb-2">
-                                                    <strong><i class="far fa-calendar-alt me-2"></i>To:</strong>
-                                                    {{ \Carbon\Carbon::parse($booking['to_date'])->format('M d, Y') }}
-                                                </p>
-                                                <p class="mb-2">
-                                                    <strong><i class="far fa-clock me-2"></i>Duration:</strong>
-                                                    {{ $booking['number_of_days'] }} days
-                                                </p>
+                                                <div class="summary-item">
+                                                    <div class="d-flex justify-content-between mb-2">
+                                                        <span class="text-muted"><i
+                                                                class="far fa-calendar-alt mr-2"></i>Check In:</span>
+                                                        <strong>{{ \Carbon\Carbon::parse($booking['from_date'])->format('M d, Y') }}</strong>
+                                                    </div>
+                                                    <div class="d-flex justify-content-between mb-2">
+                                                        <span class="text-muted"><i
+                                                                class="far fa-calendar-alt mr-2"></i>Check Out:</span>
+                                                        <strong>{{ \Carbon\Carbon::parse($booking['to_date'])->format('M d, Y') }}</strong>
+                                                    </div>
+                                                    <div class="d-flex justify-content-between">
+                                                        <span class="text-muted"><i
+                                                                class="far fa-clock mr-2"></i>Duration:</span>
+                                                        <strong>{{ $booking['number_of_days'] }} days</strong>
+                                                    </div>
+                                                </div>
                                             </div>
                                             <div class="col-md-6">
-                                                <p class="mb-2">
-                                                    <strong><i class="fas fa-tag me-2"></i>Price Type:</strong>
-                                                    {{ $booking['price_type'] }}
-                                                </p>
-                                                <p class="mb-2">
-                                                    <strong><i class="fas fa-money-bill me-2"></i>Payment
-                                                        Option:</strong>
-                                                    {{ str_replace('_', ' ', ucfirst($booking['payment_option'])) }}
-                                                </p>
+                                                <div class="summary-item">
+                                                    <div class="d-flex justify-content-between mb-2">
+                                                        <span class="text-muted"><i class="fas fa-tag mr-2"></i>Price
+                                                            Type:</span>
+                                                        <strong>{{ $booking['price_type'] }}</strong>
+                                                    </div>
+                                                    <div class="d-flex justify-content-between">
+                                                        <span class="text-muted"><i
+                                                                class="fas fa-money-bill mr-2"></i>Payment
+                                                            Option:</span>
+                                                        <strong>{{ str_replace('_', ' ', ucfirst($booking['payment_option'])) }}</strong>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
 
-                                    {{-- Payment Progress Section --}}
+                                    <!-- Payment Summary Section -->
                                     <div class="mb-4">
-                                        <h6 class="text-muted border-bottom pb-2">Payment Summary</h6>
-                                        <div class="table-responsive mt-3">
-                                            <table class="table table-sm">
+                                        <h6 class="section-header">
+                                            <i class="fas fa-money-check-alt mr-2"></i>Payment Summary
+                                        </h6>
+                                        <div class="table-responsive">
+                                            <table class="table table-minimal">
                                                 <tbody>
+                                                    <!-- Initial Charges -->
                                                     <tr class="table-light">
                                                         <td colspan="2">
-                                                            <strong><i class="fas fa-calendar me-1"></i>Initial
+                                                            <strong><i class="fas fa-receipt mr-2"></i>Initial
                                                                 Charges</strong>
                                                         </td>
                                                     </tr>
                                                     <tr>
-                                                        <td class="ps-3">Base Price:</td>
-                                                        <td class="text-end">£{{ number_format($booking['price'], 2) }}
-                                                        </td>
+                                                        <td class="pl-4">Base Price:</td>
+                                                        <td class="text-right">
+                                                            £{{ number_format($booking['price'], 2) }}</td>
                                                     </tr>
                                                     <tr>
-                                                        <td class="ps-3">Booking Fee:</td>
-                                                        <td class="text-end">
+                                                        <td class="pl-3">Booking Fee:</td>
+                                                        <td class="text-right">
                                                             £{{ number_format($booking['booking_price'], 2) }}</td>
                                                     </tr>
 
                                                     <tr class="table-light">
                                                         <td colspan="2">
-                                                            <strong><i class="fas fa-clock me-1"></i>Payment Schedule
-                                                                ({{ $booking['price_type'] }})
-                                                            </strong>
+                                                            <strong><i class="fas fa-calendar-alt mr-2"></i>Payment
+                                                                Schedule</strong>
                                                         </td>
                                                     </tr>
                                                     @if (isset($booking['bookingPayments']) && count($booking['bookingPayments']) > 0)
                                                         @foreach ($booking['bookingPayments'] as $milestone)
-                                                            <tr>
-                                                                <td class="ps-3">
-                                                                    @if ($milestone['milestone_type'] === 'Month')
-                                                                        Month {{ $milestone['milestone_number'] }}
-                                                                        Payment
-                                                                    @elseif($milestone['milestone_type'] === 'Week')
-                                                                        Week {{ $milestone['milestone_number'] }}
-                                                                        Payment
-                                                                    @elseif($milestone['milestone_type'] === 'Booking Fee')
-                                                                        Booking Fee
-                                                                        {{ $milestone['milestone_number'] }}
-                                                                        Payment
-                                                                    @else
-                                                                        Day {{ $milestone['milestone_number'] }}
-                                                                        Payment
-                                                                    @endif
-                                                                    <br>
-                                                                    <small class="text-muted">
-                                                                        Due:
-                                                                        {{ \Carbon\Carbon::parse($milestone['due_date'])->format('d M Y') }}
-                                                                    </small>
-                                                                </td>
-                                                                <td class="text-end">
-                                                                    £{{ number_format($milestone['amount'], 2) }}
-                                                                    <br>
-
-                                                                </td>
-                                                            </tr>
+                                                            @if ($milestone['milestone_type'] !== 'Booking Fee')
+                                                                <tr>
+                                                                    <td class="pl-4">
+                                                                        {{ $milestone['milestone_type'] }}
+                                                                        {{ $milestone['milestone_number'] }} Payment
+                                                                        <br>
+                                                                        <small class="text-muted">
+                                                                            Due:
+                                                                            {{ \Carbon\Carbon::parse($milestone['due_date'])->format('d M Y') }}
+                                                                        </small>
+                                                                    </td>
+                                                                    <td class="text-right align-middle">
+                                                                        £{{ number_format($milestone['amount'], 2) }}
+                                                                    </td>
+                                                                </tr>
+                                                            @endif
                                                         @endforeach
-                                                    @else
-                                                        <tr>
-                                                            <td colspan="2" class="text-center text-muted">
-                                                                <i class="fas fa-info-circle me-1"></i>No milestone
-                                                                payments set
-                                                            </td>
-                                                        </tr>
                                                     @endif
 
-                                                    <tr class="border-top table-light">
-                                                        <td><strong>Payment Overview</strong></td>
-                                                        <td></td>
+                                                    <!-- Payment Overview -->
+                                                    <tr class="table-light">
+                                                        <td colspan="2">
+                                                            <strong><i
+                                                                    class="fas fa-chart-pie mr-2"></i>Overview</strong>
+                                                        </td>
                                                     </tr>
                                                     <tr>
-                                                        <td class="ps-3">Total Amount:</td>
-                                                        <td class="text-end">
+                                                        <td class="pl-4">Total Amount:</td>
+                                                        <td class="text-right">
                                                             £{{ number_format($booking['payment_summary']['total_price'], 2) }}
                                                         </td>
                                                     </tr>
                                                     <tr>
-                                                        <td class="ps-3">Amount Paid:</td>
-                                                        <td class="text-end text-success">
+                                                        <td class="pl-4">Amount Paid:</td>
+                                                        <td class="text-right text-success">
                                                             £{{ number_format($booking['payment_summary']['total_paid'], 2) }}
                                                         </td>
                                                     </tr>
                                                     <tr class="border-top">
-                                                        <td class="ps-3"><strong>Remaining Balance:</strong></td>
-                                                        <td class="text-end">
+                                                        <td class="pl-4"><strong>Remaining Balance:</strong></td>
+                                                        <td class="text-right">
                                                             <strong
                                                                 class="text-{{ $booking['payment_summary']['remaining_balance'] > 0 ? 'danger' : 'success' }}">
                                                                 £{{ number_format($booking['payment_summary']['remaining_balance'], 2) }}
                                                             </strong>
                                                         </td>
                                                     </tr>
-                                                    <tr>
-                                                        <td class="ps-3"><strong>Status:</strong></td>
-                                                        <td class="text-end">
-                                                            <span
-                                                                class="badge bg-{{ $booking['payment_summary']['remaining_balance'] == 0 ? 'success' : 'warning' }} px-3">
-                                                                {{ $booking['payment_summary']['remaining_balance'] == 0 ? 'Fully Paid' : 'Payment Pending' }}
-                                                            </span>
-                                                        </td>
-                                                    </tr>
                                                 </tbody>
                                             </table>
 
                                             @if ($booking['payment_summary']['remaining_balance'] > 0)
-                                                <div class="alert alert-info mt-3 mb-0">
-                                                    <i class="fas fa-info-circle me-2"></i>
+                                                <div class="alert alert-modern alert-info mt-3 mb-0">
+                                                    <i class="fas fa-info-circle mr-2"></i>
                                                     @if ($booking['price_type'] === 'Month')
                                                         Monthly payments are due at the start of each month
                                                     @elseif($booking['price_type'] === 'Week')
@@ -280,42 +245,48 @@
                                         </div>
                                     </div>
 
-                                    {{-- Payment Summary Section --}}
-                                    @if ($booking['payment_status'] !== 'cancelled')
+                                    <!-- Payment History Section -->
+                                    @if ($booking['payment_status'] !== 'cancelled' && !empty($booking['payments']))
                                         <div class="mb-4">
-                                            <h6 class="text-muted border-bottom pb-2">Payment History</h6>
-                                            <div class="table-responsive mt-3">
-                                                <table class="table table-sm">
+                                            <h6 class="section-header">
+                                                <i class="fas fa-history mr-2"></i>Payment History
+                                            </h6>
+                                            <div class="table-responsive">
+                                                <table class="table table-minimal">
                                                     <thead>
                                                         <tr>
                                                             <th>#</th>
                                                             <th>Amount</th>
-                                                            <th>Payment Method</th>
-                                                            <th>Reference Number</th>
+                                                            <th>Method</th>
+                                                            <th>Reference</th>
                                                             <th>Status</th>
-                                                            <th class="text-end">Actions</th>
+                                                            <th class="text-right">Actions</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
                                                         @foreach ($booking['payments'] as $index => $payment)
                                                             <tr
-                                                                class="{{ $payment['status'] === 'Paid' ? 'bg-success text-white' : '' }}">
+                                                                class="payment-row {{ $payment['status'] === 'Paid' ? 'paid' : '' }}">
                                                                 <td>{{ $index + 1 }}</td>
                                                                 <td>£{{ number_format($payment['amount'], 2) }}</td>
                                                                 <td>{{ ucfirst($payment['payment_method']) }}</td>
-                                                                <td>{{ ucfirst($payment['transaction_id']) }}</td>
-                                                                <td>{{ ucfirst($payment['status']) }}</td>
-                                                                <td class="text-end">
-                                                                    <!-- Update Payment Status Buttons -->
+                                                                <td>{{ $payment['transaction_id'] ?? 'N/A' }}</td>
+                                                                <td>
+                                                                    <span
+                                                                        class="badge badge-{{ $payment['status'] === 'Paid' ? 'success' : 'warning' }} text-white">
+                                                                        {{ ucfirst($payment['status']) }}
+                                                                    </span>
+                                                                </td>
+                                                                <td class="text-right">
                                                                     <div class="btn-group">
                                                                         @if ($payment['status'] !== 'Paid')
-                                                                            <button class="btn btn-sm btn-success"
+                                                                            <button class="btn btn-success btn-sm"
                                                                                 wire:click="updatePaymentStatusForPayment({{ $payment['id'] }}, 'Paid')">
-                                                                                <i class="fas fa-check-circle"></i>
+                                                                                <i class="fas fa-check"></i>
                                                                             </button>
                                                                         @endif
                                                                         @if ($payment['status'] !== 'Pending')
-                                                                            <button class="btn btn-sm btn-warning"
+                                                                            <button class="btn btn-warning btn-sm"
                                                                                 wire:click="updatePaymentStatusForPayment({{ $payment['id'] }}, 'Pending')">
                                                                                 <i class="fas fa-clock"></i>
                                                                             </button>
@@ -335,8 +306,8 @@
                     @endforeach
                 </div>
             @else
-                <div class="alert alert-info">
-                    <i class="fas fa-info-circle me-2"></i>
+                <div class="alert alert-modern alert-info">
+                    <i class="fas fa-info-circle mr-2"></i>
                     No bookings found for this user.
                 </div>
             @endif
@@ -720,176 +691,245 @@
                             </thead>
                             <tbody>
                                 @forelse ($milestoneOptions as $milestone)
-                                    <tr class="{{ $milestone['status'] === 'paid' ? 'table-success' : '' }}">
+                                    @php
+                                        $statusInfo = $this->getMilestoneStatus($milestone);
+                                    @endphp
+                                    <tr class="{{ $statusInfo['status'] === 'paid' ? 'table-success' : '' }}">
                                         <td>
                                             {{ $milestone['description'] }}
                                             @if ($milestone['is_booking_fee'])
-                                                <span class="badge bg-primary ms-2">Booking Fee</span>
+                                                <span class="badge badge-primary text-white">Booking Fee</span>
                                             @endif
                                         </td>
                                         <td>{{ $milestone['due_date'] }}</td>
                                         <td>£{{ number_format($milestone['amount'], 2) }}</td>
                                         <td>
-                                            @switch($milestone['status'])
-                                                @case('paid')
-                                                    <span class="badge bg-success">Paid</span>
-                                                @break
-
-                                                @case('pending')
-                                                    <span class="badge bg-warning">Pending</span>
-                                                @break
-
-                                                @default
-                                                    <span
-                                                        class="badge bg-secondary">{{ ucfirst($milestone['status']) }}</span>
-                                            @endswitch
+                                            <span class="badge badge-{{ $statusInfo['badge_class'] }} text-white">
+                                                {{ $statusInfo['message'] }}
+                                            </span>
                                         </td>
                                         <td>
-                                            @if ($milestone['status'] === 'pending')
-                                                @if ($milestone['payment_link'])
+                                            @if ($statusInfo['can_generate_link'])
+                                                @if ($statusInfo['has_link'] ?? false)
                                                     <div class="btn-group">
-                                                        <a href="{{ $milestone['payment_link'] }}"
-                                                            class="btn btn-info btn-sm" target="_blank">
-                                                            View Link
+                                                        <a href="{{ $statusInfo['link'] }}"
+                                                            class="btn btn-info btn-sm text-white" target="_blank">
+                                                            <i class="fas fa-link mr-1"></i> View Link
                                                         </a>
-                                                        <button class="btn btn-primary btn-sm"
+                                                        <button class="btn btn-primary btn-sm text-white"
                                                             wire:click="createPaymentLinkForMilestone({{ $milestone['id'] }})">
-                                                            Regenerate Link
+                                                            <i class="fas fa-sync-alt mr-1"></i> Regenerate
                                                         </button>
                                                     </div>
                                                 @else
-                                                    <button class="btn btn-primary btn-sm"
+                                                    <button class="btn btn-primary btn-sm text-white"
                                                         wire:click="createPaymentLinkForMilestone({{ $milestone['id'] }})">
-                                                        Generate Link
+                                                        <i class="fas fa-plus mr-1"></i> Generate Link
                                                     </button>
                                                 @endif
                                             @else
                                                 <button class="btn btn-secondary btn-sm" disabled>
-                                                    No Action
+                                                    <i class="fas fa-lock mr-1"></i> No Action Required
                                                 </button>
                                             @endif
                                         </td>
                                     </tr>
-                                    @empty
-                                        <tr>
-                                            <td colspan="5" class="text-center">
-                                                No milestones found.
-                                            </td>
-                                        </tr>
-                                    @endforelse
-                                </tbody>
-                            </table>
+                                @empty
+                                    <tr>
+                                        <td colspan="5" class="text-center">No milestones found.</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary"
+                        wire:click="$set('showMilestoneSelectionModal', false)">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+@endif
+
+@if ($isEditModalOpen)
+    <!-- Modal Overlay -->
+    <div class="modal-backdrop fade show"></div>
+
+    <!-- Modal -->
+    <div class="modal fade show d-block" tabindex="-1" role="dialog" style="display: block;">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit User Information</h5>
+                    <button type="button" class="close" wire:click="closeEditModal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form wire:submit.prevent="updateUser">
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="name">Name</label>
+                            <input type="text" class="form-control" id="name" wire:model="userData.name"
+                                required>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <input type="email" class="form-control" id="email" wire:model="userData.email"
+                                required>
+                        </div>
+                        <div class="form-group">
+                            <label for="phone">Phone</label>
+                            <input type="text" class="form-control" id="phone" wire:model="userData.phone"
+                                required>
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary"
-                            wire:click="$set('showMilestoneSelectionModal', false)">
-                            Close
-                        </button>
+                        <button type="button" class="btn btn-secondary" wire:click="closeEditModal">Close</button>
+                        <button type="submit" class="btn btn-primary">Save changes</button>
                     </div>
-                </div>
+                </form>
             </div>
         </div>
-    @endif
-
-    @if ($isEditModalOpen)
-        <!-- Modal Overlay -->
-        <div class="modal-backdrop fade show"></div>
-
-        <!-- Modal -->
-        <div class="modal fade show d-block" tabindex="-1" role="dialog" style="display: block;">
-            <div class="modal-dialog" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Edit User Information</h5>
-                        <button type="button" class="close" wire:click="closeEditModal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                    <form wire:submit.prevent="updateUser">
-                        <div class="modal-body">
-                            <div class="form-group">
-                                <label for="name">Name</label>
-                                <input type="text" class="form-control" id="name" wire:model="userData.name"
-                                    required>
-                            </div>
-                            <div class="form-group">
-                                <label for="email">Email</label>
-                                <input type="email" class="form-control" id="email" wire:model="userData.email"
-                                    required>
-                            </div>
-                            <div class="form-group">
-                                <label for="phone">Phone</label>
-                                <input type="text" class="form-control" id="phone" wire:model="userData.phone"
-                                    required>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" wire:click="closeEditModal">Close</button>
-                            <button type="submit" class="btn btn-primary">Save changes</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    @endif
-
-
-    <style>
-        .card {
-            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-        }
-
-        .table> :not(caption)>*>* {
-            padding: 0.75rem;
-        }
-
-        .badge {
-            font-weight: 500;
-        }
-
-        .progress {
-            border-radius: 0.5rem;
-        }
-
-        .alert {
-            border-left: 4px solid;
-        }
-
-        .alert-success {
-            border-left-color: #198754;
-        }
-
-        .alert-danger {
-            border-left-color: #dc3545;
-        }
-
-        .alert-info {
-            border-left-color: #0dcaf0;
-        }
-
-        i {
-            margin-right: 10px;
-        }
-
-        .btn-group .btn {
-            min-width: 100px;
-            transition: all 0.2s ease;
-        }
-
-        .btn-group .btn:disabled {
-            cursor: not-allowed;
-            opacity: 0.7;
-        }
-
-        .fa-spin {
-            animation-duration: 1s;
-        }
-
-        .alert {
-            margin-top: 1rem;
-            margin-bottom: 0;
-        }
-    </style>
-
     </div>
+@endif
+
+
+<style>
+    .card {
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+
+    .table> :not(caption)>*>* {
+        padding: 0.75rem;
+    }
+
+    .badge {
+        font-weight: 500;
+    }
+
+    .progress {
+        border-radius: 0.5rem;
+    }
+
+    .alert {
+        border-left: 4px solid;
+    }
+
+    .alert-success {
+        border-left-color: #198754;
+    }
+
+    .alert-danger {
+        border-left-color: #dc3545;
+    }
+
+    .alert-info {
+        border-left-color: #0dcaf0;
+    }
+
+    i {
+        margin-right: 10px;
+    }
+
+    .btn-group .btn {
+        min-width: 100px;
+        transition: all 0.2s ease;
+    }
+
+    .btn-group .btn:disabled {
+        cursor: not-allowed;
+        opacity: 0.7;
+    }
+
+    .fa-spin {
+        animation-duration: 1s;
+    }
+
+    .alert {
+        margin-top: 1rem;
+        margin-bottom: 0;
+    }
+
+    /* Card enhancements */
+    .booking-card {
+        border: none;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+    }
+
+    .booking-card:hover {
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Status badges */
+    .status-badge {
+        padding: 0.5rem 1rem;
+        font-weight: 500;
+        border-radius: 50px;
+    }
+
+    /* Custom table styles */
+    .table-minimal {
+        font-size: 0.9rem;
+    }
+
+    .table-minimal td,
+    .table-minimal th {
+        padding: 0.75rem;
+        vertical-align: middle;
+    }
+
+    /* Payment history row styles */
+    .payment-row {
+        transition: all 0.2s ease;
+    }
+
+    .payment-row:hover {
+        background-color: rgba(0, 0, 0, 0.02);
+    }
+
+    .payment-row.paid {
+        background-color: rgba(40, 167, 69, 0.1);
+    }
+
+    /* Custom button styles */
+    .btn-action {
+        border-radius: 50px;
+        padding: 0.375rem 1rem;
+        font-weight: 500;
+    }
+
+    /* Section headers */
+    .section-header {
+        font-size: 1rem;
+        color: #495057;
+        padding-bottom: 0.5rem;
+        margin-bottom: 1rem;
+        border-bottom: 2px solid #e9ecef;
+    }
+
+    /* Summary card styles */
+    .summary-item {
+        padding: 1rem;
+        border-radius: 0.5rem;
+        background: #f8f9fa;
+        margin-bottom: 0.5rem;
+    }
+
+    /* Invoice action buttons */
+    .invoice-actions .btn {
+        margin-left: 0.5rem;
+    }
+
+    /* Alert enhancements */
+    .alert-modern {
+        border: none;
+        border-radius: 0.5rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+</style>
+
+</div>

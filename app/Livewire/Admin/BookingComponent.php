@@ -7,70 +7,90 @@ use App\Models\Package;
 use App\Models\Room;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 class BookingComponent extends Component
 {
+    use WithPagination;
+
+    protected $paginationTheme = 'bootstrap';
+
     public $bookings;
     public $showDeleteModal = false;
     public $bookingToDelete;
+    public $search = '';
+    public $perPage = 10;
+    public $sortField = 'created_at';
+    public $sortDirection = 'desc';
+    public $filters = [
+        'status' => '',
+        'date_range' => '',
+    ];
 
-    public function mount()
+    protected $queryString = [
+        'search' => ['except' => ''],
+        'sortField' => ['except' => 'created_at'],
+        'sortDirection' => ['except' => 'desc'],
+    ];
+
+    public function updatingSearch()
     {
-        $this->loadBookings();
+        $this->resetPage();
     }
 
-    private function loadBookings()
+    public function sortBy($field)
+    {
+        if ($this->sortField === $field) {
+            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->sortField = $field;
+            $this->sortDirection = 'asc';
+        }
+    }
+
+    private function getBookings()
     {
         $user = Auth::user();
+        $query = Booking::query()
+            ->with(['user', 'package'])
+            ->when($this->search, function ($query) {
+                $query->where(function ($q) {
+                    $q->whereHas('user', function ($q) {
+                        $q->where('name', 'like', '%' . $this->search . '%')
+                            ->orWhere('email', 'like', '%' . $this->search . '%');
+                    })
+                        ->orWhereHas('package', function ($q) {
+                            $q->where('name', 'like', '%' . $this->search . '%');
+                        })
+                        ->orWhere('id', 'like', '%' . $this->search . '%');
+                });
+            });
 
-        if ($user->hasRole('Super Admin')) {
-            $bookings = Booking::with(['user', 'package'])->get();
-        } else {
+        if (!$user->hasRole('Super Admin')) {
             $packageIds = Package::where('user_id', $user->id)->pluck('id');
-            $bookings = Booking::with(['user', 'package'])
-                ->whereIn('package_id', $packageIds)
-                ->get();
+            $query->whereIn('package_id', $packageIds);
         }
 
-        // Load room information for each booking
+        if ($this->filters['status']) {
+            $query->where('payment_status', $this->filters['status']);
+        }
+
+        $bookings = $query->orderBy($this->sortField, $this->sortDirection)
+            ->paginate($this->perPage);
+
+        // Load rooms for each booking
         foreach ($bookings as $booking) {
             $roomIds = json_decode($booking->room_ids, true) ?? [];
             $booking->rooms = Room::whereIn('id', $roomIds)->get();
         }
 
-        $this->bookings = $bookings;
-    }
-
-    public function confirmDelete($bookingId)
-    {
-        $this->bookingToDelete = $bookingId;
-        $this->showDeleteModal = true;
-    }
-
-    public function deleteBooking()
-    {
-        try {
-            $booking = Booking::findOrFail($this->bookingToDelete);
-
-            // Delete related records
-            $booking->payments()->delete();
-            $booking->bookingPayments()->delete();
-            $booking->paymentLinks()->delete();
-
-            // Delete the booking
-            $booking->delete();
-
-            session()->flash('success', 'Booking deleted successfully.');
-            $this->loadBookings(); // Reload the bookings
-        } catch (\Exception $e) {
-            session()->flash('error', 'Error deleting booking: ' . $e->getMessage());
-        }
-
-        $this->showDeleteModal = false;
+        return $bookings;
     }
 
     public function render()
     {
-        return view('livewire.admin.booking-component');
+        return view('livewire.admin.booking-component', [
+            'bookingsList' => $this->getBookings()
+        ]);
     }
 }

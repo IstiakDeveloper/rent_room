@@ -68,11 +68,11 @@
                                             @foreach ($package->bookings->take(2) as $booking)
                                                 <div class="mb-2 border-bottom pb-2">
                                                     <div class="d-flex align-items-center mb-1">
-                                                        <i class="fas fa-user-circle text-primary me-1"></i>
+                                                        <i class="fas fa-user-circle text-primary mr-1"></i>
                                                         <strong>{{ $booking->user->name }}</strong>
                                                     </div>
                                                     <div class="small text-muted ms-3">
-                                                        <i class="fas fa-calendar-alt me-1"></i>
+                                                        <i class="fas fa-calendar-alt mr-1"></i>
                                                         {{ \Carbon\Carbon::parse($booking->from_date)->format('d M') }}
                                                         -
                                                         {{ \Carbon\Carbon::parse($booking->to_date)->format('d M') }}
@@ -83,8 +83,8 @@
                                                             $rooms = \App\Models\Room::whereIn('id', $roomIds)->get();
                                                         @endphp
                                                         @foreach ($rooms as $room)
-                                                            <span class="badge bg-info me-1">
-                                                                <i class="fas fa-bed me-1"></i>
+                                                            <span class="badge bg-info mr-1 text-white">
+                                                                <i class="fas fa-bed mr-1"></i>
                                                                 {{ $room->name }}
                                                             </span>
                                                         @endforeach
@@ -93,7 +93,7 @@
                                             @endforeach
                                             @if ($package->bookings->count() > 2)
                                                 <small class="text-primary">
-                                                    <i class="fas fa-plus-circle me-1"></i>
+                                                    <i class="fas fa-plus-circle mr-1"></i>
                                                     {{ $package->bookings->count() - 2 }} more bookings
                                                 </small>
                                             @endif
@@ -135,37 +135,120 @@
     </div>
 
     @if ($showAssignModal)
-        <div class="modal fade show" style="display: block;" tabindex="-1">
+        <!-- Assignment Modal -->
+        <div class="modal fade {{ $showAssignModal ? 'show' : '' }}" tabindex="-1" role="dialog"
+            style="display: {{ $showAssignModal ? 'block' : 'none' }}; background: rgba(0,0,0,0.5);">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Assign User to Package</h5>
-                        <button type="button" class="btn-close" wire:click="closeModal"></button>
+                    <div class="modal-header bg-light">
+                        <h5 class="modal-title">
+                            <i class="fas fa-user-plus text-primary mr-2"></i>
+                            Assign Partner to Package
+                        </h5>
+                        <button type="button" class="close" wire:click="closeModal">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
                     </div>
-                    <div class="modal-body">
-                        <form wire:submit.prevent="assignUser">
-                            <div class="mb-3">
-                                <label class="form-label">Select User</label>
-                                <select wire:model="selectedUserId" class="form-select">
-                                    <option value="">Choose a user...</option>
+                    <form wire:submit.prevent="assignUser">
+                        <div class="modal-body">
+                            @if (session()->has('error'))
+                                <div class="alert alert-danger alert-dismissible fade show">
+                                    <i class="fas fa-exclamation-circle mr-2"></i>
+                                    {{ session('error') }}
+                                    <button type="button" class="close" data-dismiss="alert">
+                                        <span>&times;</span>
+                                    </button>
+                                </div>
+                            @endif
+
+                            <div class="form-group">
+                                <label class="font-weight-bold mb-2">
+                                    <i class="fas fa-user text-muted mr-2"></i>
+                                    Select Partner
+                                </label>
+                                <select wire:model="selectedUserId"
+                                    class="form-control @error('selectedUserId') is-invalid @enderror">
+                                    <option value="">Choose a partner...</option>
                                     @foreach ($users as $user)
                                         <option value="{{ $user->id }}">{{ $user->name }}</option>
                                     @endforeach
                                 </select>
                                 @error('selectedUserId')
-                                    <div class="text-danger mt-1">{{ $message }}</div>
+                                    <div class="invalid-feedback">
+                                        {{ $message }}
+                                    </div>
                                 @enderror
                             </div>
-                            <div class="d-flex justify-content-end gap-2">
-                                <button type="button" class="btn btn-secondary" wire:click="closeModal">Cancel</button>
-                                <button type="submit" class="btn btn-primary">Assign User</button>
-                            </div>
-                        </form>
-                    </div>
+                        </div>
+                        <div class="modal-footer bg-light">
+                            <button type="button" class="btn btn-secondary text-white" wire:click="closeModal">
+                                <i class="fas fa-times mr-2"></i>
+                                Cancel
+                            </button>
+                            <button type="submit" class="btn btn-primary text-white">
+                                <i class="fas fa-check mr-2"></i>
+                                Confirm Assignment
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
-            <div class="modal-backdrop fade show"></div>
         </div>
+
+        @push('scripts')
+            <script>
+                document.addEventListener('livewire:load', function() {
+                    Livewire.on('closeModal', () => {
+                        document.body.classList.remove('modal-open');
+                    });
+
+                    Livewire.on('modalOpened', () => {
+                        document.body.classList.add('modal-open');
+                    });
+                });
+            </script>
+        @endpush
+
+        <style>
+            .modal {
+                padding-right: 17px;
+            }
+
+            .modal-open {
+                overflow: hidden;
+            }
+
+            .modal-backdrop {
+                opacity: 0.5;
+            }
+
+            .modal-content {
+                box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+                border: none;
+                border-radius: 0.5rem;
+            }
+
+            .modal-header {
+                border-top-left-radius: 0.5rem;
+                border-top-right-radius: 0.5rem;
+            }
+
+            .modal-footer {
+                border-bottom-left-radius: 0.5rem;
+                border-bottom-right-radius: 0.5rem;
+            }
+
+            .form-control {
+                border-radius: 0.25rem;
+                padding: 0.5rem 0.75rem;
+                transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+            }
+
+            .form-control:focus {
+                border-color: #80bdff;
+                box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+            }
+        </style>
     @endif
 </div>
 

@@ -23,6 +23,8 @@ class ShowBooking extends Component
     public $newToDate;
     public $paymentPercentage;
     public $currentMilestone;
+    public $hasOverdue = false;
+
 
     protected $rules = [
         'bankTransferReference' => 'required_if:paymentMethod,bank_transfer',
@@ -33,7 +35,9 @@ class ShowBooking extends Component
     public function mount($id)
     {
         $this->booking = Booking::with(['package', 'payments', 'bookingPayments'])->findOrFail($id);
-        $this->payments = $this->booking->payments ?? collect(); // Initialize payments
+
+        // Initialize payments as a collection
+        $this->payments = $this->booking->payments ?? collect();
 
         // Calculate payment summaries
         $totalPrice = (float) $this->booking->price + (float) $this->booking->booking_price;
@@ -58,6 +62,12 @@ class ShowBooking extends Component
                 return;
             }
 
+            // Check for overdue payments
+            $this->hasOverdue = $this->booking->bookingPayments
+                ->where('payment_status', '!=', 'paid')
+                ->where('due_date', '<', now())
+                ->isNotEmpty();
+
             $this->showPaymentModal = true;
         } catch (\Exception $e) {
             session()->flash('error', 'Error loading payment details: ' . $e->getMessage());
@@ -67,28 +77,38 @@ class ShowBooking extends Component
     public function calculatePayments()
     {
         try {
-            // Refresh booking data
-            $this->booking = Booking::with(['package', 'payments', 'bookingPayments'])
-                ->findOrFail($this->booking->id);
-
-            // Calculate totals
             $totalPrice = (float) $this->booking->price + (float) $this->booking->booking_price;
-            $totalPaid = $this->booking->payments->where('status', 'Paid')->sum('amount');
+            $totalPaid = $this->booking->payments->where('status', 'completed')->sum('amount');
             $this->dueBill = $totalPrice - $totalPaid;
             $this->paymentPercentage = $totalPrice > 0 ? ($totalPaid / $totalPrice * 100) : 0;
 
-            // Get current milestone
+            // Get next unpaid milestone
             $this->currentMilestone = $this->booking->bookingPayments
-                ->where('is_paid', false)
+                ->where('payment_status', '!=', 'paid')
                 ->sortBy('due_date')
                 ->first();
 
-            if (!$this->currentMilestone) {
-                throw new \Exception('No pending payments found.');
-            }
         } catch (\Exception $e) {
             session()->flash('error', 'Error calculating payments: ' . $e->getMessage());
-            return null;
+        }
+    }
+
+    protected function handlePaymentSuccess($payment)
+    {
+        if ($this->currentMilestone) {
+            $this->currentMilestone->update([
+                'payment_status' => 'paid',
+                'paid_at' => now(),
+                'payment_method' => $payment->payment_method,
+                'transaction_reference' => $payment->transaction_id
+            ]);
+
+            $this->calculatePayments();
+
+            // Check if all milestones are paid
+            if (!$this->currentMilestone) {
+                $this->booking->update(['payment_status' => 'paid']);
+            }
         }
     }
 

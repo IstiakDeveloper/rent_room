@@ -35,7 +35,7 @@ class AdminBookingComponent extends Component
     public $totalAmount = 0;
     public $bookingPrice = 0;
     public $paymentOption = 'booking_only';
-    public $paymentMethod = 'cash';
+    public $paymentMethod = 'bank_transfer';
     public $bankTransferReference;
     public $priceType;
     public $packages;

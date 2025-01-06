@@ -19,6 +19,8 @@ class Room extends Model
         'monthly_deposit'
     ];
 
+    protected $appends = ['total_amount'];
+
     public function package()
     {
         return $this->belongsTo(Package::class);
@@ -39,5 +41,17 @@ class Room extends Model
     public function bookingRoomPrices()
     {
         return $this->hasMany(BookingRoomPrice::class);
+    }
+    public function rooms()
+    {
+        return $this->belongsToMany(Room::class, 'booking_rooms')
+            ->withPivot(['room_type', 'price'])
+            ->withTimestamps();
+    }
+
+    public function getRoomsAttribute()
+    {
+        $roomIds = json_decode($this->room_ids, true) ?? [];
+        return Room::whereIn('id', $roomIds)->get();
     }
 }

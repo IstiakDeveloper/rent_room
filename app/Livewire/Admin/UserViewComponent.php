@@ -122,80 +122,107 @@ class UserViewComponent extends Component
         try {
             DB::beginTransaction();
 
-            // Find the payment with its relationships
             $payment = Payment::with(['booking'])->findOrFail($paymentId);
             $booking = $payment->booking;
 
             // Update payment status
-            $payment->update(['status' => $status]);
+            $payment->update([
+                'status' => $status,
+                'paid_at' => $status === 'Paid' ? now() : null
+            ]);
 
-            // Find the corresponding booking payment based on amount and due date
+            // Find corresponding booking payment
             $bookingPayment = BookingPayment::where('booking_id', $booking->id)
                 ->where('amount', $payment->amount)
-                // Match booking payment that hasn't been paid yet
-                ->where('payment_status', '!=', 'paid')
-                // Order by due date to get the earliest unpaid payment
                 ->orderBy('due_date', 'asc')
                 ->first();
 
             if ($bookingPayment) {
-                // Update booking payment status
-                $bookingPayment->update([
-                    'payment_status' => $status === 'Paid' ? 'paid' : 'pending',
-                    'payment_id' => $paymentId // Link the payment to this booking payment
-                ]);
+                if ($status === 'Paid') {
+                    // Update booking payment for paid status
+                    $bookingPayment->update([
+                        'payment_status' => 'paid',
+                        'payment_id' => $payment->id,
+                        'paid_at' => now(),
+                        'payment_method' => $payment->payment_method,
+                        'transaction_reference' => $payment->transaction_id
+                    ]);
+
+                    // Invalidate any existing payment links
+                    PaymentLink::where('booking_payment_id', $bookingPayment->id)
+                        ->update(['status' => 'completed']);
+                } else {
+                    // For pending status, reset the booking payment
+                    $bookingPayment->update([
+                        'payment_status' => 'pending',
+                        'payment_id' => null,
+                        'paid_at' => null,
+                        'payment_method' => null,
+                        'transaction_reference' => null
+                    ]);
+
+                    // Invalidate any existing payment links to allow new ones
+                    PaymentLink::where('booking_payment_id', $bookingPayment->id)
+                        ->where('status', '!=', 'completed')
+                        ->update(['status' => 'expired']);
+                }
+
+                // If there was a previous payment, update its status
+                if ($bookingPayment->payment_id && $bookingPayment->payment_id !== $payment->id) {
+                    Payment::where('id', $bookingPayment->payment_id)
+                        ->update(['status' => 'cancelled']);
+                }
             }
 
-            // Update the overall booking status
+            // Recalculate booking status
             $this->updateBookingStatus($booking);
 
             DB::commit();
-
-            // Reload bookings to refresh the UI
             $this->loadBookings();
 
-            flash()->success('Payment status updated successfully!');
+            $statusText = $status === 'Paid' ? 'marked as paid' : 'reset to pending';
+            flash()->success("Payment successfully {$statusText}!");
+
         } catch (\Exception $e) {
             DB::rollBack();
-
-            \Log::error('Error updating payment status', [
+            \Log::error('Payment status update failed', [
                 'payment_id' => $paymentId,
                 'status' => $status,
                 'error' => $e->getMessage()
             ]);
-
             flash()->error('Failed to update payment status: ' . $e->getMessage());
         }
     }
 
+    /**
+     * Update the overall booking status based on payments
+     */
     protected function updateBookingStatus($booking)
     {
-        // Get total amount that should be paid
-        $totalAmount = $booking->price + $booking->booking_price;
-
-        // Get total paid amount
-        $paidAmount = $booking->payments()
+        $totalAmount = (float) $booking->price + (float) $booking->booking_price;
+        $totalPaid = $booking->payments()
             ->where('status', 'Paid')
             ->sum('amount');
 
-        // Count paid booking payments
-        $totalBookingPayments = $booking->bookingPayments()->count();
-        $paidBookingPayments = $booking->bookingPayments()
+        $allMilestonesCount = $booking->bookingPayments()->count();
+        $paidMilestonesCount = $booking->bookingPayments()
             ->where('payment_status', 'paid')
             ->count();
 
-        // Determine booking status
-        if ($paidAmount >= $totalAmount && $paidBookingPayments === $totalBookingPayments) {
+        if ($totalPaid >= $totalAmount && $paidMilestonesCount === $allMilestonesCount) {
             $status = 'paid';
-        } elseif ($paidAmount > 0) {
+        } elseif ($totalPaid > 0) {
             $status = 'partially_paid';
         } else {
             $status = 'pending';
         }
 
-        // Update booking status
-        $booking->update(['payment_status' => $status]);
+        $booking->update([
+            'payment_status' => $status,
+            'last_payment_date' => $paidMilestonesCount > 0 ? now() : null
+        ]);
     }
+
 
 
     private function updateBookingPaymentStatus($bookingId)
@@ -212,7 +239,7 @@ class UserViewComponent extends Component
     private function loadBookings()
     {
         $this->bookings = $this->user->bookings->map(function ($booking) {
-            $totalPrice = (float)$booking->price + (float)$booking->booking_price;
+            $totalPrice = (float) $booking->price + (float) $booking->booking_price;
             $totalPaid = $booking->payments->where('status', 'Paid')->sum('amount');
             $remainingBalance = $totalPrice - $totalPaid;
             $paymentPercentage = $totalPrice > 0 ? ($totalPaid / $totalPrice * 100) : 0;
@@ -589,6 +616,58 @@ class UserViewComponent extends Component
         }
     }
 
+    public function getMilestoneStatus($milestone)
+    {
+        // If milestone is already paid
+        if ($milestone['status'] === 'paid') {
+            return [
+                'status' => 'paid',
+                'badge_class' => 'success',
+                'can_generate_link' => false,
+                'message' => 'Paid'
+            ];
+        }
+
+        // Check for existing payment
+        $existingPayment = Payment::where('booking_payment_id', $milestone['id'])
+            ->where('status', '!=', 'failed')
+            ->first();
+
+        if ($existingPayment) {
+            return [
+                'status' => 'processing',
+                'badge_class' => 'info',
+                'can_generate_link' => false,
+                'message' => 'Payment Processing'
+            ];
+        }
+
+        // Check for existing payment link
+        $existingLink = PaymentLink::where('booking_payment_id', $milestone['id'])
+            ->where('status', 'pending')
+            ->first();
+
+        if ($existingLink) {
+            return [
+                'status' => 'pending',
+                'badge_class' => 'warning',
+                'can_generate_link' => true,
+                'has_link' => true,
+                'link' => route('payment.page', $existingLink->unique_id),
+                'message' => 'Payment Link Generated'
+            ];
+        }
+
+        // Default status
+        return [
+            'status' => 'pending',
+            'badge_class' => 'secondary',
+            'can_generate_link' => true,
+            'has_link' => false,
+            'message' => 'Awaiting Payment'
+        ];
+    }
+
     private function getMilestoneDescription($payment)
     {
         // Format the due_date to 'Day AbbreviatedMonth Year' (e.g., '17 Dec 2024')
@@ -677,7 +756,7 @@ class UserViewComponent extends Component
         $this->sendInvoiceEmail($pdfContent, $invoiceData);
 
         return response()->streamDownload(
-            fn() => print($pdfContent),
+            fn() => print ($pdfContent),
             $invoiceNumber . '.pdf'
         );
     }
@@ -694,7 +773,7 @@ class UserViewComponent extends Component
             $pdf->loadView('livewire.admin.invoice-template', $invoiceData);
 
             return response()->streamDownload(
-                fn() => print($pdf->output()),
+                fn() => print ($pdf->output()),
                 "invoice-{$booking->id}.pdf"
             );
         } catch (\Exception $e) {
@@ -834,21 +913,7 @@ class UserViewComponent extends Component
         }
     }
 
-    public function removePackage()
-    {
-        // Clear the package_id and reset any related data
-        $this->userDetail['package_id'] = null;
-        $this->userDetail['package_price'] = null;
-        $this->userDetail['security_amount'] = null;
 
-        // Save the updated user details
-        $this->user->userDetail()->updateOrCreate(
-            ['user_id' => $this->user->id],
-            $this->userDetail
-        );
-
-        flash()->success(message: 'Package removed successfully.');
-    }
     public function updateUser()
     {
         $this->validate([

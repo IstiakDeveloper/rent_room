@@ -51,24 +51,6 @@ class BookingShowComponent extends Component
         flash()->success('Booking status updated successfully!');
     }
 
-    public function approvePayment($paymentId)
-    {
-        $payment = Payment::findOrFail($paymentId);
-        $payment->update(['status' => 'completed']);
-        $this->updateDueBill();
-
-        $this->updateBookingPaymentStatus();
-    }
-
-    public function rejectPayment($paymentId)
-    {
-        $payment = Payment::findOrFail($paymentId);
-        $payment->update(['status' => 'rejected']);
-        $this->updateDueBill();
-
-        $this->updateBookingPaymentStatus();
-    }
-
     public function cancelBooking()
     {
         if ($this->booking->payment_status === 'cancelled') {

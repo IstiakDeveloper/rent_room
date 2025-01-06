@@ -85,18 +85,54 @@
             <div class="row">
                 <article class="col-lg-8 pr-xl-7">
                     <section class="pb-2 border-bottom">
-                        <div class="d-sm-flex justify-content-sm-between">
-                            <div>
+                        <div class="d-sm-flex justify-content-sm-between align-items-start">
+                            <div class="flex-grow-1">
                                 <h2 class="font-weight-600 text-heading">{{ $package->name }}</h2>
-                                <p class="mb-0">{{ $package->address }} <i class="fal fa-map-marker-alt ml-2"></i>
-                                    <a class="ml-3 border px-2 py-1" href="{{ $package->map_link }}"
-                                        target="_blank">View Map</a>
-                                </p>
+                                <div class="d-flex align-items-center text-muted mb-2">
+                                    <i class="fal fa-map-marker-alt mr-2"></i>
+                                    {{ $package->address }}
+                                    @if ($package->map_link)
+                                        <a href="{{ $package->map_link }}" target="_blank"
+                                            class="ml-3 btn btn-sm btn-outline-secondary">
+                                            <i class="fas fa-map mr-1"></i>View Map
+                                        </a>
+                                    @endif
+                                </div>
+
+                                <!-- Host Information -->
+                                <div class="d-flex align-items-center mt-3">
+                                    <div class="host-avatar mr-3">
+                                        @if ($package->user && $package->user->profile_photo_path)
+                                            <img src="{{ Storage::url($package->user->profile_photo_path) }}"
+                                                alt="{{ $package->user->name }}" class="rounded-circle"
+                                                style="width: 48px; height: 48px; object-fit: cover;">
+                                        @else
+                                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center"
+                                                style="width: 48px; height: 48px;">
+                                                <i class="fas fa-user-circle fa-2x"></i>
+                                            </div>
+                                        @endif
+                                    </div>
+                                    <div>
+                                        <p class="mb-0 font-weight-medium">Hosted by</p>
+                                        <h6 class="mb-0 text-primary">{{ $package->user->name }}</h6>
+                                        <div class="d-flex align-items-center mt-1">
+                                            <span class="badge badge-success text-white mr-2">
+                                                <i class="fas fa-check-circle mr-1"></i>Verified Host
+                                            </span>
+                                            @if ($package->user->created_at)
+                                                <small class="text-muted">
+                                                    <i class="far fa-calendar mr-1"></i>
+                                                    Member since {{ $package->user->created_at->format('M Y') }}
+                                                </small>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
-
-                            <!-- Price display with dropdown -->
-                            <div class="mb-2">
+                            <!-- Price Display Section -->
+                            <div class="ml-sm-4">
                                 @php
                                     $roomPrices = $package->rooms->flatMap(function ($room) {
                                         return $room->roomPrices;
@@ -107,63 +143,112 @@
                                     $priceIndicator = $priceType ? $this->getPriceIndicator($priceType) : '';
                                 @endphp
 
-                                <!-- Default Price Display -->
-                                @if ($firstPrice)
-                                    <p class="fs-17 font-weight-bold text-heading mb-0 lh-16">
-                                        @if ($firstPrice->discount_price)
-                                            <del class="text-muted mr-2">£{{ $firstPrice->fixed_price }}</del>
-                                            <span>£{{ $firstPrice->discount_price }}</span>
-                                        @else
-                                            <span>£{{ $firstPrice->fixed_price }}</span>
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-body">
+                                        @if ($firstPrice)
+                                            <div class="text-center mb-2">
+                                                <p class="text-muted mb-1">Starting from</p>
+                                                <h3 class="font-weight-bold text-primary mb-0">
+                                                    @if ($firstPrice->discount_price)
+                                                        <del
+                                                            class="text-muted h5 mr-2">£{{ number_format($firstPrice->fixed_price, 2) }}</del>
+                                                        <span>£{{ number_format($firstPrice->discount_price, 2) }}</span>
+                                                    @else
+                                                        <span>£{{ number_format($firstPrice->fixed_price, 2) }}</span>
+                                                    @endif
+                                                </h3>
+                                                <span class="badge badge-light">{{ $priceIndicator }}</span>
+                                            </div>
                                         @endif
-                                        <span class="price-indicate">{{ $priceIndicator }}</span>
-                                    </p>
-                                @endif
 
-                                <!-- Dropdown for all prices -->
-                                <div class="dropdown mt-2">
-                                    <button class="btn btn-link p-0 text-decoration-none" type="button"
-                                        id="priceDropdown" data-toggle="dropdown">
-                                        View All Prices <i class="fas fa-chevron-down ml-1"></i>
-                                    </button>
-                                    <div class="dropdown-menu p-3" aria-labelledby="priceDropdown"
-                                        style="min-width: 300px;">
-                                        @foreach ($package->rooms as $room)
-                                            <div class="mb-3">
-                                                <h6 class="dropdown-header">{{ $room->name }}</h6>
-                                                @php
-                                                    $pricesByType = $room->roomPrices->groupBy('type');
-                                                @endphp
-                                                @foreach ($pricesByType as $type => $prices)
-                                                    <div class="px-3 py-1">
-                                                        <small class="text-muted">{{ ucfirst($type) }}</small>
-                                                        @foreach ($prices as $price)
-                                                            <div
-                                                                class="d-flex justify-content-between align-items-center">
-                                                                <span>
-                                                                    @if ($price->discount_price)
-                                                                        <del
-                                                                            class="text-muted">£{{ number_format($price->fixed_price, 2) }}</del>
-                                                                        <span
-                                                                            class="text-primary">£{{ number_format($price->discount_price, 2) }}</span>
-                                                                    @else
-                                                                        <span>£{{ number_format($price->fixed_price, 2) }}</span>
-                                                                    @endif
-                                                                </span>
-                                                                <small class="text-muted">Booking:
-                                                                    £{{ number_format($price->booking_price, 2) }}</small>
+                                        <!-- Price Details Dropdown -->
+                                        <div class="dropdown">
+                                            <button class="btn btn-outline-primary btn-block" type="button"
+                                                id="priceDropdown" data-toggle="dropdown">
+                                                <i class="fas fa-list-ul mr-2"></i>View All Prices
+                                            </button>
+                                            <div class="dropdown-menu dropdown-menu-right p-3"
+                                                style="min-width: 300px; max-height: 400px; overflow-y: auto;">
+                                                @foreach ($package->rooms as $room)
+                                                    <div class="mb-3">
+                                                        <h6 class="border-bottom pb-2">
+                                                            <i class="fas fa-bed mr-2 text-primary"></i>
+                                                            {{ $room->name }}
+                                                        </h6>
+                                                        @php
+                                                            $pricesByType = $room->roomPrices->groupBy('type');
+                                                        @endphp
+                                                        @foreach ($pricesByType as $type => $prices)
+                                                            <div class="mb-2">
+                                                                <div class="text-muted small mb-1">{{ ucfirst($type) }}
+                                                                    Rates</div>
+                                                                @foreach ($prices as $price)
+                                                                    <div
+                                                                        class="d-flex justify-content-between align-items-center py-1">
+                                                                        <div>
+                                                                            @if ($price->discount_price)
+                                                                                <del
+                                                                                    class="text-muted small">£{{ number_format($price->fixed_price, 2) }}</del>
+                                                                                <span
+                                                                                    class="text-success">£{{ number_format($price->discount_price, 2) }}</span>
+                                                                            @else
+                                                                                <span>£{{ number_format($price->fixed_price, 2) }}</span>
+                                                                            @endif
+                                                                        </div>
+                                                                        <small class="text-muted">
+                                                                            +£{{ number_format($price->booking_price, 2) }}
+                                                                            booking fee
+                                                                        </small>
+                                                                    </div>
+                                                                @endforeach
                                                             </div>
                                                         @endforeach
                                                     </div>
                                                 @endforeach
-                                                <div class="dropdown-divider"></div>
                                             </div>
-                                        @endforeach
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-
                         </div>
+
+                        <style>
+                            .host-avatar img,
+                            .host-avatar div {
+                                border: 2px solid #fff;
+                                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                                transition: transform 0.2s ease;
+                            }
+
+                            .host-avatar img:hover,
+                            .host-avatar div:hover {
+                                transform: scale(1.05);
+                            }
+
+                            .dropdown-menu {
+                                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                                border: none;
+                                border-radius: 0.5rem;
+                            }
+
+                            .badge {
+                                padding: 0.4em 0.8em;
+                                font-weight: 500;
+                            }
+
+                            .btn-outline-primary:hover {
+                                transform: translateY(-1px);
+                                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                            }
+
+                            .price-details {
+                                transition: all 0.3s ease;
+                            }
+
+                            .price-details:hover {
+                                background-color: #f8f9fa;
+                            }
+                        </style>
                         <h4 class="text-heading mt-3 mb-2">Description</h4>
                         <p class="mb-0 lh-214">
                             @php
@@ -359,98 +444,6 @@
                                     </div>
                                 </div>
 
-                                {{-- @if (!$propertyPrice)
-                                    <div class="panel panel-default">
-                                        <div class="panel-heading active" role="tab" id="headingFour">
-                                            <h4 class="panel-title">
-                                                <a role="button" data-toggle="collapse" data-parent="#accordion"
-                                                    href="#collapsFour" aria-expanded="true"
-                                                    aria-controls="collapsFour">
-                                                    Room Prices
-                                                </a>
-                                            </h4>
-                                        </div>
-
-                                        <div id="collapsFour" class="panel-collapse collapse" role="tabpanel"
-                                            aria-labelledby="headingFour">
-                                            <div class="panel-body">
-                                                <div class="accordion accordion-03 mb-3" id="accordion-rooms">
-                                                    @foreach ($package->rooms as $index => $room)
-                                                        <div class="card border-0 shadow-xxs-2">
-                                                            <div class="card-header bg-gray-01 border-gray border-0 p-0"
-                                                                id="floor-plans-{{ $index + 1 }}">
-                                                                <div class="heading d-flex justify-content-between align-items-center px-6 {{ $index !== 0 ? 'collapsed' : '' }}"
-                                                                    data-toggle="collapse"
-                                                                    data-target="#collapse-{{ $index + 1 }}"
-                                                                    aria-expanded="{{ $index === 0 ? 'true' : 'false' }}"
-                                                                    aria-controls="collapse-{{ $index + 1 }}"
-                                                                    role="button">
-                                                                    <h2
-                                                                        class="mb-0 fs-16 text-heading font-weight-500 py-4 lh-13">
-                                                                        {{ $room->name }}</h2>
-                                                                    <ul
-                                                                        class="list-inline mb-0 d-none d-sm-block pr-2">
-                                                                        <li class="list-inline-item text-muted mr-4">
-                                                                            Beds :
-                                                                            <span
-                                                                                class="font-weight-500 text-heading">{{ $room->number_of_beds }}</span>
-                                                                        </li>
-                                                                        <li class="list-inline-item text-muted mr-4">
-                                                                            Bath :
-                                                                            <span
-                                                                                class="font-weight-500 text-heading">{{ $room->number_of_bathrooms }}</span>
-                                                                        </li>
-                                                                    </ul>
-                                                                </div>
-                                                            </div>
-                                                            <div id="collapse-{{ $index + 1 }}"
-                                                                class="collapse {{ $index === 0 ? 'show' : '' }}"
-                                                                aria-labelledby="floor-plans-{{ $index + 1 }}"
-                                                                data-parent="#accordion-rooms">
-                                                                <div class="card-body col-sm-12 mb-3">
-                                                                    @php
-                                                                        $pricesByType = $room->roomPrices->groupBy(
-                                                                            'type',
-                                                                        );
-                                                                    @endphp
-                                                                    @foreach ($pricesByType as $type => $prices)
-                                                                        <div class="mb-4">
-                                                                            <h6 class="fs-16 text-heading">
-                                                                                {{ ucfirst($type) }} Prices</h6>
-                                                                            <table class="table table-bordered">
-                                                                                <thead>
-                                                                                    <tr>
-                                                                                        <th scope="col">Price</th>
-                                                                                        <th scope="col">Booking</th>
-                                                                                    </tr>
-                                                                                </thead>
-                                                                                <tbody>
-                                                                                    @foreach ($prices as $price)
-                                                                                        <tr>
-                                                                                            <td>£{{ number_format($price->discount_price, 2) }}
-                                                                                            </td>
-                                                                                            <td>£{{ number_format($price->booking_price, 2) }}
-                                                                                            </td>
-                                                                                        </tr>
-                                                                                    @endforeach
-                                                                                </tbody>
-                                                                            </table>
-                                                                        </div>
-                                                                    @endforeach
-                                                                </div>
-                                                            </div>
-
-
-                                                        </div>
-                                                    @endforeach
-                                                    <div class="container my-5">
-
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                @endif --}}
 
                             </div>
                         </div>

@@ -275,9 +275,8 @@
                                 <div class="mb-3">
                                     <label class="form-label">Payment Method</label>
                                     <select class="form-control" wire:model.live="paymentMethod">
-                                        <option value="cash">Cash</option>
-                                        <option value="card">Card Payment</option>
                                         <option value="bank_transfer">Bank Transfer</option>
+                                        <option value="card">Card Payment</option>
                                     </select>
                                 </div>
                             </div>
