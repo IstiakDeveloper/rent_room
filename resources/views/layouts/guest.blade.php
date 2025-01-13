@@ -111,7 +111,6 @@
             max-height: 300px;
             overflow-y: auto;
         }
-
     </style>
 </head>
 
@@ -119,18 +118,27 @@
     <header class="main-header navbar-light header-sticky header-sticky-smart header-mobile-lg">
         <div class="sticky-area">
             <div class="container">
-
                 <nav class="navbar navbar-expand-lg px-0">
                     <div class="container-fluid">
-
                         @livewire('user.logo-component')
+
+                        <!-- Rent & Rooms Service Link -->
+                        <div class="d-flex align-items-center mr-4">
+                            <a href="https://rapidhandyworks.com"
+                               target="_blank"
+                               rel="noopener noreferrer"
+                               class="nav-link text-dark d-flex align-items-center hover-s">
+                                <i class="fas fa-home mr-1"></i>
+                                <span class="fs-13 font-weight-500">Rapid Handyworks</span>
+                                <i class="fas fa-external-link-alt ml-1" style="font-size: 12px;"></i>
+                            </a>
+                        </div>
+
 
                         <div class="">
                             @livewire('user.customer-support-component')
                         </div>
 
-
-                        @livewire('country-selector')
 
                         <div>
                             @if (auth()->check())
@@ -170,13 +178,11 @@
                                 </a>
                             @endif
                         </div>
-
                     </div>
                 </nav>
             </div>
         </div>
     </header>
-
 
 
 

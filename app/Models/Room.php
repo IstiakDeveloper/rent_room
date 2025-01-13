@@ -49,6 +49,24 @@ class Room extends Model
             ->withTimestamps();
     }
 
+    /**
+     * Get the total amount (base price + booking price).
+     *
+     * @return float
+     */
+    public function getTotalAmountAttribute()
+    {
+        // If you have a room_price table
+        $latestPrice = $this->roomPrices()->latest()->first();
+
+        if ($latestPrice) {
+            return $latestPrice->fixed_price + $latestPrice->booking_price;
+        }
+
+        // If price is directly on rooms table
+        return ($this->price ?? 0) + ($this->booking_price ?? 0);
+    }
+
     public function getRoomsAttribute()
     {
         $roomIds = json_decode($this->room_ids, true) ?? [];

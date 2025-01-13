@@ -160,7 +160,7 @@ h4, h3, h2, h1, h5{
     height: 3px;
     margin-top: 4px;
     margin-bottom: 6px;
-    background-color: #0ec6d5;
+    background-color: #252525;
 }
 .swiper-slide {
     display: flex;
@@ -542,7 +542,7 @@ a:hover {
     box-shadow: 5px 5px 20px 2px rgba(0, 0, 0, 0.19);
 }
 .lightbox-btn{
-    background-color: #0ec6d5;
+    background-color: #252525;
     padding: 6px 10px;
     border-radius: 50%;
 }
