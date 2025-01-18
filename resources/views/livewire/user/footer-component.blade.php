@@ -11,14 +11,14 @@
                             </span>
                             <span class="mb-0">{{$footer->address}}</span>
                         </div>
-                        
+
                         <a class="d-flex align-items-center text-muted hover-white mb-2" href="mailto:contact@homeid.com">
                             <span class="mr-2">
                                 <i class="fas fa-envelope fa-1x"></i>
                             </span>
                             <span>{{$footer->email}}</span>
                         </a>
-                        
+
                         @if($footer && $footer->contact_number)
                             <a class="d-flex align-items-center text-muted hover-white mb-2" href="tel:{{ preg_replace('/[^0-9+]/', '', $footer->contact_number) }}">
                                 <span class="mr-2">
@@ -27,13 +27,13 @@
                                 <span>{{ $footer->contact_number }}</span>
                             </a>
                         @endif
-                        
-                        <a class="d-flex align-items-center text-muted hover-white" href="/">
+
+                        <a href="https://wa.me/+07777955040" class="d-flex align-items-center text-muted hover-white" href="/">
                             <span class="mr-2">
                                 <i class="fab fa-whatsapp-square fa-2x"></i>
                             </span>
                             <span>{{$footer->website}}</span>
-                        </a>                        
+                        </a>
                     </div>
                 </div>
                 <div class="col-md-6 col-lg-2 mb-6 mb-md-0">

@@ -208,7 +208,7 @@
                             @endif
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary"
+                            <button type="button" class="btn btn"
                                 wire:click="$set('showPaymentModal', false)">Cancel</button>
                             <button type="submit" class="btn btn-primary">Complete Payment</button>
                         </div>

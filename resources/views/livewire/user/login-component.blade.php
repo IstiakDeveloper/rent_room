@@ -53,7 +53,7 @@
                         Remember me
                     </label>
                 </div>
-                <a href="/forgot-password" class="d-inline-block ml-auto text-orange fs-15">
+                <a href="/forgot-password" class="d-inline-block ml-auto text-dark fs-15">
                     Lost password?
                 </a>
             </div>

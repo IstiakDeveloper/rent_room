@@ -456,7 +456,7 @@
                             <ul class="nav nav-tabs d-flex" role="tablist">
                                 <li class="nav-item">
                                     <a class="nav-link active px-3" data-toggle="tab" href="#schedule"
-                                        role="tab" aria-selected="true">Select Your Room</a>
+                                        role="tab" aria-selected="true">Book Now</a>
                                 </li>
                             </ul>
                             <div class="card-body px-sm-6 shadow-xxs-2 pb-5 pt-0">

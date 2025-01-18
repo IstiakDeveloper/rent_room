@@ -362,14 +362,14 @@ a:hover {
 
 .nav-tabs .nav-link {
     color: #ffffff; /* Default text color for tabs */
-    background-color: #7a7575 !important; /* Default background color */
-    border: 1px solid #a5aaae; /* Border for tabs */
+    background-color: #4126dfd9 !important; /* Default background color */
+    border: 1px solid #4126dfd9; /* Border for tabs */
 }
 
 .nav-tabs .nav-link.active {
     color: #fff !important;
-    background-color: #2d11ce !important;
-    border-color: #3410ff;
+    background-color: #28a745 !important;
+    border-color: #28a745;
 }
 
 /* Adjust the tab colors for mobile view */
