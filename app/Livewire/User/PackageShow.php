@@ -448,11 +448,11 @@ class PackageShow extends Component
     {
         switch ($type) {
             case 'Day':
-                return '(P/N by Room)';
+                return '/day';
             case 'Week':
-                return '(P/W by Room)';
+                return '/week';
             case 'Month':
-                return '(P/M by Room)';
+                return '/month';
             default:
                 return '';
         }

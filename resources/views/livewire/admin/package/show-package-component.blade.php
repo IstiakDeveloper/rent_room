@@ -50,7 +50,7 @@
                         <thead class="table-light">
                             <tr>
                                 <th scope="col">Guest</th>
-                                <th scope="col">Booked Rooms</th>
+                                <th scope="col">Booked Place</th>
                                 <th scope="col">Stay Period</th>
                                 <th scope="col">Duration</th>
                                 <th scope="col">Amount</th>

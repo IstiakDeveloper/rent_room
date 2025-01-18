@@ -1,7 +1,7 @@
 <div class="container mt-5">
     <div class="card shadow-sm mb-4">
         <div class="card-header bg-primary text-white">
-            <h5 class="mb-0">{{ $package->name }} - Booking Summary</h5>
+            <h5 class="mb-0 text-white">{{ $package->name }} - Booking Summary</h5>
         </div>
         <div class="card-body">
             <div class="row">

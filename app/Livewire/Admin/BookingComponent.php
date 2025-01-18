@@ -87,6 +87,70 @@ class BookingComponent extends Component
         return $bookings;
     }
 
+    public function confirmDelete($bookingId)
+    {
+        $booking = Booking::find($bookingId);
+        if (!$booking) {
+            session()->flash('error', 'Booking not found.');
+            return;
+        }
+
+        // Check if user has permission to delete this booking
+        $user = Auth::user();
+        if (!$user->hasRole('Super Admin')) {
+            $packageIds = Package::where('user_id', $user->id)->pluck('id');
+            if (!$packageIds->contains($booking->package_id)) {
+                session()->flash('error', 'You do not have permission to delete this booking.');
+                return;
+            }
+        }
+
+        $this->bookingToDelete = $booking;
+        $this->showDeleteModal = true;
+    }
+
+    public function deleteBooking()
+    {
+        if (!$this->bookingToDelete) {
+            session()->flash('error', 'No booking selected for deletion.');
+            return;
+        }
+
+        try {
+            \DB::beginTransaction();
+
+            // Delete related records
+            \DB::table('booking_room_prices')
+                ->where('booking_id', $this->bookingToDelete->id)
+                ->delete();
+
+            \DB::table('booking_payments')
+                ->where('booking_id', $this->bookingToDelete->id)
+                ->delete();
+
+            // Delete payments
+            $this->bookingToDelete->payments()->delete();
+
+            // Finally delete the booking
+            $this->bookingToDelete->delete();
+
+            \DB::commit();
+
+            session()->flash('success', 'Booking deleted successfully.');
+            $this->showDeleteModal = false;
+            $this->bookingToDelete = null;
+        } catch (\Exception $e) {
+            \DB::rollBack();
+            session()->flash('error', 'Error deleting booking: ' . $e->getMessage());
+        }
+    }
+
+    public function cancelDelete()
+    {
+        $this->showDeleteModal = false;
+        $this->bookingToDelete = null;
+    }
+
     public function render()
     {
         return view('livewire.admin.booking-component', [

@@ -90,7 +90,7 @@
                                 </td>
                                 <td>
                                     <span class="font-weight-medium">
-                                        #{{ ($booking->id) }}
+                                        #{{ $booking->id }}
                                     </span>
                                 </td>
                                 <td>
@@ -149,18 +149,25 @@
                                         {{ ucfirst($booking->payment_status) }}
                                     </span>
                                 </td>
-                                <td class="text-right pr-4">
+
+                                <td class="text-right">
                                     <div class="btn-group">
                                         <a href="{{ route('admin.bookings.show', ['id' => $booking->id]) }}"
-                                            class="btn btn-sm btn-outline-primary">
+                                            class="btn btn-sm btn-outline-primary" title="View Details">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        <button type="button" class="btn btn-sm btn-outline-danger"
+                                        <a href="{{ route('admin.bookings.edit', $booking) }}"
+                                            class="btn btn-sm btn-outline-primary" title="Edit Booking">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-sm btn-outline-danger" title="Delete Booking"
                                             wire:click="confirmDelete({{ $booking->id }})">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </div>
                                 </td>
+
+
                             </tr>
                         @empty
                             <tr>

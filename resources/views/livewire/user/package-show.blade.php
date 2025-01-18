@@ -114,19 +114,8 @@
                                         @endif
                                     </div>
                                     <div>
-                                        <p class="mb-0 font-weight-medium">Hosted by</p>
-                                        <h6 class="mb-0 text-primary">{{ $package->user->name }}</h6>
-                                        <div class="d-flex align-items-center mt-1">
-                                            <span class="badge badge-success text-white mr-2">
-                                                <i class="fas fa-check-circle mr-1"></i>Verified Host
-                                            </span>
-                                            @if ($package->user->created_at)
-                                                <small class="text-muted">
-                                                    <i class="far fa-calendar mr-1"></i>
-                                                    Member since {{ $package->user->created_at->format('M Y') }}
-                                                </small>
-                                            @endif
-                                        </div>
+                                        <small class="text-muted d-block">Hosted by</small>
+                                        <span class="fw-medium">{{ $package->user->name }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -456,7 +445,7 @@
                             <ul class="nav nav-tabs d-flex" role="tablist">
                                 <li class="nav-item">
                                     <a class="nav-link active px-3" data-toggle="tab" href="#schedule"
-                                        role="tab" aria-selected="true">Book Now</a>
+                                        role="tab" aria-selected="true">Book Your Place</a>
                                 </li>
                             </ul>
                             <div class="card-body px-sm-6 shadow-xxs-2 pb-5 pt-0">

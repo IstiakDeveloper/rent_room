@@ -3,6 +3,7 @@
 use App\Http\Controllers\StripeController;
 use App\Livewire\Actions\Logout;
 use App\Livewire\Admin\AdminBookingComponent;
+use App\Livewire\Admin\AdminBookingEditComponent;
 use App\Livewire\Admin\Amenity\AmenityComponent;
 use App\Livewire\Admin\AmenityType\AmenityTypeComponent;
 use App\Livewire\Admin\Area\AreaComponent;
@@ -208,6 +209,8 @@ Route::middleware(['auth'])->group(function () {
     Route::post('user/documents/store', [UserViewComponent::class, 'saveDocuments'])->name('user.documents.store');
     Route::get('/admin/bookings/create', AdminBookingComponent::class)
     ->name('admin.bookings.create');
+    Route::get('/admin/bookings/{booking}/edit', AdminBookingEditComponent::class)
+    ->name('admin.bookings.edit');
 
     Route::get('/dashboard/main', DashboardComponent::class)->name('dashboard')->middleware('can:dashboard');
 
