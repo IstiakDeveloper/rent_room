@@ -783,7 +783,7 @@
     </div>
 
     <!-- WhatsApp Chat Icon -->
-    <a href="https://wa.me/+0044771319672" target="_blank" class="whatsapp-chat-icon">
+    <a href="https://wa.me/+447777955040" target="_blank" class="whatsapp-chat-icon">
         <i class="fab fa-whatsapp"></i>
     </a>
     {{--
