@@ -317,6 +317,58 @@
                         </div>
                     @endforeach
                 </div>
+
+                <div class="mb-4">
+                    <div class="card">
+                        <div class="card-header bg-light py-2 d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">Package Instructions</h6>
+                            <button type="button" class="btn btn-primary btn-sm" wire:click="addInstruction">
+                                <i class="fas fa-plus"></i> Add Instruction
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            @foreach ($instructions as $index => $instruction)
+                                <div class="card mb-3">
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-12 mb-3">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <h6 class="mb-0">Instruction {{ $index + 1 }}</h6>
+                                                    @if (count($instructions) > 1)
+                                                        <button type="button" class="btn btn-danger btn-sm"
+                                                            wire:click="removeInstruction({{ $index }})">
+                                                            <i class="fas fa-times"></i>
+                                                        </button>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                            <div class="col-md-12 mb-3">
+                                                <label class="form-label required">Title</label>
+                                                <input type="text"
+                                                    wire:model="instructions.{{ $index }}.title"
+                                                    class="form-control @error('instructions.' . $index . '.title') is-invalid @enderror"
+                                                    placeholder="Enter instruction title">
+                                                @error('instructions.' . $index . '.title')
+                                                    <div class="invalid-feedback">{{ $message }}</div>
+                                                @enderror
+                                            </div>
+                                            <div class="col-md-12">
+                                                <label class="form-label required">Description</label>
+                                                <textarea wire:model="instructions.{{ $index }}.description"
+                                                    class="form-control @error('instructions.' . $index . '.description') is-invalid @enderror" rows="3"
+                                                    placeholder="Enter instruction details"></textarea>
+                                                @error('instructions.' . $index . '.description')
+                                                    <div class="invalid-feedback">{{ $message }}</div>
+                                                @enderror
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Services Section -->
                 <div class="row mb-4">
                     <!-- Free Services -->
@@ -547,54 +599,54 @@
 
     <style>
         /* Style for the label */
-label {
-    display: block;
-    margin-bottom: 8px;
-    font-size: 14px;
-    font-weight: bold;
-    color: #333;
-}
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            color: #333;
+        }
 
-/* Basic styling for the select dropdown */
-select {
-    width: 100%;
-    padding: 6px;
-    font-size: 16px;
-    border: 2px solid #ccc;
-    border-radius: 8px;
-    background-color: #fff;
-    color: #333;
-    cursor: pointer;
-    appearance: none; /* Removes the default arrow for custom styling */
-    background-image: url("data:image/svg+xml;utf8,<svg fill='%23333' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'><path d='M7 7l3-3 3 3M7 13l3 3 3-3'/></svg>");
-    background-repeat: no-repeat;
-    background-position: right 10px center;
-    background-size: 15px;
-    transition: border-color 0.3s ease;
-}
+        /* Basic styling for the select dropdown */
+        select {
+            width: 100%;
+            padding: 6px;
+            font-size: 16px;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            background-color: #fff;
+            color: #333;
+            cursor: pointer;
+            appearance: none;
+            /* Removes the default arrow for custom styling */
+            background-image: url("data:image/svg+xml;utf8,<svg fill='%23333' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'><path d='M7 7l3-3 3 3M7 13l3 3 3-3'/></svg>");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            background-size: 15px;
+            transition: border-color 0.3s ease;
+        }
 
-/* Hover and focus states */
-select:hover {
-    border-color: #888;
-}
+        /* Hover and focus states */
+        select:hover {
+            border-color: #888;
+        }
 
-select:focus {
-    border-color: #007BFF;
-    outline: none;
-    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
-}
+        select:focus {
+            border-color: #007BFF;
+            outline: none;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+        }
 
-/* Option styling */
-option {
-    padding: 10px;
-    font-size: 14px;
-}
+        /* Option styling */
+        option {
+            padding: 10px;
+            font-size: 14px;
+        }
 
-/* Selected option highlight */
-option:checked {
-    background-color: #007BFF;
-    color: #fff;
-}
-
+        /* Selected option highlight */
+        option:checked {
+            background-color: #007BFF;
+            color: #fff;
+        }
     </style>
 </div>

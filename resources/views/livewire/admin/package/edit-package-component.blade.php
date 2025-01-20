@@ -131,159 +131,6 @@
 
 
         <div>
-            <!-- Selection for Entire Property or Room Wise -->
-            <div class="form-group">
-                <label for="selection">Select Type</label>
-                <input type="text" id="selection" class="form-control"
-                    value="{{ $selection === 'entire' ? 'Entire Property' : 'Room Wise' }}" readonly>
-            </div>
-
-            <div class="alert alert-info mt-3">
-                <strong>Note:</strong> You cannot change the type of this package. If you need a different type, please
-                <a href="{{ route('admin.packages.create') }}" class="btn btn-link">create a new package</a>.
-            </div>
-
-            <!-- Entire Property Fields -->
-            @if ($selection == 'entire')
-                <div class="form-group">
-                    <h2>Entire Property</h2>
-                    <div class="pricing-options form-grid">
-                        @foreach ($entireProperty['prices'] as $priceIndex => $price)
-                            <div class="pricing-option">
-                                <div class="form-group">
-                                    <label for="entireProperty-prices-{{ $priceIndex }}-type">Price Type</label>
-                                    <select wire:model.live="entireProperty.prices.{{ $priceIndex }}.type"
-                                        id="entireProperty-prices-{{ $priceIndex }}-type" class="form-control">
-                                        <option value="">Select Option</option>
-                                        <option value="Day">Day</option>
-                                        <option value="Week">Week</option>
-                                        <option value="Month">Month</option>
-                                    </select>
-                                    @error('entireProperty.prices.' . $priceIndex . '.type')
-                                        <span class="text-danger">{{ $message }}</span>
-                                    @enderror
-                                </div>
-                                @if ($price['type'] === 'Day')
-                                    <div class="form-group">
-                                        <label for="entireProperty-prices-{{ $priceIndex }}-fixed_price">Day Fixed
-                                            Price</label>
-                                        <input type="number"
-                                            wire:model="entireProperty.prices.{{ $priceIndex }}.fixed_price"
-                                            id="entireProperty-prices-{{ $priceIndex }}-fixed_price"
-                                            class="form-control">
-                                        @error('entireProperty.prices.' . $priceIndex . '.fixed_price')
-                                            <span class="text-danger">{{ $message }}</span>
-                                        @enderror
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="entireProperty-prices-{{ $priceIndex }}-discount_price">Day
-                                            Discount Price</label>
-                                        <input type="number"
-                                            wire:model="entireProperty.prices.{{ $priceIndex }}.discount_price"
-                                            id="entireProperty-prices-{{ $priceIndex }}-discount_price"
-                                            class="form-control">
-                                        @error('entireProperty.prices.' . $priceIndex . '.discount_price')
-                                            <span class="text-danger">{{ $message }}</span>
-                                        @enderror
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="entireProperty-prices-{{ $priceIndex }}-booking_price">Day
-                                            Booking Price</label>
-                                        <input type="number"
-                                            wire:model="entireProperty.prices.{{ $priceIndex }}.booking_price"
-                                            id="entireProperty-prices-{{ $priceIndex }}-booking_price"
-                                            class="form-control">
-                                        @error('entireProperty.prices.' . $priceIndex . '.booking_price')
-                                            <span class="text-danger">{{ $message }}</span>
-                                        @enderror
-                                    </div>
-                                @elseif($price['type'] === 'Week')
-                                    <div class="form-group">
-                                        <label for="entireProperty-prices-{{ $priceIndex }}-fixed_price">Week Fixed
-                                            Price</label>
-                                        <input type="number"
-                                            wire:model="entireProperty.prices.{{ $priceIndex }}.fixed_price"
-                                            id="entireProperty-prices-{{ $priceIndex }}-fixed_price"
-                                            class="form-control">
-                                        @error('entireProperty.prices.' . $priceIndex . '.fixed_price')
-                                            <span class="text-danger">{{ $message }}</span>
-                                        @enderror
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="entireProperty-prices-{{ $priceIndex }}-discount_price">Week
-                                            Discount Price</label>
-                                        <input type="number"
-                                            wire:model="entireProperty.prices.{{ $priceIndex }}.discount_price"
-                                            id="entireProperty-prices-{{ $priceIndex }}-discount_price"
-                                            class="form-control">
-                                        @error('entireProperty.prices.' . $priceIndex . '.discount_price')
-                                            <span class="text-danger">{{ $message }}</span>
-                                        @enderror
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="entireProperty-prices-{{ $priceIndex }}-booking_price">Week
-                                            Booking Price</label>
-                                        <input type="number"
-                                            wire:model="entireProperty.prices.{{ $priceIndex }}.booking_price"
-                                            id="entireProperty-prices-{{ $priceIndex }}-booking_price"
-                                            class="form-control">
-                                        @error('entireProperty.prices.' . $priceIndex . '.booking_price')
-                                            <span class="text-danger">{{ $message }}</span>
-                                        @enderror
-                                    </div>
-                                @elseif($price['type'] === 'Month')
-                                    <div class="form-group">
-                                        <label for="entireProperty-prices-{{ $priceIndex }}-fixed_price">Month Fixed
-                                            Price</label>
-                                        <input type="number"
-                                            wire:model="entireProperty.prices.{{ $priceIndex }}.fixed_price"
-                                            id="entireProperty-prices-{{ $priceIndex }}-fixed_price"
-                                            class="form-control">
-                                        @error('entireProperty.prices.' . $priceIndex . '.fixed_price')
-                                            <span class="text-danger">{{ $message }}</span>
-                                        @enderror
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="entireProperty-prices-{{ $priceIndex }}-discount_price">Month
-                                            Discount Price</label>
-                                        <input type="number"
-                                            wire:model="entireProperty.prices.{{ $priceIndex }}.discount_price"
-                                            id="entireProperty-prices-{{ $priceIndex }}-discount_price"
-                                            class="form-control">
-                                        @error('entireProperty.prices.' . $priceIndex . '.discount_price')
-                                            <span class="text-danger">{{ $message }}</span>
-                                        @enderror
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="entireProperty-prices-{{ $priceIndex }}-booking_price">Month
-                                            Booking Price</label>
-                                        <input type="number"
-                                            wire:model="entireProperty.prices.{{ $priceIndex }}.booking_price"
-                                            id="entireProperty-prices-{{ $priceIndex }}-booking_price"
-                                            class="form-control">
-                                        @error('entireProperty.prices.' . $priceIndex . '.booking_price')
-                                            <span class="text-danger">{{ $message }}</span>
-                                        @enderror
-                                    </div>
-                                @endif
-                            </div>
-                        @endforeach
-                    </div>
-
-                    @if (count($entireProperty['prices']) < 3)
-                        <button type="button" class="btn btn-secondary" wire:click="addEntirePropertyPrice"><i
-                                class="fas fa-plus"></i></button>
-                    @endif
-                    @if (count($entireProperty['prices']) > 1)
-                        <button type="button" class="btn btn-danger"
-                            wire:click="removeEntirePropertyPrice({{ $priceIndex }})"><i
-                                class="fas fa-times"></i></button>
-                    @endif
-                </div>
-            @endif
-
-
-            <!-- Room Wise Fields -->
             @if ($selection == 'room')
                 <div class="form-group group-2">
                     <h2>Rooms</h2>
@@ -488,156 +335,108 @@
                 </div>
             @endif
         </div>
-
-
-
-        {{-- <!-- Container for the form -->
-            <div class="container my-4">
-                <div class="row">
-                    <!-- Column for Free Maintains -->
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="freeMaintains" class="form-label">Select Free Maintains</label>
-                            @foreach ($maintains as $maintain)
-                                <div class="form-check">
-                                    <input type="checkbox" wire:model="freeMaintains" value="{{ $maintain->id }}" id="maintain{{ $maintain->id }}" class="form-check-input">
-                                    <label for="maintain{{ $maintain->id }}" class="form-check-label">{{ $maintain->name }}</label>
-                                </div>
-                            @endforeach
-                            @error('freeMaintains') <div class="text-danger mt-2">{{ $message }}</div> @enderror
-                        </div>
-                    </div>
-
-                    <!-- Column for Free Amenities -->
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="freeAmenities" class="form-label">Select Free Amenities</label>
-                            @foreach ($amenities as $amenity)
-                                <div class="form-check">
-                                    <input type="checkbox" wire:model="freeAmenities" value="{{ $amenity->id }}" id="amenity{{ $amenity->id }}" class="form-check-input">
-                                    <label for="amenity{{ $amenity->id }}" class="form-check-label">{{ $amenity->name }}</label>
-                                </div>
-                            @endforeach
-                            @error('freeAmenities') <div class="text-danger mt-2">{{ $message }}</div> @enderror
-                        </div>
-                    </div>
+        <div class="form-group group-2">
+            <div class="card">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Package Instructions</h5>
+                    <button type="button" class="btn btn-primary btn-sm" wire:click="addInstruction">
+                        <i class="fas fa-plus"></i> Add Instruction
+                    </button>
                 </div>
-            </div> --}}
+                <div class="card-body">
+                    @foreach ($instructions as $index => $instruction)
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h6 class="mb-0">Instruction {{ $index + 1 }}</h6>
+                                    @if (count($instructions) > 1)
+                                        <button type="button" class="btn btn-danger btn-sm"
+                                            wire:click="removeInstruction({{ $index }})">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    @endif
+                                </div>
 
+                                <div class="form-group mb-3">
+                                    <label class="form-label">Title</label>
+                                    <input type="text" wire:model="instructions.{{ $index }}.title"
+                                        class="form-control @error('instructions.' . $index . '.title') is-invalid @enderror"
+                                        placeholder="Enter instruction title">
+                                    @error('instructions.' . $index . '.title')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
 
-        {{-- <div class="form-group group-2">
-                <h2>Paid Maintains</h2>
-                <div class="form-grid">
-                    @foreach ($paidMaintains as $index => $maintain)
-                    <div class="room-section mb-4">
-                        <div class="form-group">
-                            <label for="paidMaintains-{{ $index }}-maintain_id">Select Maintain</label>
-                            <select wire:model="paidMaintains.{{ $index }}.maintain_id" id="paidMaintains-{{ $index }}-maintain_id" class="form-control">
-                                <option value="">Select Maintain</option>
-                                @foreach ($maintains as $maintainOption)
-                                    <option value="{{ $maintainOption->id }}">{{ $maintainOption->name }}</option>
-                                @endforeach
-                            </select>
-                            @error('paidMaintains.' . $index . '.maintain_id') <span class="text-danger">{{ $message }}</span> @enderror
+                                <div class="form-group">
+                                    <label class="form-label">Description</label>
+                                    <textarea wire:model="instructions.{{ $index }}.description"
+                                        class="form-control @error('instructions.' . $index . '.description') is-invalid @enderror" rows="3"
+                                        placeholder="Enter instruction details"></textarea>
+                                    @error('instructions.' . $index . '.description')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label for="paidMaintains-{{ $index }}-price">Price</label>
-                            <input type="number" wire:model="paidMaintains.{{ $index }}.price" id="paidMaintains-{{ $index }}-price" class="form-control">
-                            @error('paidMaintains.' . $index . '.price') <span class="text-danger">{{ $message }}</span> @enderror
-                        </div>
-                    </div>
                     @endforeach
+
+                    @if (empty($instructions))
+                        <div class="text-center py-4">
+                            <i class="fas fa-clipboard-list fa-2x text-muted mb-2"></i>
+                            <p class="text-muted">No instructions added yet. Click the button above to add
+                                instructions.</p>
+                        </div>
+                    @endif
                 </div>
-                @if (count($paidMaintains) > 1)
-                    <button type="button" class="btn btn-lg btn-danger mb-3" wire:click="removePaidMaintain({{ $index }})">Remove Maintain</button>
-                @endif
-                <button type="button" class="btn btn-lg btn-primary mb-3" wire:click="addPaidMaintain">Add Paid Maintain</button>
+            </div>
+        </div>
+
+
+        <div class="form-group group-2">
+            <h2 class="mb-4">Package Photos</h2>
+
+            {{-- Existing Photos --}}
+            <div class="row mb-4">
+                @foreach ($storedPhotos as $photo)
+                    <div class="col-md-3 col-sm-6 mb-3">
+                        <div class="card h-100 position-relative">
+                            <img src="{{ Storage::url($photo['url']) }}" class="card-img-top img-fluid"
+                                style="height: 200px; object-fit: cover;" alt="Package Photo">
+                            <button type="button" wire:click="removeStoredPhoto({{ $photo['id'] }})"
+                                class="btn btn-danger btn-sm position-absolute" style="top: 10px; right: 10px;">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                @endforeach
             </div>
 
-            <div class="form-group group-2">
-                <h2>Paid Amenities</h2>
-                <div class="form-grid">
-                    @foreach ($paidAmenities as $index => $amenity)
-                    <div class="room-section mb-4">
-                        <div class="form-group">
-                            <label for="paidAmenities-{{ $index }}-amenity_id">Select Amenity</label>
-                            <select wire:model="paidAmenities.{{ $index }}.amenity_id" id="paidAmenities-{{ $index }}-amenity_id" class="form-control">
-                                <option value="">Select Amenity</option>
-                                @foreach ($amenities as $amenityOption)
-                                    <option value="{{ $amenityOption->id }}">{{ $amenityOption->name }}</option>
-                                @endforeach
-                            </select>
-                            @error('paidAmenities.' . $index . '.amenity_id') <span class="text-danger">{{ $message }}</span> @enderror
-                        </div>
-                        <div class="form-group">
-                            <label for="paidAmenities-{{ $index }}-price">Price</label>
-                            <input type="number" wire:model="paidAmenities.{{ $index }}.price" id="paidAmenities-{{ $index }}-price" class="form-control">
-                            @error('paidAmenities.' . $index . '.price') <span class="text-danger">{{ $message }}</span> @enderror
-                        </div>
-                    </div>
-                    @endforeach
+            {{-- Upload New Photos --}}
+            <div class="card mb-4">
+                <div class="card-body text-center p-5">
+                    <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+                    <h5>Upload New Photos</h5>
+                    <input type="file" wire:model="photos" multiple id="photo-upload" class="form-control">
+                    @error('photos')
+                        <div class="text-danger mt-2">{{ $message }}</div>
+                    @enderror
                 </div>
-                @if (count($paidAmenities) > 1)
-                    <button type="button" class="btn btn-lg btn-danger mb-3" wire:click="removePaidAmenity({{ $index }})">Remove Amenity</button>
-                @endif
-                <button type="button" class="btn btn-lg btn-primary mb-3" wire:click="addPaidAmenity">Add Paid Amenity</button>
-            </div> --}}
+            </div>
 
-            <div class="form-group group-2">
-                <h2 class="mb-4">Package Photos</h2>
-
-                {{-- Existing Photos --}}
-                <div class="row mb-4">
-                    @foreach ($storedPhotos as $photo)
+            {{-- New Photos Preview --}}
+            @if ($photos)
+                <div class="row">
+                    @foreach ($photos as $photo)
                         <div class="col-md-3 col-sm-6 mb-3">
-                            <div class="card h-100 position-relative">
-                                <img src="{{ Storage::url($photo['url']) }}"
-                                     class="card-img-top img-fluid"
-                                     style="height: 200px; object-fit: cover;"
-                                     alt="Package Photo">
-                                <button type="button"
-                                        wire:click="removeStoredPhoto({{ $photo['id'] }})"
-                                        class="btn btn-danger btn-sm position-absolute"
-                                        style="top: 10px; right: 10px;">
-                                    <i class="fas fa-times"></i>
-                                </button>
+                            <div class="card h-100">
+                                <img src="{{ $photo->temporaryUrl() }}" class="card-img-top img-fluid"
+                                    style="height: 200px; object-fit: cover;" alt="Photo Preview">
                             </div>
                         </div>
                     @endforeach
                 </div>
-
-                {{-- Upload New Photos --}}
-                <div class="card mb-4">
-                    <div class="card-body text-center p-5">
-                        <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
-                        <h5>Upload New Photos</h5>
-                        <input type="file"
-                               wire:model="photos"
-                               multiple
-                               id="photo-upload"
-                               class="form-control">
-                        @error('photos')
-                            <div class="text-danger mt-2">{{ $message }}</div>
-                        @enderror
-                    </div>
-                </div>
-
-                {{-- New Photos Preview --}}
-                @if ($photos)
-                    <div class="row">
-                        @foreach ($photos as $photo)
-                            <div class="col-md-3 col-sm-6 mb-3">
-                                <div class="card h-100">
-                                    <img src="{{ $photo->temporaryUrl() }}"
-                                         class="card-img-top img-fluid"
-                                         style="height: 200px; object-fit: cover;"
-                                         alt="Photo Preview">
-                                </div>
-                            </div>
-                        @endforeach
-                    </div>
-                @endif
-             </div>
+            @endif
+        </div>
 
         <div class="form-group group-2">
             <label for="video_link">Video Link</label>
@@ -663,29 +462,29 @@
 
     <style>
         .card {
-           transition: transform 0.2s;
-           box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
         .card:hover {
-           transform: translateY(-5px);
-           box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            transform: translateY(-5px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
 
         .btn-danger {
-           opacity: 0.9;
-           border-radius: 50%;
-           width: 30px;
-           height: 30px;
-           padding: 0;
-           display: flex;
-           align-items: center;
-           justify-content: center;
+            opacity: 0.9;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         #photo-upload {
-           max-width: 300px;
-           margin: 0 auto;
+            max-width: 300px;
+            margin: 0 auto;
         }
-        </style>
+    </style>
 </div>

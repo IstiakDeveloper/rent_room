@@ -36,6 +36,7 @@ class CreatePackageComponent extends Component
     // Photos
     public $photos = [];
     public $storedPhotos = [];
+    public $instructions = [];
 
     protected array $rules = [
         // Basic Information
@@ -73,6 +74,10 @@ class CreatePackageComponent extends Component
 
         // Photos
         'photos.*' => 'nullable|image|max:5120', // 5MB max
+
+        'instructions.*.title' => 'required|string|max:255',
+        'instructions.*.description' => 'required|string',
+        'instructions.*.order' => 'required|integer|min:0',
     ];
 
     protected array $messages = [
@@ -95,6 +100,7 @@ class CreatePackageComponent extends Component
         $this->addRoom();
         $this->addPaidMaintain();
         $this->addPaidAmenity();
+        $this->addInstruction();
     }
 
     // Location Updates
@@ -181,6 +187,30 @@ class CreatePackageComponent extends Component
         }
     }
 
+
+    public function addInstruction()
+    {
+        $this->instructions[] = [
+            'title' => '',
+            'description' => '',
+            'order' => count($this->instructions)
+        ];
+    }
+
+
+    public function removeInstruction($index)
+    {
+        if (count($this->instructions) > 1) {
+            unset($this->instructions[$index]);
+            $this->instructions = array_values($this->instructions);
+
+            // Reorder remaining instructions
+            foreach ($this->instructions as $key => $instruction) {
+                $this->instructions[$key]['order'] = $key;
+            }
+        }
+    }
+
     // Photo Management
     public function updatedPhotos()
     {
@@ -223,7 +253,7 @@ class CreatePackageComponent extends Component
 
     protected function createPackage()
     {
-        return Package::create([
+        $package = Package::create([
             'country_id' => $this->country_id,
             'city_id' => $this->city_id,
             'area_id' => $this->area_id,
@@ -241,6 +271,17 @@ class CreatePackageComponent extends Component
             'status' => strtotime($this->expiration_date) <= strtotime(now()) ? 'expired' : 'active',
             'user_id' => Auth::id(),
         ]);
+
+        foreach ($this->instructions as $instruction) {
+            $package->instructions()->create([
+                'title' => $instruction['title'],
+                'description' => $instruction['description'],
+                'order' => $instruction['order'],
+                'user_id' => Auth::id(),
+            ]);
+        }
+
+        return $package;
     }
 
     protected function saveRooms($package)

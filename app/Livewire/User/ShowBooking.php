@@ -4,6 +4,7 @@ namespace App\Livewire\User;
 
 use App\Models\Booking;
 use App\Models\Payment;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Livewire\Component;
 use Stripe\StripeClient;
@@ -16,7 +17,7 @@ class ShowBooking extends Component
     public $dueBill;
     public $showPaymentModal = false;
     public $showRenewalModal = false;
-    public $paymentMethod = 'bank_transfer'; // Default payment method
+    public $paymentMethod = 'bank_transfer';
     public $bankTransferReference;
     public $bankDetails = 'Bank: ABC Bank, Account Number: 12345678, Sort Code: 12-34-56';
     public $newFromDate;
@@ -25,30 +26,202 @@ class ShowBooking extends Component
     public $currentMilestone;
     public $hasOverdue = false;
 
+    public bool $autoRenewal = false;
+
+    public int $renewalPeriodDays = 30;
+
+    public bool $showAutoRenewalModal = false;
+
 
     protected $rules = [
         'bankTransferReference' => 'required_if:paymentMethod,bank_transfer',
         'newFromDate' => 'required|date',
         'newToDate' => 'required|date|after_or_equal:newFromDate',
+        'autoRenewal' => 'boolean',
+        'renewalPeriodDays' => 'integer|min:1|max:365'
     ];
 
     public function mount($id)
     {
-        $this->booking = Booking::with(['package', 'payments', 'bookingPayments'])->findOrFail($id);
+        $this->booking = Booking::with([
+            'package.instructions',
+            'payments',
+            'bookingPayments'
+        ])->findOrFail($id);
 
-        // Initialize payments as a collection
+        // Fixed: Properly cast values and use $this->booking instead of $booking
+        $this->autoRenewal = (bool) $this->booking->auto_renewal;
+        $this->renewalPeriodDays = (int) ($this->booking->renewal_period_days ?? 30);
+
+
         $this->payments = $this->booking->payments ?? collect();
 
-        // Calculate payment summaries
         $totalPrice = (float) $this->booking->price + (float) $this->booking->booking_price;
         $totalPaid = $this->payments->where('status', 'Paid')->sum('amount');
         $this->dueBill = $totalPrice - $totalPaid;
         $this->paymentPercentage = $totalPrice > 0 ? ($totalPaid / $totalPrice * 100) : 0;
     }
 
+
+    public function closeAutoRenewalModal()
+    {
+        // Reset to the original state if the modal is closed without saving
+        $this->autoRenewal = (bool) $this->booking->auto_renewal;
+        $this->renewalPeriodDays = (int) ($this->booking->renewal_period_days ?? 30);
+        $this->dispatch('closeModal', 'autoRenewalModal');
+    }
+
+
+
+    public function canEnableAutoRenewal(): bool
+    {
+        // If auto-renewal is already enabled, always return true to allow managing it
+        if ($this->booking->auto_renewal) {
+            return true;
+        }
+
+        // For new auto-renewals, check conditions
+        $toDate = Carbon::parse($this->booking->to_date);
+
+        return $this->booking
+            && !in_array($this->booking->payment_status, ['cancelled', 'finished'])
+            && $this->booking->from_date
+            && $this->booking->to_date
+            && $toDate->isFuture();
+    }
+
+    public function toggleAutoRenewal()
+    {
+        $this->validate([
+            'renewalPeriodDays' => 'required|integer|min:1|max:365'
+        ]);
+
+        try {
+            $newState = !$this->booking->auto_renewal;
+
+            // If trying to enable and can't enable, block it
+            if ($newState && !$this->canEnableAutoRenewal()) {
+                throw new \Exception($this->getAutoRenewalBlockReason() ?? 'Cannot enable auto-renewal.');
+            }
+
+            // Calculate next renewal date if enabling
+            $nextRenewalDate = $newState
+                ? Carbon::parse($this->booking->to_date)->subDays(7)
+                : null;
+
+            // Update booking
+            $this->booking->update([
+                'auto_renewal' => $newState,
+                'renewal_period_days' => $this->renewalPeriodDays,
+                'next_renewal_date' => $nextRenewalDate,
+                'renewal_status' => $newState ? 'pending' : null
+            ]);
+
+            // Update local state
+            $this->autoRenewal = $newState;
+
+            // Show success message and close modal
+            $this->dispatch('closeModal', 'autoRenewalModal');
+            $this->dispatch('notify', [
+                'message' => $newState
+                    ? "Auto-renewal enabled. Will renew every {$this->renewalPeriodDays} days."
+                    : 'Auto-renewal disabled successfully.',
+                'type' => 'success'
+            ]);
+        } catch (\Exception $e) {
+            // Reset local state on error
+            $this->autoRenewal = $this->booking->auto_renewal;
+
+            $this->dispatch('notify', [
+                'message' => $e->getMessage(),
+                'type' => 'error'
+            ]);
+        }
+    }
+
+    public function updateAutoRenewalPeriod()
+    {
+        $this->validate([
+            'renewalPeriodDays' => 'required|integer|min:1|max:365'
+        ]);
+
+        try {
+            if (!$this->booking->auto_renewal) {
+                throw new \Exception('Auto-renewal must be enabled first.');
+            }
+
+            // Calculate next renewal date based on current to_date
+            $nextRenewalDate = Carbon::parse($this->booking->to_date)->subDays(7);
+
+            $this->booking->update([
+                'renewal_period_days' => $this->renewalPeriodDays,
+                'next_renewal_date' => $nextRenewalDate
+            ]);
+
+            $this->dispatch('notify', [
+                'message' => "Renewal period updated to {$this->renewalPeriodDays} days.",
+                'type' => 'success'
+            ]);
+        } catch (\Exception $e) {
+            $this->dispatch('notify', [
+                'message' => $e->getMessage(),
+                'type' => 'error'
+            ]);
+        }
+    }
+
+    protected function getAutoRenewalBlockReason(): ?string
+    {
+        if (!$this->booking) {
+            return 'Booking not found.';
+        }
+
+        if ($this->booking->payment_status === 'cancelled') {
+            return 'Auto-renewal is not available for cancelled bookings.';
+        }
+
+        if ($this->booking->payment_status === 'finished') {
+            return 'Auto-renewal is not available for finished bookings.';
+        }
+
+        if (!$this->booking->from_date || !$this->booking->to_date) {
+            return 'Booking dates must be properly set before enabling auto-renewal.';
+        }
+
+        $toDate = Carbon::parse($this->booking->to_date);
+        if ($toDate->isPast()) {
+            return 'Cannot enable auto-renewal for expired bookings.';
+        }
+
+        return null;
+    }
+
+    public function showAutoRenewalSettings()
+    {
+        // If already enabled, always allow access to settings
+        if ($this->booking->auto_renewal) {
+            $this->dispatch('openModal', 'autoRenewalModal');
+            return;
+        }
+
+        // For new enablement, check if it's allowed
+        if (!$this->canEnableAutoRenewal()) {
+            $this->dispatch('notify', [
+                'message' => $this->getAutoRenewalBlockReason() ?? 'Auto-renewal cannot be enabled.',
+                'type' => 'error'
+            ]);
+            return;
+        }
+
+        $this->dispatch('openModal', 'autoRenewalModal');
+    }
+
     public function render()
     {
-        return view('livewire.user.show-booking');
+        // Pass the computed property to the view explicitly
+        return view('livewire.user.show-booking', [
+            'canEnableAutoRenewal' => $this->canEnableAutoRenewal()
+        ]);
     }
 
     public function showPaymentM()
@@ -87,7 +260,6 @@ class ShowBooking extends Component
                 ->where('payment_status', '!=', 'paid')
                 ->sortBy('due_date')
                 ->first();
-
         } catch (\Exception $e) {
             session()->flash('error', 'Error calculating payments: ' . $e->getMessage());
         }
@@ -133,7 +305,6 @@ class ShowBooking extends Component
             } else {
                 return $this->handleBankTransfer();
             }
-
         } catch (\Illuminate\Validation\ValidationException $e) {
             session()->flash('error', $e->getMessage());
             return null;
@@ -180,7 +351,6 @@ class ShowBooking extends Component
             $this->resetForm();
 
             return redirect()->route('bookings.show', ['id' => $this->booking->id]);
-
         } catch (\Exception $e) {
             \DB::rollBack();
             session()->flash('error', 'Failed to process bank transfer: ' . $e->getMessage());
@@ -240,7 +410,6 @@ class ShowBooking extends Component
             \DB::commit();
 
             return redirect($session->url);
-
         } catch (\Exception $e) {
             \DB::rollBack();
             session()->flash('error', 'Stripe payment failed: ' . $e->getMessage());

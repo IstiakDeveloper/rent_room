@@ -106,46 +106,46 @@
 
                     <!-- Date Selection -->
                     @if ($selectedRoom && $calendarView)
-                    <div x-data="datePickerComponent(@js(['disabledDates' => $disabledDates, 'fromDate' => $fromDate, 'toDate' => $toDate]))" class="mt-4">
-                        <label class="form-label">Check-in and Check-out Dates</label>
-                        <input x-ref="dateRangePicker" type="text" class="form-control w-full"
-                            placeholder="Select dates" readonly>
+                        <div x-data="datePickerComponent(@js(['disabledDates' => $disabledDates, 'fromDate' => $fromDate, 'toDate' => $toDate]))" class="mt-4">
+                            <label class="form-label">Check-in and Check-out Dates</label>
+                            <input x-ref="dateRangePicker" type="text" class="form-control w-full"
+                                placeholder="Select dates" readonly>
 
-                        @error('dateRange')
-                            <span class="text-danger">{{ $message }}</span>
-                        @enderror
-                    </div>
+                            @error('dateRange')
+                                <span class="text-danger">{{ $message }}</span>
+                            @enderror
+                        </div>
 
-                    <script>
-                        function datePickerComponent(config) {
-                            return {
-                                disabledDates: config.disabledDates,
-                                init() {
-                                    const picker = flatpickr(this.$refs.dateRangePicker, {
-                                        mode: 'range',
-                                        dateFormat: 'Y-m-d',
-                                        minDate: 'today',
-                                        disable: this.disabledDates.map(date => new Date(date)),
-                                        defaultDate: [config.fromDate, config.toDate],
-                                        onChange: (selectedDates) => {
-                                            if (selectedDates.length === 2) {
-                                                @this.call('selectDates', {
-                                                    start: selectedDates[0].toISOString().split('T')[0],
-                                                    end: selectedDates[1].toISOString().split('T')[0]
-                                                });
+                        <script>
+                            function datePickerComponent(config) {
+                                return {
+                                    disabledDates: config.disabledDates,
+                                    init() {
+                                        const picker = flatpickr(this.$refs.dateRangePicker, {
+                                            mode: 'range',
+                                            dateFormat: 'Y-m-d',
+                                            minDate: 'today',
+                                            disable: this.disabledDates.map(date => new Date(date)),
+                                            defaultDate: [config.fromDate, config.toDate],
+                                            onChange: (selectedDates) => {
+                                                if (selectedDates.length === 2) {
+                                                    @this.call('selectDates', {
+                                                        start: selectedDates[0].toISOString().split('T')[0],
+                                                        end: selectedDates[1].toISOString().split('T')[0]
+                                                    });
+                                                }
                                             }
-                                        }
-                                    });
+                                        });
 
-                                    // Watch for changes in disabled dates
-                                    this.$watch('disabledDates', (newValue) => {
-                                        picker.set('disable', newValue.map(date => new Date(date)));
-                                    });
-                                }
-                            };
-                        }
-                    </script>
-                @endif
+                                        // Watch for changes in disabled dates
+                                        this.$watch('disabledDates', (newValue) => {
+                                            picker.set('disable', newValue.map(date => new Date(date)));
+                                        });
+                                    }
+                                };
+                            }
+                        </script>
+                    @endif
 
                     @if ($fromDate && $toDate)
                         <div class="mb-3">
@@ -200,7 +200,29 @@
                                             </tr>
                                             <tr>
                                                 <td class="ps-3">Booking Fee:</td>
-                                                <td class="text-end">£{{ number_format($bookingPrice, 2) }}</td>
+                                                <td class="text-end">
+                                                    <div class="d-flex align-items-center justify-content-end">
+                                                        @if (!$useCustomBookingFee)
+                                                            £{{ number_format($bookingPrice, 2) }}
+                                                            <button type="button" class="btn btn-link btn-sm ms-2"
+                                                                wire:click="$set('useCustomBookingFee', true)">
+                                                                <i class="fas fa-edit"></i>
+                                                            </button>
+                                                        @else
+                                                            <div class="input-group input-group-sm"
+                                                                style="width: 150px">
+                                                                <span class="input-group-text">£</span>
+                                                                <input type="number" class="form-control text-end"
+                                                                    wire:model.live="customBookingFee" step="0.01"
+                                                                    min="0">
+                                                                <button type="button" class="btn btn-outline-secondary"
+                                                                    wire:click="$set('useCustomBookingFee', false)">
+                                                                    <i class="fas fa-undo"></i>
+                                                                </button>
+                                                            </div>
+                                                        @endif
+                                                    </div>
+                                                </td>
                                             </tr>
 
                                             <!-- Milestone Breakdown -->
@@ -216,7 +238,8 @@
                                                         <td class="ps-3">
                                                             {{ $milestone['description'] }}
                                                             @if (isset($milestone['note']))
-                                                                <small class="text-muted d-block">{{ $milestone['note'] }}</small>
+                                                                <small
+                                                                    class="text-muted d-block">{{ $milestone['note'] }}</small>
                                                             @endif
                                                         </td>
                                                         <td class="text-end">

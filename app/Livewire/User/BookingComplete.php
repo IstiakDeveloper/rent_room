@@ -10,12 +10,15 @@ class BookingComplete extends Component
 {
     public $booking;
     public $payment;
-
+    public $instructions;
 
     public function mount($bookingId)
     {
         $this->booking = Booking::findOrFail($bookingId);
         $this->payment = Payment::where('booking_id', $this->booking->id)->first();
+        $this->instructions = $this->booking->package->instructions()
+            ->orderBy('order')
+            ->get();
     }
 
     public function render()

@@ -52,6 +52,7 @@ class EditPackageComponent extends Component
     public $expiration_date;
     public $selection;
     public $package;
+    public $instructions = [];
     public $entireProperty = [
         'prices' => [
             ['type' => '', 'fixed_price' => 0, 'discount_price' => null, 'booking_price' => 0]
@@ -89,6 +90,9 @@ class EditPackageComponent extends Component
         'entireProperty.prices.*.booking_price' => 'numeric',
         'video_link' => 'nullable|url',
         'expiration_date' => 'required|date|after:today',
+        'instructions.*.title' => 'required|string|max:255',
+        'instructions.*.description' => 'required|string',
+        'instructions.*.order' => 'required|integer|min:0',
     ];
 
     public function mount($packageId)
@@ -121,6 +125,18 @@ class EditPackageComponent extends Component
                 'url' => $photo->url
             ];
         })->toArray();
+
+        $this->instructions = $package->instructions()
+            ->orderBy('order')
+            ->get()
+            ->map(function ($instruction) {
+                return [
+                    'id' => $instruction->id,
+                    'title' => $instruction->title,
+                    'description' => $instruction->description,
+                    'order' => $instruction->order
+                ];
+            })->toArray();
     }
 
     protected function loadRelatedData($package)
@@ -277,6 +293,35 @@ class EditPackageComponent extends Component
         $this->paidAmenities = array_values($this->paidAmenities);
     }
 
+
+    public function addInstruction()
+    {
+        $this->instructions[] = [
+            'id' => null,
+            'title' => '',
+            'description' => '',
+            'order' => count($this->instructions)
+        ];
+    }
+
+    public function removeInstruction($index)
+    {
+        if (isset($this->instructions[$index]['id'])) {
+            // Delete from database if exists
+            $package = Package::find($this->packageId);
+            $package->instructions()->where('id', $this->instructions[$index]['id'])->delete();
+        }
+
+        unset($this->instructions[$index]);
+        $this->instructions = array_values($this->instructions);
+
+        // Reorder remaining instructions
+        foreach ($this->instructions as $key => $instruction) {
+            $this->instructions[$key]['order'] = $key;
+        }
+    }
+
+
     public function update()
     {
         $this->validate();
@@ -408,6 +453,23 @@ class EditPackageComponent extends Component
                 ]);
             }
         }
+
+
+        $currentInstructionIds = [];
+        foreach ($this->instructions as $instructionData) {
+            $instruction = $package->instructions()->updateOrCreate(
+                ['id' => isset($instructionData['id']) ? $instructionData['id'] : null],
+                [
+                    'title' => $instructionData['title'],
+                    'description' => $instructionData['description'],
+                    'order' => $instructionData['order'],
+                    'user_id' => Auth::id(),
+                ]
+            );
+            $currentInstructionIds[] = $instruction->id;
+        }
+
+        $package->instructions()->whereNotIn('id', $currentInstructionIds)->delete();
     }
 
     public function removeStoredPhoto($photoId)
@@ -421,56 +483,6 @@ class EditPackageComponent extends Component
         }));
     }
 
-
-
-    // private function updatePaidMaintains()
-    // {
-    //     $maintainsToSync = collect($this->paidMaintains)
-    //         ->mapWithKeys(fn($item) => [$item['maintain_id'] => ['is_paid' => true, 'price' => $item['price'], 'user_id' => auth()->id()]]);
-
-    //     $validMaintainIds = Maintain::whereIn('id', $maintainsToSync->keys())->pluck('id')->toArray();
-    //     $maintainsToSync = $maintainsToSync->only($validMaintainIds);
-
-    //     // Sync paid maintains, which will replace the current pivot data
-    //     $this->package->maintains()->sync($maintainsToSync);
-    // }
-
-    // private function updatePaidAmenities()
-    // {
-    //     $amenitiesToSync = collect($this->paidAmenities)
-    //         ->mapWithKeys(fn($item) => [$item['amenity_id'] => ['is_paid' => true, 'price' => $item['price'], 'user_id' => auth()->id()]]);
-
-    //     $validAmenityIds = Amenity::whereIn('id', $amenitiesToSync->keys())->pluck('id')->toArray();
-    //     $amenitiesToSync = $amenitiesToSync->only($validAmenityIds);
-
-    //     // Sync paid amenities, which will replace the current pivot data
-    //     $this->package->amenities()->sync($amenitiesToSync);
-    // }
-
-
-    //     public function updateFreeMaintains()
-    // {
-    //     $freeMaintainsToSync = collect($this->freeMaintains)
-    //         ->mapWithKeys(fn($id) => [$id => ['is_paid' => false, 'user_id' => Auth::id()]]);
-
-    //     $validMaintainIds = Maintain::whereIn('id', $freeMaintainsToSync->keys())->pluck('id')->toArray();
-    //     $freeMaintainsToSync = $freeMaintainsToSync->only($validMaintainIds);
-
-    //     // Sync free maintains without detaching
-    //     $this->package->maintains()->syncWithoutDetaching($freeMaintainsToSync);
-    // }
-
-    // public function updateFreeAmenities()
-    // {
-    //     $freeAmenitiesToSync = collect($this->freeAmenities)
-    //         ->mapWithKeys(fn($id) => [$id => ['is_paid' => false, 'user_id' => Auth::id()]]);
-
-    //     $validAmenityIds = Amenity::whereIn('id', $freeAmenitiesToSync->keys())->pluck('id')->toArray();
-    //     $freeAmenitiesToSync = $freeAmenitiesToSync->only($validAmenityIds);
-
-    //     // Sync free amenities without detaching
-    //     $this->package->amenities()->syncWithoutDetaching($freeAmenitiesToSync);
-    // }
 
     protected function getFreeMaintains()
     {

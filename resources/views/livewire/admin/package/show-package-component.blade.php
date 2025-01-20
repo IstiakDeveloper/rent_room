@@ -298,6 +298,52 @@
                     </div>
                 </div>
 
+                <!-- Package Instructions -->
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-white py-3">
+                            <h6 class="mb-0">
+                                <i class="fas fa-list-ol text-primary mr-2"></i>
+                                Package Instructions
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            @if ($package->instructions->isEmpty())
+                                <div class="text-center py-4">
+                                    <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+                                    <p class="text-muted mb-0">No instructions available for this package</p>
+                                </div>
+                            @else
+                                <div class="timeline">
+                                    @foreach ($package->instructions->sortBy('order') as $instruction)
+                                        <div class="instruction-item mb-4">
+                                            <div class="d-flex">
+                                                <div class="instruction-number">
+                                                    <span
+                                                        class="badge bg-primary rounded-circle d-flex align-items-center justify-content-center"
+                                                        style="width: 30px; height: 30px;">
+                                                        {{ $loop->iteration }}
+                                                    </span>
+                                                </div>
+                                                <div class="instruction-content ml-3 flex-grow-1">
+                                                    <div class="card border-0 bg-light">
+                                                        <div class="card-body">
+                                                            <h6 class="card-title mb-2">{{ $instruction->title }}</h6>
+                                                            <p class="card-text text-muted mb-0">
+                                                                {{ $instruction->description }}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Amenities and Maintains -->
                 <div class="col-md-6">
                     <div class="card border-0 shadow-sm h-100">

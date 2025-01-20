@@ -1,4 +1,3 @@
-<!-- resources/views/livewire/user/booking-complete.blade.php -->
 <div class="container py-5">
     <!-- Breadcrumb -->
     <nav aria-label="breadcrumb" class="bg-light rounded-lg shadow-sm p-3 mb-4">
@@ -25,6 +24,54 @@
                 <span style="color: #252525;">Booking Reference: </span>
                 <strong class="ms-2" style="color: #252525;">#{{ $booking->id }}</strong>
             </div>
+        </div>
+    </div>
+
+    <!-- Package Instructions -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white py-3 border-bottom">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-list-ol mr-2" style="color: #252525;"></i>
+                <h4 class="mb-0" style="color: #252525;">Important Instructions</h4>
+            </div>
+        </div>
+        <div class="card-body">
+            @if ($instructions->isEmpty())
+                <div class="text-center py-4">
+                    <div class="mb-3">
+                        <i class="fas fa-clipboard-list fa-3x text-muted"></i>
+                    </div>
+                    <p class="text-muted mb-0">No specific instructions provided for this package.</p>
+                </div>
+            @else
+                <div class="timeline">
+                    @foreach ($instructions as $instruction)
+                        <div class="instruction-item mb-4">
+                            <div class="d-flex">
+                                <div class="instruction-number">
+                                    <span class="badge rounded-circle d-flex align-items-center justify-content-center"
+                                        style="width: 35px; height: 35px; background-color: #252525; color: white;">
+                                        {{ $loop->iteration }}
+                                    </span>
+                                </div>
+                                <div class="instruction-content ml-3 flex-grow-1">
+                                    <div class="card bg-light border-0">
+                                        <div class="card-body">
+                                            <h6 class="card-title mb-2" style="color: #252525;">
+                                                {{ $instruction->title }}
+                                            </h6>
+                                            <p class="card-text text-muted mb-0">
+                                                {{ $instruction->description }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+
+            @endif
         </div>
     </div>
 
@@ -96,7 +143,8 @@
                                 </h6>
                                 <div class="row align-items-center">
                                     <div class="col-md-5">
-                                        <div class="text-center p-3 border rounded-3 bg-white" style="border-color: #252525 !important;">
+                                        <div class="text-center p-3 border rounded-3 bg-white"
+                                            style="border-color: #252525 !important;">
                                             <small class="text-muted d-block mb-1">Check In</small>
                                             <strong style="color: #252525;">
                                                 <i class="fas fa-calendar-check mr-1"></i>
@@ -108,7 +156,8 @@
                                         <i class="fas fa-arrow-right text-muted"></i>
                                     </div>
                                     <div class="col-md-5">
-                                        <div class="text-center p-3 border rounded-3 bg-white" style="border-color: #252525 !important;">
+                                        <div class="text-center p-3 border rounded-3 bg-white"
+                                            style="border-color: #252525 !important;">
                                             <small class="text-muted d-block mb-1">Check Out</small>
                                             <strong style="color: #252525;">
                                                 <i class="fas fa-calendar-times mr-1"></i>
@@ -125,7 +174,8 @@
 
             <!-- Action Buttons -->
             <div class="d-flex justify-content-between gap-3">
-                <a href="{{ route('dashboard') }}" class="btn px-4" style="background-color: #252525; color: white;">
+                <a href="{{ route('dashboard') }}" class="btn px-4"
+                    style="background-color: #252525; color: white;">
                     <i class="fas fa-tachometer-alt mr-2"></i>View Dashboard
                 </a>
                 <a href="{{ route('home') }}" class="btn px-4" style="border: 2px solid #252525; color: #252525;">
@@ -156,7 +206,8 @@
                         </li>
                         <li class="list-group-item d-flex justify-content-between px-0 border-bottom">
                             <span class="text-muted">Total Amount</span>
-                            <strong style="color: #252525;">£{{ number_format($booking->price + $booking->booking_price, 2) }}</strong>
+                            <strong
+                                style="color: #252525;">£{{ number_format($booking->price + $booking->booking_price, 2) }}</strong>
                         </li>
                         <li class="list-group-item d-flex justify-content-between px-0">
                             <span class="text-muted">Amount Paid</span>
@@ -165,7 +216,8 @@
                         @if ($booking->price + $booking->booking_price - $booking->total_amount > 0)
                             <li class="list-group-item d-flex justify-content-between px-0">
                                 <span class="text-muted">Remaining Balance</span>
-                                <strong style="color: #252525;">£{{ number_format($booking->price + $booking->booking_price - $booking->total_amount, 2) }}</strong>
+                                <strong
+                                    style="color: #252525;">£{{ number_format($booking->price + $booking->booking_price - $booking->total_amount, 2) }}</strong>
                             </li>
                         @endif
                     </ul>
@@ -191,39 +243,90 @@
         </div>
     </div>
 
-<style>
-    .circle-check {
-        width: 80px;
-        height: 80px;
-        background: rgba(255, 255, 255, 0.2);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 auto;
-    }
+    <style>
+        .circle-check {
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+        }
 
-    .sticky-top {
-        z-index: 1020;
-    }
+        .sticky-top {
+            z-index: 1020;
+        }
 
-    .booking-reference {
-        font-size: 1.1rem;
-    }
+        .booking-reference {
+            font-size: 1.1rem;
+        }
 
-    .room-icon {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
+        .room-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
-    .btn:hover {
-        opacity: 0.9;
-        transition: all 0.3s ease;
-    }
-</style>
+        .btn:hover {
+            opacity: 0.9;
+            transition: all 0.3s ease;
+        }
+
+        .timeline {
+            position: relative;
+            padding-left: 1rem;
+        }
+
+        .instruction-item {
+            position: relative;
+        }
+
+        .instruction-item::before {
+            content: '';
+            position: absolute;
+            left: 17px;
+            top: 35px;
+            bottom: -15px;
+            width: 2px;
+            background-color: #e9ecef;
+        }
+
+        .instruction-item:last-child::before {
+            display: none;
+        }
+
+        .instruction-content {
+            padding-left: 1rem;
+        }
+
+        .instruction-content .card {
+            transition: transform 0.2s ease;
+            border-radius: 0.5rem;
+        }
+
+        .instruction-content .card:hover {
+            transform: translateX(5px);
+        }
+
+        .badge {
+            font-size: 1rem;
+            font-weight: normal;
+        }
+
+        @media (max-width: 768px) {
+            .timeline {
+                padding-left: 0;
+            }
+
+            .instruction-content {
+                padding-left: 0.5rem;
+            }
+        }
+    </style>
 
 </div>

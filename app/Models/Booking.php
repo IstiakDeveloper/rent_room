@@ -23,12 +23,19 @@ class Booking extends Model
         'payment_option',
         'total_amount',
         'payment_status',
+        'auto_renewal',
+        'renewal_period_days',
+        'next_renewal_date',
+        'renewal_status'
     ];
 
     protected $casts = [
         'from_date' => 'date',
         'to_date' => 'date',
-        'room_ids' => 'json'
+        'room_ids' => 'json',
+        'auto_renewal' => 'boolean',
+        'renewal_period_days' => 'integer',
+        'next_renewal_date' => 'datetime',
     ];
 
     public function user()

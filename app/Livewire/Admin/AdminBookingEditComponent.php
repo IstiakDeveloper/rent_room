@@ -46,6 +46,8 @@ class AdminBookingEditComponent extends Component
     public $milestone_breakdown;
     public $total_milestones;
     public $milestone_amount;
+    public $useCustomBookingFee = false;
+    public $customBookingFee = 0;
     protected $listeners = ['dates-selected' => 'calculateTotals'];
 
     protected $rules = [
@@ -55,8 +57,15 @@ class AdminBookingEditComponent extends Component
         'toDate' => 'required|date|after:fromDate',
         'phone' => 'required|string|max:15',
         'paymentMethod' => 'required|in:cash,card,bank_transfer',
-        'bankTransferReference' => 'required_if:paymentMethod,bank_transfer'
+        'bankTransferReference' => 'required_if:paymentMethod,bank_transfer',
+        'customBookingFee' => 'required_if:useCustomBookingFee,true|numeric|min:0'
     ];
+
+    protected $casts = [
+        'bookingPrice' => 'float',
+        'customBookingFee' => 'float',
+        'totalAmount' => 'float',
+    ];  
 
     public function mount(Booking $booking)
     {
@@ -73,6 +82,7 @@ class AdminBookingEditComponent extends Component
         $this->paymentOption = $this->booking->payment_option;
         $this->totalAmount = $this->booking->price;
         $this->bookingPrice = $this->booking->booking_price;
+        $this->customBookingFee = $this->bookingPrice;
         $this->priceType = $this->booking->price_type;
         $this->milestone_breakdown = $this->booking->milestone_breakdown;
 
@@ -84,7 +94,7 @@ class AdminBookingEditComponent extends Component
         $this->fetchDisabledDates();
 
         // Remove current booking dates from disabled dates
-        $this->disabledDates = array_filter($this->disabledDates, function($date) {
+        $this->disabledDates = array_filter($this->disabledDates, function ($date) {
             $checkDate = Carbon::parse($date);
             return !$checkDate->between(
                 Carbon::parse($this->fromDate),
@@ -93,6 +103,25 @@ class AdminBookingEditComponent extends Component
         });
 
         $this->calculateTotals();
+    }
+
+    public function updatedUseCustomBookingFee($value)
+    {
+        if ($value) {
+            $this->customBookingFee = $this->bookingPrice;
+        } else {
+            $room = Room::with('roomPrices')->find($this->selectedRoom);
+            $this->bookingPrice = $room->roomPrices->first()?->booking_price ?? 0;
+            $this->calculateTotals();
+        }
+    }
+
+    public function updatedCustomBookingFee($value)
+    {
+        if ($this->useCustomBookingFee) {
+            $this->bookingPrice = (float) $value;
+            $this->calculateTotals();
+        }
     }
 
     public function updateBooking()
@@ -124,7 +153,7 @@ class AdminBookingEditComponent extends Component
                 'number_of_days' => Carbon::parse($this->fromDate)->diffInDays(Carbon::parse($this->toDate)),
                 'price_type' => $this->priceType,
                 'price' => $this->totalAmount,
-                'booking_price' => $this->bookingPrice,
+                'booking_price' => $this->useCustomBookingFee ? $this->customBookingFee : $this->bookingPrice,
                 'payment_option' => $this->paymentOption,
                 'total_amount' => $paymentAmount,
                 'total_milestones' => count($priceBreakdownData['breakdown']),
@@ -141,7 +170,6 @@ class AdminBookingEditComponent extends Component
             DB::commit();
             session()->flash('success', 'Booking updated successfully!');
             return redirect()->route('admin.bookings.index');
-
         } catch (\Exception $e) {
             DB::rollBack();
             session()->flash('error', 'Error updating booking: ' . $e->getMessage());
@@ -222,11 +250,57 @@ class AdminBookingEditComponent extends Component
         }
     }
 
-    // Reuse existing methods from AdminBookingComponent
-    public function calculateTotals() { /* ... */ }
-    public function updatedSearchQuery() { /* ... */ }
-    public function selectUser($userId) { /* ... */ }
-    public function selectRoom($roomId) { /* ... */ }
+
+
+    public function calculateTotals()
+    {
+        if ($this->selectedRoom && $this->fromDate && $this->toDate) {
+            $this->calculateRoomTotal();
+        }
+    }
+    public function updatedSearchQuery()
+    {
+        if (strlen($this->searchQuery) >= 2) {
+            $this->users = User::where('name', 'like', '%' . $this->searchQuery . '%')
+                ->orWhere('email', 'like', '%' . $this->searchQuery . '%')
+                ->take(5)
+                ->get();
+        }
+    }
+
+    public function selectUser($userId)
+    {
+        $this->selectedUser = User::find($userId);
+        $this->searchQuery = '';
+        $this->users = [];
+    }
+
+    public function selectRoom($roomId)
+    {
+        $this->selectedRoom = $roomId;
+        $this->calendarView = true;
+
+        $room = Room::with('roomPrices')->find($roomId);
+        $this->roomPrices[$roomId] = $room->roomPrices->groupBy('type')->map(function ($prices) {
+            return $prices->first();
+        })->toArray();
+
+        // Set packageId for the selected room
+        $this->packageId = $room->package_id;
+
+        // Reset dates when room changes
+        $this->fromDate = null;
+        $this->toDate = null;
+        $this->totalAmount = 0;
+
+        // Reset booking fee to default when room changes
+        $this->useCustomBookingFee = false;
+        $this->bookingPrice = $room->roomPrices->first()?->booking_price ?? 0;
+        $this->customBookingFee = $this->bookingPrice;
+
+        $this->disabledDates = $this->fetchDisabledDates();
+    }
+
     public function selectDates($dates)
     {
         $this->fromDate = $dates['start'];
@@ -261,8 +335,11 @@ class AdminBookingEditComponent extends Component
         $this->priceBreakdown = $priceBreakdownData['breakdown'];
         $this->totalAmount = $priceBreakdownData['total'];
 
-        // Get the booking price
-        $this->bookingPrice = $room->roomPrices->first()?->booking_price ?? 0;
+        // Handle booking price based on custom fee setting
+        if (!$this->useCustomBookingFee) {
+            $this->bookingPrice = $room->roomPrices->first()?->booking_price ?? 0;
+        }
+        // If using custom fee, bookingPrice is already set through customBookingFee
 
         return $this->totalAmount;
     }

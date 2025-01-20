@@ -13,7 +13,13 @@ class ShowPackageComponent extends Component
 
     public function mount($packageId)
     {
-        $this->package = Package::with(['rooms', 'maintains', 'amenities', 'photos'])->findOrFail($packageId);
+        $this->package = Package::with([
+            'rooms',
+            'maintains',
+            'amenities',
+            'photos',
+            'instructions' // Add this
+        ])->findOrFail($packageId);
         $this->bookings = Booking::with('user')
             ->where('package_id', $packageId)
             ->orderBy('from_date', 'desc')

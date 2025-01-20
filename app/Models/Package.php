@@ -10,9 +10,22 @@ class Package extends Model
 {
     use HasFactory;
     protected $fillable = [
-        'country_id','user_id', 'city_id', 'area_id', 'property_id',
-        'name', 'address', 'map_link', 'number_of_rooms','number_of_kitchens',
-        'seating', 'details', 'video_link' , 'common_bathrooms', 'status', 'expiration_date'
+        'country_id',
+        'user_id',
+        'city_id',
+        'area_id',
+        'property_id',
+        'name',
+        'address',
+        'map_link',
+        'number_of_rooms',
+        'number_of_kitchens',
+        'seating',
+        'details',
+        'video_link',
+        'common_bathrooms',
+        'status',
+        'expiration_date'
     ];
 
     public function country()
@@ -43,14 +56,14 @@ class Package extends Model
     public function maintains(): BelongsToMany
     {
         return $this->belongsToMany(Maintain::class, 'package_maintains')
-                    ->withPivot('is_paid', 'price');
+            ->withPivot('is_paid', 'price');
     }
 
 
     public function amenities(): BelongsToMany
     {
         return $this->belongsToMany(Amenity::class, 'package_amenities')
-                    ->withPivot('is_paid', 'price');
+            ->withPivot('is_paid', 'price');
     }
     public function user()
     {
@@ -81,4 +94,9 @@ class Package extends Model
         return $this->hasManyThrough(User::class, UserDetail::class, 'package_id', 'id', 'id', 'user_id');
     }
 
+
+    public function instructions()
+    {
+        return $this->hasMany(PackageInstruction::class);
+    }
 }
