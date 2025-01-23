@@ -73,6 +73,8 @@ class UserViewComponent extends Component
     public $selectedMilestoneAmount;
     public $milestoneOptions = [];
     public array $paymentLinks = [];
+    public $showDeletePaymentModal = false;
+    public $paymentToDelete = null;
 
     public function mount($userId)
     {
@@ -98,6 +100,8 @@ class UserViewComponent extends Component
 
         $this->packages = Package::all();
     }
+
+
 
     private function loadPaymentLinks()
     {
@@ -182,7 +186,6 @@ class UserViewComponent extends Component
 
             $statusText = $status === 'Paid' ? 'marked as paid' : 'reset to pending';
             flash()->success("Payment successfully {$statusText}!");
-
         } catch (\Exception $e) {
             DB::rollBack();
             \Log::error('Payment status update failed', [
@@ -256,6 +259,61 @@ class UserViewComponent extends Component
                 ]
             ]);
         });
+    }
+
+    public function confirmDeletePayment($paymentId)
+    {
+        $this->paymentToDelete = $paymentId;
+        $this->showDeletePaymentModal = true;
+    }
+
+    public function deletePayment()
+    {
+        try {
+            DB::beginTransaction();
+
+            $payment = Payment::findOrFail($this->paymentToDelete);
+            $booking = $payment->booking;
+
+            // Find corresponding booking payment
+            $bookingPayment = BookingPayment::where('booking_id', $booking->id)
+                ->where('amount', $payment->amount)
+                ->orderBy('due_date', 'asc')
+                ->first();
+
+            if ($bookingPayment) {
+                // Update only the status for booking payment
+                $bookingPayment->update([
+                    'payment_status' => 'pending'
+                ]);
+
+                // Invalidate any related payment links
+                PaymentLink::where('booking_payment_id', $bookingPayment->id)
+                    ->where('status', '!=', 'completed')
+                    ->update(['status' => 'expired']);
+            }
+
+            // Delete the payment
+            $payment->delete();
+
+            // Recalculate booking status
+            $this->updateBookingStatus($booking);
+
+            DB::commit();
+
+            $this->showDeletePaymentModal = false;
+            $this->paymentToDelete = null;
+            $this->loadBookings();
+
+            flash()->success('Payment deleted successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Delete payment failed', [
+                'payment_id' => $this->paymentToDelete,
+                'error' => $e->getMessage()
+            ]);
+            flash()->error('Failed to delete payment: ' . $e->getMessage());
+        }
     }
 
     private function initializeUserData()
@@ -756,7 +814,7 @@ class UserViewComponent extends Component
         $this->sendInvoiceEmail($pdfContent, $invoiceData);
 
         return response()->streamDownload(
-            fn() => print ($pdfContent),
+            fn() => print($pdfContent),
             $invoiceNumber . '.pdf'
         );
     }
@@ -773,7 +831,7 @@ class UserViewComponent extends Component
             $pdf->loadView('livewire.admin.invoice-template', $invoiceData);
 
             return response()->streamDownload(
-                fn() => print ($pdf->output()),
+                fn() => print($pdf->output()),
                 "invoice-{$booking->id}.pdf"
             );
         } catch (\Exception $e) {

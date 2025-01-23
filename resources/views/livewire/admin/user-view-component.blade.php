@@ -280,17 +280,25 @@
                                                                 <td class="text-right">
                                                                     <div class="btn-group">
                                                                         @if ($payment['status'] !== 'Paid')
-                                                                            <button class="btn btn-success btn-sm"
+                                                                            <button
+                                                                                class="btn btn-success btn-sm text-white"
                                                                                 wire:click="updatePaymentStatusForPayment({{ $payment['id'] }}, 'Paid')">
                                                                                 <i class="fas fa-check"></i>
                                                                             </button>
                                                                         @endif
                                                                         @if ($payment['status'] !== 'Pending')
-                                                                            <button class="btn btn-warning btn-sm"
+                                                                            <button
+                                                                                class="btn btn-warning btn-sm text-white"
                                                                                 wire:click="updatePaymentStatusForPayment({{ $payment['id'] }}, 'Pending')">
                                                                                 <i class="fas fa-clock"></i>
                                                                             </button>
                                                                         @endif
+                                                                        <button
+                                                                            class="btn btn-danger btn-sm text-white"
+                                                                            wire:click="confirmDeletePayment({{ $payment['id'] }})"
+                                                                            title="Delete Payment">
+                                                                            <i class="fas fa-trash"></i>
+                                                                        </button>
                                                                     </div>
                                                                 </td>
                                                             </tr>
@@ -797,6 +805,47 @@
 @endif
 
 
+<!-- Delete Payment Confirmation Modal -->
+@if ($showDeletePaymentModal)
+    <div class="modal fade show" style="display: block; background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-trash text-danger mr-2"></i>
+                        Confirm Delete Payment
+                    </h5>
+                    <button type="button" class="close" wire:click="$set('showDeletePaymentModal', false)">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>
+                        Are you sure you want to delete this payment? This action cannot be undone.
+                    </div>
+                    <p class="mb-0 text-muted small">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        Deleting this payment will update the booking's payment status and remaining balance.
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary text-white"
+                        wire:click="$set('showDeletePaymentModal', false)">
+                        <i class="fas fa-times mr-1"></i>
+                        Cancel
+                    </button>
+                    <button type="button" class="btn btn-danger text-white" wire:click="deletePayment">
+                        <i class="fas fa-trash mr-1"></i>
+                        Delete Payment
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+@endif
+
+
 <style>
     .card {
         box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
@@ -929,6 +978,38 @@
         border: none;
         border-radius: 0.5rem;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+
+    .modal {
+        padding-right: 17px;
+    }
+
+    .modal-content {
+        border-radius: 0.5rem;
+        border: none;
+        box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
+    }
+
+    .modal-header {
+        border-top-left-radius: 0.5rem;
+        border-top-right-radius: 0.5rem;
+    }
+
+    .btn-group .btn {
+        padding: 0.25rem 0.5rem;
+    }
+
+    .btn-group .btn:not(:last-child) {
+        margin-right: 0.25rem;
+    }
+
+    .badge {
+        padding: 0.5em 0.75em;
+    }
+
+    .payment-row.paid {
+        background-color: rgba(40, 167, 69, 0.05);
     }
 </style>
 
