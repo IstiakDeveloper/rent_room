@@ -162,14 +162,24 @@
                                                         </td>
                                                     </tr>
                                                     <tr>
-                                                        <td class="pl-4">Base Price:</td>
+                                                        <td class="pl-4">Rent:</td>
                                                         <td class="text-right">
                                                             £{{ number_format($booking['price'], 2) }}</td>
                                                     </tr>
                                                     <tr>
-                                                        <td class="pl-3">Booking Fee:</td>
+                                                        <td class="pl-3">Booking:
+                                                            <br>
+
+                                                            <small class="text-muted">
+                                                                Due:
+                                                                {{ isset($booking['booking_payments']) && count($booking['booking_payments']) > 0? \Carbon\Carbon::parse(collect($booking['booking_payments'])->where('milestone_type', 'Booking Fee')->first()['due_date'])->format('d M Y'): 'N/A' }}
+                                                            </small>
+                                                        </td>
                                                         <td class="text-right">
-                                                            £{{ number_format($booking['booking_price'], 2) }}</td>
+                                                            £{{ number_format($booking['booking_price'], 2) }}
+
+                                                        </td>
+
                                                     </tr>
 
                                                     <tr class="table-light">
@@ -988,7 +998,7 @@
     .modal-content {
         border-radius: 0.5rem;
         border: none;
-        box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
     }
 
     .modal-header {

@@ -4,19 +4,23 @@ namespace App\Livewire\User;
 
 use App\Models\Booking;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 class BookingList extends Component
 {
-    public $bookings;
+    use WithPagination;
 
-    public function mount()
-    {
-        // Fetch bookings for the currently authenticated user
-        $this->bookings = Booking::where('user_id', auth()->id())->get();
-    }
+    protected $paginationTheme = 'bootstrap';
 
     public function render()
     {
-        return view('livewire.user.booking-list');
+        $bookings = Booking::where('user_id', auth()->id())
+            ->with('package')
+            ->latest()
+            ->paginate(10);
+
+        return view('livewire.user.booking-list', [
+            'bookings' => $bookings
+        ]);
     }
 }

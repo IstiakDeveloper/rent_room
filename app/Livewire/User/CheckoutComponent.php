@@ -182,7 +182,7 @@ class CheckoutComponent extends Component
                 'Month' => $startDate->copy()->addMonths($index),
                 'Week' => $startDate->copy()->addWeeks($index),
                 'Day' => $startDate->copy()->addDays($index),
-                'Booking Fee' => $startDate->copy()->addDays(0), // Booking Fee due immediately, adjust as needed
+                'Booking Fee' => now(),
             };
 
             // Create booking payment record for the milestone
@@ -225,9 +225,7 @@ class CheckoutComponent extends Component
                     'transaction_reference' => $this->bankTransferReference ?? null,
                     'updated_at' => now()
                 ]);
-        }
-
-        else {
+        } else {
             DB::table('booking_payments')
                 ->where('booking_id', $booking->id)
                 ->update([
@@ -307,17 +305,19 @@ class CheckoutComponent extends Component
 
             $session = Session::create([
                 'payment_method_types' => ['card'],
-                'line_items' => [[
-                    'price_data' => [
-                        'currency' => 'gbp',
-                        'product_data' => [
-                            'name' => $description,
-                            'description' => "Booking from {$this->fromDate} to {$this->toDate}",
+                'line_items' => [
+                    [
+                        'price_data' => [
+                            'currency' => 'gbp',
+                            'product_data' => [
+                                    'name' => $description,
+                                    'description' => "Booking from {$this->fromDate} to {$this->toDate}",
+                                ],
+                            'unit_amount' => (int) ($paymentAmount * 100),
                         ],
-                        'unit_amount' => (int)($paymentAmount * 100),
-                    ],
-                    'quantity' => 1,
-                ]],
+                        'quantity' => 1,
+                    ]
+                ],
                 'mode' => 'payment',
                 'success_url' => route('stripe.success', ['booking' => $booking->id]) . '?session_id={CHECKOUT_SESSION_ID}',
                 'cancel_url' => route('stripe.cancel', ['booking' => $booking->id]),

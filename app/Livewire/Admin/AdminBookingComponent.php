@@ -224,18 +224,17 @@ class AdminBookingComponent extends Component
         }
     }
 
-
     private function createMilestonePayments($booking)
     {
         $startDate = Carbon::parse($booking->from_date);
         $bookingFee = $booking->booking_price;
 
-        // First, insert the booking fee payment
+        // Insert booking fee payment with immediate due date
         DB::table('booking_payments')->insert([
             'booking_id' => $booking->id,
             'milestone_type' => 'Booking Fee',
             'milestone_number' => 0,
-            'due_date' => $startDate, // Due date is the start of the booking
+            'due_date' => now(), // Changed to now() for immediate payment
             'amount' => $bookingFee,
             'payment_status' => 'pending',
             'payment_method' => $this->paymentMethod,
@@ -243,7 +242,7 @@ class AdminBookingComponent extends Component
             'updated_at' => now()
         ]);
 
-        // Then create milestone payments for the remaining amount
+        // Create milestone payments for remaining amount
         foreach ($this->priceBreakdown as $index => $milestone) {
             $dueDate = match ($milestone['type']) {
                 'Month' => $startDate->copy()->addMonths($index + 1),
