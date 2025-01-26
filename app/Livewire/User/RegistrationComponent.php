@@ -41,7 +41,8 @@ class RegistrationComponent extends Component
         Auth::login($user);
 
         session()->flash('message', 'Registration successful.');
-        return redirect()->intended('/');
+        $this->dispatch('auth-success');
+        $this->dispatch('hideModal');
     }
 
     public function render()

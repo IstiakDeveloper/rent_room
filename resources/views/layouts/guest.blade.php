@@ -124,10 +124,8 @@
 
                         <!-- Rent & Rooms Service Link -->
                         <div class="d-flex align-items-center mr-4">
-                            <a href="https://rapidhandyworks.com"
-                               target="_blank"
-                               rel="noopener noreferrer"
-                               class="nav-link text-dark d-flex align-items-center hover-s">
+                            <a href="https://rapidhandyworks.com" target="_blank" rel="noopener noreferrer"
+                                class="nav-link text-dark d-flex align-items-center hover-s">
                                 <i class="fas fa-home mr-1"></i>
                                 <span class="fs-13 font-weight-500">Rapid Handyworks</span>
                                 <i class="fas fa-external-link-alt ml-1" style="font-size: 12px;"></i>
@@ -171,7 +169,8 @@
                                     </form>
                                 </div>
                             @else
-                                <a class="nav-link px-2 text-dark hover-s" data-toggle="modal" href="#signInModal">SIGN
+                                <a class="nav-link px-2 text-dark hover-s" data-toggle="modal"
+                                    href="#signInModal">SIGN
                                     IN</a>
                                 <a class="nav-link px-2 text-dark hover-s" data-toggle="modal"
                                     href="#signUpModal">SIGN UP
@@ -238,6 +237,29 @@
                     this.querySelector('i').classList.toggle('fa-eye');
                 });
             }
+        });
+    </script>
+
+    <script>
+        document.addEventListener('livewire:initialized', () => {
+            Livewire.on('hideModal', () => {
+                $('.modal').modal('hide');
+                $('.modal-backdrop').remove();
+                document.body.classList.remove('modal-open');
+            });
+
+            Livewire.on('auth-success', () => {
+                window.location.reload();
+            });
+        });
+
+        // Toggle password visibility
+        document.getElementById('togglePassword').addEventListener('click', function() {
+            const password = document.getElementById('password');
+            const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+            password.setAttribute('type', type);
+            this.querySelector('i').classList.toggle('fa-eye');
+            this.querySelector('i').classList.toggle('fa-eye-slash');
         });
     </script>
 

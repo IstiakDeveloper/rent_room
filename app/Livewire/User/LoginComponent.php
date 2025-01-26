@@ -21,7 +21,8 @@ class LoginComponent extends Component
 
         if (Auth::attempt($credentials, $this->remember)) {
             session()->flash('message', 'Login successful.');
-            return redirect()->intended('/');
+            $this->dispatch('auth-success');
+            $this->dispatch('hideModal');
         } else {
             throw ValidationException::withMessages([
                 'email' => __('auth.failed'),

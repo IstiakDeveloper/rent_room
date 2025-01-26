@@ -43,6 +43,8 @@ class PackageShow extends Component
         'phone' => 'required|string|max:15',
         'selectedRoom' => 'required',
     ];
+    protected $listeners = ['auth-success' => 'handleAuthSuccess'];
+
 
     public function mount($id)
     {
@@ -56,6 +58,14 @@ class PackageShow extends Component
             $this->email = Auth::user()->email;
             $this->phone = Auth::user()->phone;
         }
+    }
+
+    public function handleAuthSuccess()
+    {
+        $this->name = Auth::user()->name;
+        $this->email = Auth::user()->email;
+        $this->phone = Auth::user()->phone;
+        $this->dispatch('close-modals');
     }
 
     private function determineOptimalPriceType($room, $startDate, $endDate)

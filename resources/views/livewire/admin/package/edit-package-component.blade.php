@@ -131,209 +131,131 @@
 
 
         <div>
-            @if ($selection == 'room')
-                <div class="form-group group-2">
+
+            <div class="form-group group-2">
+                <div class="d-flex justify-content-between align-items-center mb-4">
                     <h2>Rooms</h2>
-                    <div class="mb-4 group-2">
-                        @foreach ($rooms as $roomIndex => $room)
-                            <div class="room-section mb-4 form-grid-2">
-                                <div class="form-group">
-                                    <label for="rooms-{{ $roomIndex }}-name">Room Name</label>
-                                    <input type="text" wire:model="rooms.{{ $roomIndex }}.name"
-                                        id="rooms-{{ $roomIndex }}-name" class="form-control">
-                                    @error('rooms.' . $roomIndex . '.name')
-                                        <span class="text-danger">{{ $message }}</span>
-                                    @enderror
+                    <button type="button" class="btn btn-primary" wire:click="addRoom">
+                        <i class="fas fa-plus mr-2"></i>Add Room
+                    </button>
+                </div>
+
+                @foreach ($rooms as $roomIndex => $room)
+                    <div class="card mb-4">
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Room Details</h5>
+                            <button type="button" class="btn btn-danger btn-sm"
+                                wire:click="removeRoom({{ $roomIndex }})">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <!-- Room Basic Info -->
+                            <div class="form-row">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="rooms-{{ $roomIndex }}-name">Room Name</label>
+                                        <input type="text" wire:model="rooms.{{ $roomIndex }}.name"
+                                            id="rooms-{{ $roomIndex }}-name" class="form-control">
+                                        @error('rooms.' . $roomIndex . '.name')
+                                            <span class="text-danger small">{{ $message }}</span>
+                                        @enderror
+                                    </div>
                                 </div>
-                                <div class="form-group">
-                                    <label for="rooms-{{ $roomIndex }}-number_of_beds">Beds</label>
-                                    <input type="number" wire:model="rooms.{{ $roomIndex }}.number_of_beds"
-                                        id="rooms-{{ $roomIndex }}-number_of_beds" class="form-control">
-                                    @error('rooms.' . $roomIndex . '.number_of_beds')
-                                        <span class="text-danger">{{ $message }}</span>
-                                    @enderror
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="rooms-{{ $roomIndex }}-number_of_beds">Beds</label>
+                                        <input type="number" wire:model="rooms.{{ $roomIndex }}.number_of_beds"
+                                            id="rooms-{{ $roomIndex }}-number_of_beds" class="form-control">
+                                        @error('rooms.' . $roomIndex . '.number_of_beds')
+                                            <span class="text-danger small">{{ $message }}</span>
+                                        @enderror
+                                    </div>
                                 </div>
-                                <div class="form-group">
-                                    <label for="rooms-{{ $roomIndex }}-number_of_bathrooms">Attach
-                                        Bathrooms</label>
-                                    <input type="number" wire:model="rooms.{{ $roomIndex }}.number_of_bathrooms"
-                                        id="rooms-{{ $roomIndex }}-number_of_bathrooms" class="form-control">
-                                    @error('rooms.' . $roomIndex . '.number_of_bathrooms')
-                                        <span class="text-danger">{{ $message }}</span>
-                                    @enderror
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="rooms-{{ $roomIndex }}-number_of_bathrooms">Attached
+                                            Bathrooms</label>
+                                        <input type="number"
+                                            wire:model="rooms.{{ $roomIndex }}.number_of_bathrooms"
+                                            id="rooms-{{ $roomIndex }}-number_of_bathrooms" class="form-control">
+                                        @error('rooms.' . $roomIndex . '.number_of_bathrooms')
+                                            <span class="text-danger small">{{ $message }}</span>
+                                        @enderror
+                                    </div>
                                 </div>
                             </div>
 
                             <!-- Pricing Options -->
-                            <div class="pricing-options form-grid">
-                                @foreach ($room['prices'] as $priceIndex => $price)
-                                    <div class="pricing-option">
-                                        <div class="form-group">
-                                            <label
-                                                for="rooms-{{ $roomIndex }}-prices-{{ $priceIndex }}-type">Price
-                                                Type</label>
-                                            <select
-                                                wire:model.live="rooms.{{ $roomIndex }}.prices.{{ $priceIndex }}.type"
-                                                id="rooms-{{ $roomIndex }}-prices-{{ $priceIndex }}-type"
-                                                class="form-control">
-                                                <option value="">Select Option</option>
-                                                <option value="Day">Day</option>
-                                                <option value="Week">Week</option>
-                                                <option value="Month">Month</option>
-                                            </select>
-                                            @error('rooms.' . $roomIndex . '.prices.' . $priceIndex . '.type')
-                                                <span class="text-danger">{{ $message }}</span>
-                                            @enderror
-                                        </div>
+                            <div class="mt-4">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h6 class="mb-0">Pricing Options</h6>
+                                    <button type="button" class="btn btn-outline-primary btn-sm"
+                                        wire:click="addPriceOption({{ $roomIndex }})">
+                                        <i class="fas fa-plus mr-1"></i>Add Price
+                                    </button>
+                                </div>
 
-                                        @if ($price['type'] === 'Day')
-                                            <div class="form-group">
-                                                <label
-                                                    for="rooms-{{ $roomIndex }}-prices-{{ $priceIndex }}-fixed_price">Day
-                                                    Fixed Price</label>
-                                                <input type="number"
-                                                    wire:model="rooms.{{ $roomIndex }}.prices.{{ $priceIndex }}.fixed_price"
-                                                    id="rooms-{{ $roomIndex }}-prices-{{ $priceIndex }}-fixed_price"
-                                                    class="form-control">
-                                                @error('rooms.' . $roomIndex . '.prices.' . $priceIndex .
-                                                    '.fixed_price')
-                                                    <span class="text-danger">{{ $message }}</span>
-                                                @enderror
+                                @foreach ($room['prices'] as $priceIndex => $price)
+                                    <div class="card mb-3 bg-light">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                                <div class="form-group mb-0 flex-grow-1 mr-3">
+                                                    <label
+                                                        for="rooms-{{ $roomIndex }}-prices-{{ $priceIndex }}-type">Price
+                                                        Type</label>
+                                                    <select
+                                                        wire:model.live="rooms.{{ $roomIndex }}.prices.{{ $priceIndex }}.type"
+                                                        id="rooms-{{ $roomIndex }}-prices-{{ $priceIndex }}-type"
+                                                        class="form-control">
+                                                        <option value="">Select Option</option>
+                                                        <option value="Day">Day</option>
+                                                        <option value="Week">Week</option>
+                                                        <option value="Month">Month</option>
+                                                    </select>
+                                                </div>
+                                                @if (count($room['prices']) > 1)
+                                                    <button type="button" class="btn btn-danger btn-sm mt-4"
+                                                        wire:click="removePriceOption({{ $roomIndex }}, {{ $priceIndex }})">
+                                                        <i class="fas fa-times"></i>
+                                                    </button>
+                                                @endif
                                             </div>
-                                            <div class="form-group">
-                                                <label
-                                                    for="rooms-{{ $roomIndex }}-prices-{{ $priceIndex }}-discount_price">Day
-                                                    Discount Price</label>
-                                                <input type="number"
-                                                    wire:model="rooms.{{ $roomIndex }}.prices.{{ $priceIndex }}.discount_price"
-                                                    id="rooms-{{ $roomIndex }}-prices-{{ $priceIndex }}-discount_price"
-                                                    class="form-control">
-                                                @error('rooms.' . $roomIndex . '.prices.' . $priceIndex .
-                                                    '.discount_price')
-                                                    <span class="text-danger">{{ $message }}</span>
-                                                @enderror
-                                            </div>
-                                            <div class="form-group">
-                                                <label
-                                                    for="rooms-{{ $roomIndex }}-prices-{{ $priceIndex }}-booking_price">Day
-                                                    Booking Price</label>
-                                                <input type="number"
-                                                    wire:model="rooms.{{ $roomIndex }}.prices.{{ $priceIndex }}.booking_price"
-                                                    id="rooms-{{ $roomIndex }}-prices-{{ $priceIndex }}-booking_price"
-                                                    class="form-control">
-                                                @error('rooms.' . $roomIndex . '.prices.' . $priceIndex .
-                                                    '.booking_price')
-                                                    <span class="text-danger">{{ $message }}</span>
-                                                @enderror
-                                            </div>
-                                        @elseif($price['type'] === 'Week')
-                                            <div class="form-group">
-                                                <label
-                                                    for="rooms-{{ $roomIndex }}-prices-{{ $priceIndex }}-fixed_price">Week
-                                                    Fixed Price</label>
-                                                <input type="number"
-                                                    wire:model="rooms.{{ $roomIndex }}.prices.{{ $priceIndex }}.fixed_price"
-                                                    id="rooms-{{ $roomIndex }}-prices-{{ $priceIndex }}-fixed_price"
-                                                    class="form-control">
-                                                @error('rooms.' . $roomIndex . '.prices.' . $priceIndex .
-                                                    '.fixed_price')
-                                                    <span class="text-danger">{{ $message }}</span>
-                                                @enderror
-                                            </div>
-                                            <div class="form-group">
-                                                <label
-                                                    for="rooms-{{ $roomIndex }}-prices-{{ $priceIndex }}-discount_price">Week
-                                                    Discount Price</label>
-                                                <input type="number"
-                                                    wire:model="rooms.{{ $roomIndex }}.prices.{{ $priceIndex }}.discount_price"
-                                                    id="rooms-{{ $roomIndex }}-prices-{{ $priceIndex }}-discount_price"
-                                                    class="form-control">
-                                                @error('rooms.' . $roomIndex . '.prices.' . $priceIndex .
-                                                    '.discount_price')
-                                                    <span class="text-danger">{{ $message }}</span>
-                                                @enderror
-                                            </div>
-                                            <div class="form-group">
-                                                <label
-                                                    for="rooms-{{ $roomIndex }}-prices-{{ $priceIndex }}-booking_price">Week
-                                                    Booking Price</label>
-                                                <input type="number"
-                                                    wire:model="rooms.{{ $roomIndex }}.prices.{{ $priceIndex }}.booking_price"
-                                                    id="rooms-{{ $roomIndex }}-prices-{{ $priceIndex }}-booking_price"
-                                                    class="form-control">
-                                                @error('rooms.' . $roomIndex . '.prices.' . $priceIndex .
-                                                    '.booking_price')
-                                                    <span class="text-danger">{{ $message }}</span>
-                                                @enderror
-                                            </div>
-                                        @elseif($price['type'] === 'Month')
-                                            <div class="form-group">
-                                                <label
-                                                    for="rooms-{{ $roomIndex }}-prices-{{ $priceIndex }}-fixed_price">Month
-                                                    Fixed Price</label>
-                                                <input type="number"
-                                                    wire:model="rooms.{{ $roomIndex }}.prices.{{ $priceIndex }}.fixed_price"
-                                                    id="rooms-{{ $roomIndex }}-prices-{{ $priceIndex }}-fixed_price"
-                                                    class="form-control">
-                                                @error('rooms.' . $roomIndex . '.prices.' . $priceIndex .
-                                                    '.fixed_price')
-                                                    <span class="text-danger">{{ $message }}</span>
-                                                @enderror
-                                            </div>
-                                            <div class="form-group">
-                                                <label
-                                                    for="rooms-{{ $roomIndex }}-prices-{{ $priceIndex }}-discount_price">Month
-                                                    Discount Price</label>
-                                                <input type="number"
-                                                    wire:model="rooms.{{ $roomIndex }}.prices.{{ $priceIndex }}.discount_price"
-                                                    id="rooms-{{ $roomIndex }}-prices-{{ $priceIndex }}-discount_price"
-                                                    class="form-control">
-                                                @error('rooms.' . $roomIndex . '.prices.' . $priceIndex .
-                                                    '.discount_price')
-                                                    <span class="text-danger">{{ $message }}</span>
-                                                @enderror
-                                            </div>
-                                            <div class="form-group">
-                                                <label
-                                                    for="rooms-{{ $roomIndex }}-prices-{{ $priceIndex }}-booking_price">Month
-                                                    Booking Price</label>
-                                                <input type="number"
-                                                    wire:model="rooms.{{ $roomIndex }}.prices.{{ $priceIndex }}.booking_price"
-                                                    id="rooms-{{ $roomIndex }}-prices-{{ $priceIndex }}-booking_price"
-                                                    class="form-control">
-                                                @error('rooms.' . $roomIndex . '.prices.' . $priceIndex .
-                                                    '.booking_price')
-                                                    <span class="text-danger">{{ $message }}</span>
-                                                @enderror
-                                            </div>
-                                        @endif
+
+                                            @if ($price['type'])
+                                                <div class="form-row">
+                                                    <div class="col-md-4">
+                                                        <div class="form-group">
+                                                            <label>{{ $price['type'] }} Fixed Price</label>
+                                                            <input type="number" class="form-control"
+                                                                wire:model="rooms.{{ $roomIndex }}.prices.{{ $priceIndex }}.fixed_price">
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <div class="form-group">
+                                                            <label>{{ $price['type'] }} Discount Price</label>
+                                                            <input type="number" class="form-control"
+                                                                wire:model="rooms.{{ $roomIndex }}.prices.{{ $priceIndex }}.discount_price">
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <div class="form-group">
+                                                            <label>{{ $price['type'] }} Booking Price</label>
+                                                            <input type="number" class="form-control"
+                                                                wire:model="rooms.{{ $roomIndex }}.prices.{{ $priceIndex }}.booking_price">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            @endif
+                                        </div>
                                     </div>
                                 @endforeach
                             </div>
-
-                            <!-- Add/Remove Pricing Options -->
-                            <div>
-                                <button type="button" class="btn btn-secondary"
-                                    wire:click="addPriceOption({{ $roomIndex }})"><i
-                                        class="fas fa-plus"></i></button>
-                                @if (count($room['prices']) > 1)
-                                    <button type="button" class="btn btn-danger"
-                                        wire:click="removePriceOption({{ $roomIndex }}, {{ $priceIndex }})"><i
-                                            class="fas fa-times"></i></button>
-                                @endif
-                            </div>
-
-                            <!-- Remove Room -->
-                            <button type="button" class="btn btn-danger"
-                                wire:click="removeRoom({{ $roomIndex }})"><i class="fas fa-times"></i></button>
-                        @endforeach
+                        </div>
                     </div>
+                @endforeach
+            </div>
 
-                    <!-- Add Room -->
-                    <button type="button" class="btn btn-secondary" wire:click="addRoom"><i
-                            class="fas fa-plus"></i> Add Room</button>
-                </div>
-            @endif
         </div>
         <div class="form-group group-2">
             <div class="card">
@@ -485,6 +407,21 @@
         #photo-upload {
             max-width: 300px;
             margin: 0 auto;
+        }
+
+        .card {
+            border: 1px solid rgba(0, 0, 0, .125);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, .1);
+        }
+
+        .card-header {
+            background-color: #f8f9fa;
+            border-bottom: 1px solid rgba(0, 0, 0, .125);
+        }
+
+        .btn-sm {
+            padding: .25rem .5rem;
+            font-size: .875rem;
         }
     </style>
 </div>

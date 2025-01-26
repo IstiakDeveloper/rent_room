@@ -442,69 +442,79 @@
                 <aside class="col-lg-4 pl-xl-4 primary-sidebar sidebar-sticky" id="sidebar">
                     <div class="primary-sidebar-inner">
                         <div class="card border-0 widget-request-tour">
-                            <ul class="nav nav-tabs d-flex" role="tablist">
-                                <li class="nav-item">
-                                    <a class="nav-link active px-3" data-toggle="tab" href="#schedule"
-                                        role="tab" aria-selected="true">Book Your Place</a>
-                                </li>
-                            </ul>
                             <div class="card-body px-sm-6 shadow-xxs-2 pb-5 pt-0">
                                 <form wire:submit.prevent="submit">
                                     <div class="tab-content pt-1 pb-0 px-0 shadow-none">
                                         <div id="signupform" class="tab-pane fade show active" role="tabpanel">
-
                                             @if (session('error'))
-                                                <div class="alert alert-warning">
-                                                    {{ session('error') }}
-                                                </div>
+                                                <div class="alert alert-warning">{{ session('error') }}</div>
                                             @endif
+
                                             @unless (Auth::check())
-                                                <p class="mb-4">
-                                                    Please <a class="text-primary" href="#signInModal"
-                                                        data-toggle="modal">Sign in</a>
-                                                    if not <a class="text-primary" href="#signUpModal"
-                                                        data-toggle="modal">sign up</a>
-                                                </p>
+                                                <div class="text-center mb-4">
+                                                    <p>Please <a class="text-primary fw-bold" href="#signInModal"
+                                                            data-toggle="modal">Sign in</a>
+                                                        if not <a class="text-primary fw-bold" href="#signUpModal"
+                                                            data-toggle="modal">Sign up</a></p>
+                                                </div>
                                             @endunless
-                                            <div class="card shadow-sm">
-                                                <div class="card-body p-2">
-                                                    @if ($package->rooms->count() > 0)
-                                                        <div class="room-list">
+
+                                            <div class="mb-4">
+                                                <div class="position-relative">
+                                                    <div class="dropdown">
+                                                        <button
+                                                            class="btn btn-primary btn-lg w-100 dropdown-toggle d-flex align-items-center justify-content-between"
+                                                            type="button" id="roomSelectButton"
+                                                            data-toggle="dropdown"
+                                                            {{ !Auth::check() ? 'disabled' : '' }}>
+                                                            <span>{{ $selectedRoom ? $package->rooms->find($selectedRoom)->name : 'Select Your Room' }}</span>
+                                                            <i class="fas fa-chevron-down"></i>
+                                                        </button>
+                                                        <div class="dropdown-menu w-100"
+                                                            aria-labelledby="roomSelectButton">
                                                             @foreach ($package->rooms as $room)
-                                                                <div wire:key="room-{{ $room->id }}"
-                                                                    wire:click="selectRoom({{ $room->id }})"
-                                                                    class="room-item d-flex justify-content-between align-items-center p-2 mb-2 rounded-2 {{ $selectedRoom == $room->id ? 'selected' : '' }}">
-                                                                    <span class="fw-medium">{{ $room->name }} • <i
-                                                                            class="fas fa-bed small"></i>
-                                                                        {{ $room->number_of_beds }} • <i
-                                                                            class="fas fa-bath small"></i>
-                                                                        {{ $room->number_of_bathrooms }}</span>
-                                                                    @if ($selectedRoom == $room->id)
-                                                                        <i
-                                                                            class="fas fa-check-circle text-success"></i>
-                                                                    @endif
-                                                                </div>
+                                                                <a class="dropdown-item {{ $selectedRoom == $room->id ? 'active' : '' }}"
+                                                                    wire:click="selectRoom({{ $room->id }})">
+                                                                    {{ $room->name }} • {{ $room->number_of_beds }}
+                                                                    Beds • {{ $room->number_of_bathrooms }} Baths
+                                                                </a>
                                                             @endforeach
                                                         </div>
-                                                    @else
-                                                        <div class="text-muted small py-2">
-                                                            <i class="fas fa-info-circle mr-1"></i>No rooms available
+                                                    </div>
+                                                    @if (!Auth::check())
+                                                        <div class="overlay auth-overlay"
+                                                            wire:click="showAuthMessage('room')"
+                                                            style="position: absolute; top: 0; left: 0; right: 0; bottom: 0;">
                                                         </div>
                                                     @endif
                                                 </div>
+                                                @if ($showAuthWarning === 'room')
+                                                    <span class="text-danger">Please sign in or sign up first.</span>
+                                                @endif
+
+                                                @if ($selectedRoom)
+                                                    <div class="selected-room-details mt-3 p-3 bg-light rounded">
+                                                        @php $room = $package->rooms->find($selectedRoom) @endphp
+                                                        <div class="d-flex align-items-center">
+                                                            <span class="mr-3">{{ $room->name }}</span>
+                                                            <span class="text-muted">
+                                                                <i class="fas fa-bed"></i> {{ $room->number_of_beds }}
+                                                                <i class="fas fa-bath ml-2"></i>
+                                                                {{ $room->number_of_bathrooms }}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                @endif
                                             </div>
 
-
                                             @if ($selectedRoom && $calendarView)
-                                                <div x-data="datePickerComponent({{ json_encode($disabledDates) }})" wire:ignore.self class="mt-6">
-                                                    <label class="block mb-2">Select Check-in and Check-out
-                                                        Dates</label>
+                                                <div x-data="datePickerComponent({{ json_encode($disabledDates) }})" wire:ignore.self class="mt-4">
+                                                    <label class="mb-2">Select Check-in and Check-out Dates</label>
                                                     <input x-ref="dateRangePicker" type="text"
-                                                        class="form-control w-full" placeholder="Select dates"
-                                                        readonly {{ !Auth::check() ? 'disabled' : '' }}>
-
+                                                        class="form-control" placeholder="Select dates" readonly
+                                                        {{ !Auth::check() ? 'disabled' : '' }}>
                                                     @error('dateRange')
-                                                        <span class="text-red-500 text-sm">{{ $message }}</span>
+                                                        <span class="text-danger small">{{ $message }}</span>
                                                     @enderror
                                                 </div>
                                             @endif
@@ -606,6 +616,37 @@
                             </div>
                         </div>
                     </div>
+                    <style>
+                        .dropdown-toggle::after {
+                            display: none;
+                        }
+
+                        .dropdown-menu {
+                            margin-top: 0;
+                            border: 1px solid rgba(0, 0, 0, .1);
+                            max-height: 300px;
+                            overflow-y: auto;
+                        }
+
+                        .dropdown-item {
+                            padding: .75rem 1rem;
+                            cursor: pointer;
+                        }
+
+                        .dropdown-item.active {
+                            background-color: #f8f9fa;
+                            color: #000;
+                        }
+
+                        .selected-room-details {
+                            border: 1px solid #dee2e6;
+                            background-color: #f8f9fa;
+                        }
+
+                        .btn-lg {
+                            padding: 0.75rem 1.25rem;
+                        }
+                    </style>
                 </aside>
 
 
