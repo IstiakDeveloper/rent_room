@@ -21,64 +21,142 @@ class PackageComponent extends Component
     public $countries, $cities = [], $areas = [], $properties = [];
     public $maintains, $amenities, $packages;
     public $selectedPackageId;
+    public $selectedPackage;
     public $selectedUserId;
     public $showAssignModal = false;
 
+    public $showDeleteModal = false;
+    public $packageToDelete = null;
+
+
     public function mount()
     {
-        $user = Auth::user();
-
-        if ($user->roles->pluck('name')->contains('Super Admin')) {
-            // If the user is a Super Admin, they can see all data
-            $this->countries = Country::all();
-            $this->maintains = Maintain::all();
-            $this->amenities = Amenity::all();
-            $this->packages = Package::with(['country', 'city', 'area', 'property'])->get();
-        } else {
-            // If the user is not a Super Admin, show only the data they created
-            $this->countries = Country::all();
-            $this->maintains = Maintain::where('user_id', $user->id)->get();
-            $this->amenities = Amenity::where('user_id', $user->id)->get();
-            $this->packages = Package::with(['country', 'city', 'area', 'property'])
-                                    ->where('user_id', $user->id)
-                                    ->get();
-        }
-
-
+        $this->refreshPackages();
     }
 
+    private function refreshPackages()
+    {
+        $user = Auth::user();
+        $with = ['creator', 'assignedPartner', 'assignedBy', 'country', 'city', 'area', 'property'];
+
+        if ($user->roles->pluck('name')->contains('Super Admin')) {
+            $this->packages = Package::with($with)->get();
+        } else {
+            $this->packages = Package::with($with)
+                ->where(function ($query) use ($user) {
+                    $query->where('user_id', $user->id)
+                        ->orWhere('assigned_to', $user->id);
+                })
+                ->get();
+        }
+    }
+
+    public function assignUser()
+    {
+        if (empty($this->selectedUserId)) {
+            // Handle unassignment
+            $this->removeAssignment();
+            return;
+        }
+
+        $this->validate([
+            'selectedUserId' => 'required|exists:users,id'
+        ]);
+
+        $package = Package::find($this->selectedPackageId);
+
+        if (!auth()->user()->hasRole('Super Admin') && auth()->id() !== $package->user_id) {
+            session()->flash('error', 'You do not have permission to assign this package.');
+            return;
+        }
+
+        $package->update([
+            'assigned_to' => $this->selectedUserId,
+            'assigned_by' => auth()->id(),
+            'assigned_at' => now()
+        ]);
+
+        $this->refreshPackages();
+        session()->flash('message', 'Package assigned successfully.');
+        $this->closeModal();
+    }
+
+    public function removeAssignment()
+    {
+        $package = Package::find($this->selectedPackageId);
+
+        if (!auth()->user()->hasRole('Super Admin') && auth()->id() !== $package->user_id) {
+            session()->flash('error', 'You do not have permission to remove this assignment.');
+            return;
+        }
+
+        $package->update([
+            'assigned_to' => null,
+            'assigned_by' => null,
+            'assigned_at' => null
+        ]);
+
+        $this->refreshPackages();
+        session()->flash('message', 'Package assignment removed successfully.');
+        $this->closeModal();
+    }
 
     public function openAssignModal($packageId)
     {
         $this->selectedPackageId = $packageId;
+        $this->selectedPackage = Package::with(['creator', 'assignedPartner', 'assignedBy'])->find($packageId);
+        $this->selectedUserId = $this->selectedPackage->assigned_to; // Set current assignment if exists
         $this->showAssignModal = true;
+        $this->dispatch('modalOpened');
     }
 
-
-    public function assignUser()
+    public function closeModal()
     {
-        $package = Package::find($this->selectedPackageId);
-        $package->user_id = $this->selectedUserId;
-        $package->save();
-
         $this->showAssignModal = false;
-        session()->flash('message', 'User assigned successfully.');
-    }
-
-    public function delete($id)
-    {
-        Package::find($id)->delete();
-        session()->flash('message', 'Package Deleted Successfully.');
+        $this->selectedUserId = null;
+        $this->selectedPackageId = null;
+        $this->selectedPackage = null;
+        $this->dispatch('modalClosed');
     }
 
     public function render()
     {
-        $packages = Package::with('users')->get();
+        $availablePartners = User::role('Partner')
+            ->when($this->selectedPackageId, function ($query) {
+                $package = Package::find($this->selectedPackageId);
+                return $query->where('id', '!=', $package->user_id);
+            })
+            ->get();
 
         return view('livewire.admin.package.package-component', [
-            'packages' => $packages,
-            'users' => User::role('Partner')->get(),
+            'availablePartners' => $availablePartners,
+            'packages' => $this->packages
         ]);
     }
 
+
+
+    public function confirmDelete($id)
+    {
+        $this->packageToDelete = Package::find($id);
+        $this->showDeleteModal = true;
+        $this->dispatch('deleteModalOpened');
+    }
+
+    public function deletePackage()
+    {
+        if ($this->packageToDelete) {
+            $this->packageToDelete->delete();
+            $this->refreshPackages();
+            session()->flash('message', 'Package deleted successfully.');
+            $this->closeDeleteModal();
+        }
+    }
+
+    public function closeDeleteModal()
+    {
+        $this->showDeleteModal = false;
+        $this->packageToDelete = null;
+        $this->dispatch('deleteModalClosed');
+    }
 }

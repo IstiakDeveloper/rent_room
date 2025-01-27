@@ -25,8 +25,16 @@ class Package extends Model
         'video_link',
         'common_bathrooms',
         'status',
-        'expiration_date'
+        'expiration_date',
+        'assigned_to',
+        'assigned_by',
+        'assigned_at'
     ];
+    protected $dates = ['assigned_at'];
+    protected $casts = [
+        'assigned_at' => 'datetime',
+    ];
+
 
     public function country()
     {
@@ -98,5 +106,48 @@ class Package extends Model
     public function instructions()
     {
         return $this->hasMany(PackageInstruction::class);
+    }
+
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function assignedPartner()
+    {
+        return $this->belongsTo(User::class, 'assigned_to');
+    }
+    public function assignedBy()
+    {
+        return $this->belongsTo(User::class, 'assigned_by');
+    }
+
+    public function getSlugAttribute()
+    {
+        return str_replace(' ', '-', strtolower($this->name));
+    }
+
+    public function getShowUrl()
+    {
+        // Check for assigned partner first
+        if ($this->assignedPartner) {
+            $partnerSlug = str_replace(' ', '-', strtolower($this->assignedPartner->name));
+        }
+        // If not assigned, use the creator's name
+        elseif ($this->creator) {
+            $partnerSlug = str_replace(' ', '-', strtolower($this->creator->name));
+        }
+        // If neither exists (shouldn't happen, but just in case)
+        else {
+            return '#';
+        }
+
+        // Include ID in the package slug for better identification
+        $packageSlug = $this->id . '-' . str_replace(' ', '-', strtolower($this->name));
+
+        return route('package.show', [
+            'partnerSlug' => $partnerSlug,
+            'packageSlug' => $packageSlug
+        ]);
     }
 }

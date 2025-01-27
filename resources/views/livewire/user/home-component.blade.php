@@ -49,7 +49,7 @@
         <div class="row">
             @foreach($packages as $package)
               <div class="col-md-4 mb-4">
-                <a href="{{ route('package.show', ['id' => $package->id]) }}" class="text-decoration-none">
+                <a href="{{ $package->getShowUrl() }}" class="text-decoration-none">
                     <div class="card py-3">
                         <div class="position-relative hover-change-image bg-hover-overlay rounded-lg card-img">
                             @if($package->photos->isNotEmpty())
@@ -181,7 +181,7 @@
 		     data-slick-options='{"slidesToShow": 4,"dots":true,"arrows":false,"responsive":[{"breakpoint": 1600,"settings": {"slidesToShow":3}},{"breakpoint": 992,"settings": {"slidesToShow":2,"arrows":false}},{"breakpoint": 768,"settings": {"slidesToShow": 2,"arrows":false,"dots":true,"autoplay":true}},{"breakpoint": 576,"settings": {"slidesToShow": 1,"arrows":false,"dots":true,"autoplay":true}}]}'>
              @foreach($featuredPackages as $package)
               <div class="box box pb-7 pt-2" data-animate="fadeInUp">
-                <a href="{{ route('package.show', ['id' => $package->id]) }}" class="text-dark text-decoration-none">
+                <a href="{{ $package->getShowUrl() }}" class="text-dark text-decoration-none">
                     <div class="card shadow-hover-2">
                         <div class="hover-change-image bg-hover-overlay rounded-lg card-img-top">
                             @if($package->photos->isNotEmpty())

@@ -88,7 +88,10 @@ Route::post('/logout', [Logout::class, 'logout'])->name('logout');
 Route::get('/packages', PackageList::class)->name('package.list');
 Route::get('booking-complete/{bookingId}', BookingComplete::class)->name('booking.complete');
 
-Route::get('/package/{id}', PackageShow::class)->name('package.show');
+Route::get('/package/{partnerSlug}/{packageSlug}', PackageShow::class)->name('package.show');
+Route::get('/partner/{partnerSlug}/packages', PackageList::class)->name('partner.packages');
+
+
 Route::get('/seeder', function () {
     Artisan::call('db:seed', ['--class' => 'Database\\Seeders\\RolesAndSuperAdminSeeder']);
     return 'Roles and Super Admin seeder ran successfully!';

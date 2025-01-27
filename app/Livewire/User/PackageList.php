@@ -6,6 +6,7 @@ use App\Models\Area;
 use App\Models\City;
 use App\Models\Country;
 use App\Models\Package;
+use App\Models\User;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -17,17 +18,64 @@ class PackageList extends Component
     public $selectedCity;
     public $selectedArea;
     public $keyword;
+    public $partnerSlug;
+    public $partner;
 
     public $countries;
     public $cities;
     public $areas;
 
-    public function mount()
+    public function mount($partnerSlug = null)
     {
         $this->countries = Country::all();
         $this->cities = [];
         $this->areas = [];
+
+        if ($partnerSlug) {
+            $this->partnerSlug = $partnerSlug;
+            $this->partner = User::where(function($query) use ($partnerSlug) {
+                $query->whereRaw('LOWER(REPLACE(name, " ", "-")) = ?', [strtolower($partnerSlug)]);
+            })->firstOrFail();
+        }
     }
+
+    public function getPackagesProperty()
+    {
+        $query = Package::with([
+            'country',
+            'city',
+            'area',
+            'rooms.prices',
+            'entireProperty.prices',
+            'photos',
+            'assignedPartner',
+            'creator'
+        ]);
+
+        // If viewing partner's packages
+        if ($this->partner) {
+            $query->where(function($q) {
+                $q->where('assigned_to', $this->partner->id)
+                  ->orWhere('user_id', $this->partner->id);
+            });
+        }
+
+        return $query
+            ->when($this->selectedCountry, function ($query) {
+                return $query->where('country_id', $this->selectedCountry);
+            })
+            ->when($this->selectedCity, function ($query) {
+                return $query->where('city_id', $this->selectedCity);
+            })
+            ->when($this->selectedArea, function ($query) {
+                return $query->where('area_id', $this->selectedArea);
+            })
+            ->when($this->keyword, function ($query) {
+                return $query->where('name', 'like', '%' . $this->keyword . '%');
+            })
+            ->paginate(10);
+    }
+
 
     public function getFirstAvailablePrice($prices)
     {
@@ -99,30 +147,7 @@ class PackageList extends Component
         $this->resetPage();
     }
 
-    public function getPackagesProperty()
-    {
-        return Package::with([
-            'country',
-            'city',
-            'area',
-            'rooms.prices',
-            'entireProperty.prices', // Include entireProperty prices relation
-            'photos'
-        ])
-        ->when($this->selectedCountry, function ($query) {
-            return $query->where('country_id', $this->selectedCountry);
-        })
-        ->when($this->selectedCity, function ($query) {
-            return $query->where('city_id', $this->selectedCity);
-        })
-        ->when($this->selectedArea, function ($query) {
-            return $query->where('area_id', $this->selectedArea);
-        })
-        ->when($this->keyword, function ($query) {
-            return $query->where('name', 'like', '%' . $this->keyword . '%');
-        })
-        ->paginate(10);
-    }
+
 
     public function render()
     {

@@ -46,20 +46,81 @@ class PackageShow extends Component
     protected $listeners = ['auth-success' => 'handleAuthSuccess'];
 
 
-    public function mount($id)
+    public function mount($partnerSlug, $packageSlug)
     {
-        $this->packageId = $id;
-        $this->fetchPackage();
-        $this->incrementViews();
-        $this->disabledDates = $this->fetchDisabledDates();
+        try {
+            // First, let's log what we're receiving
+            \Log::info('Searching for package with:', [
+                'partnerSlug' => $partnerSlug,
+                'packageSlug' => $packageSlug
+            ]);
 
-        if (Auth::check()) {
-            $this->name = Auth::user()->name;
-            $this->email = Auth::user()->email;
-            $this->phone = Auth::user()->phone;
+            $this->package = Package::with([
+                'creator',
+                'assignedPartner',
+                'country',
+                'city',
+                'area',
+                'property',
+                'rooms.roomPrices',
+                'photos',
+            ])
+                ->where(function ($query) use ($partnerSlug) {
+                    $query->whereHas('assignedPartner', function ($q) use ($partnerSlug) {
+                        $q->whereRaw('LOWER(REPLACE(name, " ", "-")) = ?', [strtolower($partnerSlug)]);
+                    })
+                        ->orWhereHas('creator', function ($q) use ($partnerSlug) {
+                            $q->whereRaw('LOWER(REPLACE(name, " ", "-")) = ?', [strtolower($partnerSlug)]);
+                        });
+                })
+                ->where(function ($query) use ($packageSlug) {
+                    // Check if packageSlug is numeric (ID) or string (name)
+                    if (is_numeric($packageSlug)) {
+                        $query->where('id', $packageSlug);
+                    } else {
+                        // Extract the ID if it's in format "123-package-name"
+                        if (preg_match('/^(\d+)-/', $packageSlug, $matches)) {
+                            $query->where('id', $matches[1]);
+                        } else {
+                            $query->whereRaw('LOWER(REPLACE(name, " ", "-")) = ?', [strtolower($packageSlug)]);
+                        }
+                    }
+                })
+                ->firstOrFail();
+
+            $this->packageId = $this->package->id;
+            $this->incrementViews();
+
+            if (Auth::check()) {
+                $this->name = Auth::user()->name;
+                $this->email = Auth::user()->email;
+                $this->phone = Auth::user()->phone;
+            }
+
+            $this->disabledDates = $this->fetchDisabledDates();
+        } catch (\Exception $e) {
+            \Log::error('Package not found:', [
+                'error' => $e->getMessage(),
+                'partnerSlug' => $partnerSlug,
+                'packageSlug' => $packageSlug
+            ]);
+            abort(404, 'Package not found.');
         }
     }
 
+    // Add a helper method in your Package model
+    public function getShowUrl()
+    {
+        if ($this->assignedPartner) {
+            $partnerSlug = str_replace(' ', '-', strtolower($this->assignedPartner->name));
+            $packageSlug = str_replace(' ', '-', strtolower($this->name));
+            return route('package.show', [
+                'partnerSlug' => $partnerSlug,
+                'packageSlug' => $packageSlug
+            ]);
+        }
+        return '#';
+    }
     public function handleAuthSuccess()
     {
         $this->name = Auth::user()->name;
