@@ -14,7 +14,7 @@ class PackageList extends Component
 {
     use WithPagination;
 
-    public $selectedCountry;
+    public $selectedCountry = 1;
     public $selectedCity;
     public $selectedArea;
     public $keyword;
@@ -23,6 +23,7 @@ class PackageList extends Component
 
     public $countries;
     public $cities;
+
     public $areas;
 
     public function mount($partnerSlug = null)
@@ -30,12 +31,26 @@ class PackageList extends Component
         $this->countries = Country::all();
         $this->cities = [];
         $this->areas = [];
+        $this->selectedCountry = 1;
+
+        $this->loadCities();
+
 
         if ($partnerSlug) {
             $this->partnerSlug = $partnerSlug;
             $this->partner = User::where(function($query) use ($partnerSlug) {
                 $query->whereRaw('LOWER(REPLACE(name, " ", "-")) = ?', [strtolower($partnerSlug)]);
             })->firstOrFail();
+        }
+    }
+
+    public function loadCities()
+    {
+        if ($this->selectedCountry) {
+            $this->cities = City::where('country_id', $this->selectedCountry)->get();
+            $this->selectedCity = null; // Reset city selection
+            $this->areas = []; // Reset areas
+            $this->selectedArea = null; // Reset area selection
         }
     }
 
@@ -97,11 +112,11 @@ class PackageList extends Component
     {
         switch ($type) {
             case 'Day':
-                return '(P/N by Room)';
+                return '(Day Rate)';
             case 'Week':
-                return '(P/W by Room)';
+                return '(Week Rate)';
             case 'Month':
-                return '(P/M by Room)';
+                return '(Month Rate)';
             default:
                 return '';
         }
@@ -111,11 +126,11 @@ class PackageList extends Component
     {
         switch ($type) {
             case 'Day':
-                return '(P/N by Property)';
+                return '(Day Rate)';
             case 'Week':
-                return '(P/W by Property)';
+                return '(Week Rate)';
             case 'Month':
-                return '(P/M by Property)';
+                return '(Month Rate)';
             default:
                 return '';
         }
