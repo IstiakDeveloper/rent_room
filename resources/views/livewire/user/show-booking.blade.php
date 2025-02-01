@@ -200,10 +200,11 @@
                                     <h5 class="modal-title">
                                         <i class="fas fa-credit-card mr-2"></i>Make Payment
                                     </h5>
-                                    <button type="button" class="close text-white" data-dismiss="modal"
-                                        aria-label="Close" wire:click="closePaymentModal">
-                                        <span aria-hidden="true">&times;</span>
-                                    </button>
+                                    @if ($dueBill > 0 && $booking->payment_status != 'finished')
+                                        <button class="btn btn-primary btn-sm text-white" wire:click="showPaymentM()">
+                                            <i class="fas fa-credit-card mr-2"></i>Make Payment
+                                        </button>
+                                    @endif
                                 </div>
                                 <div class="modal-body">
                                     <div class="form-group">
@@ -386,13 +387,12 @@
                                                                     class="badge badge-success text-white">Paid</span>
                                                             @elseif($isOverdue)
                                                                 <button class="btn btn-danger btn-sm text-white"
-                                                                    wire:click="showPaymentM"
-                                                                    {{ $isNextPayment ? '' : 'disabled' }}>
+                                                                    wire:click="showPaymentM({{ $milestone->id }}, {{ $milestone->amount }})">
                                                                     Pay Now (Overdue)
                                                                 </button>
                                                             @elseif($isNextPayment)
                                                                 <button class="btn btn-warning btn-sm text-white"
-                                                                    wire:click="showPaymentM">
+                                                                    wire:click="showPaymentM({{ $milestone->id }}, {{ $milestone->amount }})">
                                                                     Pay Now
                                                                 </button>
                                                             @else
@@ -412,15 +412,19 @@
 
                     <script>
                         document.addEventListener('livewire:initialized', () => {
-                            const paymentModal = new bootstrap.Modal(document.getElementById('paymentModal'));
+                            const paymentModal = document.getElementById('paymentModal');
+                            const bsPaymentModal = new bootstrap.Modal(paymentModal);
 
-                            Livewire.on('closePaymentModal', () => {
-                                paymentModal.hide();
+                            Livewire.on('openModal', (modalId) => {
+                                if (modalId === 'paymentModal') {
+                                    bsPaymentModal.show();
+                                }
                             });
 
-                            Livewire.on('paymentProcessed', () => {
-                                paymentModal.hide();
-                                // Additional success handling if needed
+                            Livewire.on('closeModal', (modalId) => {
+                                if (modalId === 'paymentModal') {
+                                    bsPaymentModal.hide();
+                                }
                             });
                         });
                     </script>

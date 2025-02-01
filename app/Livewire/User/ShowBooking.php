@@ -25,6 +25,8 @@ class ShowBooking extends Component
     public $paymentPercentage;
     public $currentMilestone;
     public $hasOverdue = false;
+    public $selectedMilestoneId = null;
+    public $selectedMilestoneAmount = null;
 
     public bool $autoRenewal = false;
 
@@ -224,13 +226,17 @@ class ShowBooking extends Component
         ]);
     }
 
-    public function showPaymentM()
+    public function showPaymentM($milestoneId = null, $amount = null)
     {
         try {
             // Calculate current milestone and due bill
             $this->calculatePayments();
 
-            if (!$this->currentMilestone) {
+            // Store the selected payment details
+            $this->selectedMilestoneId = $milestoneId ?? $this->currentMilestone?->id;
+            $this->selectedMilestoneAmount = $amount ?? $this->dueBill;
+
+            if (!$this->selectedMilestoneId && !$this->currentMilestone) {
                 session()->flash('error', 'No pending payments found.');
                 return;
             }
@@ -241,7 +247,8 @@ class ShowBooking extends Component
                 ->where('due_date', '<', now())
                 ->isNotEmpty();
 
-            $this->showPaymentModal = true;
+            // Dispatch modal open event
+            $this->dispatch('openModal', 'paymentModal');
         } catch (\Exception $e) {
             session()->flash('error', 'Error loading payment details: ' . $e->getMessage());
         }
