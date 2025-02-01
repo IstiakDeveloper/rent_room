@@ -71,7 +71,7 @@
                     <div class="row">
                         @forelse($packages as $package)
                             <div class="col-md-6 mb-6">
-                                <a href="{{ route('packages.show', $package) }}" class="text-decoration-none">
+                                <a href="{{ $package->getShowUrl() }}" class="text-decoration-none">
                                     <div class="card border-0 py-3" wire:key="package-{{ $package->id }}">
                                         <!-- Property Image -->
                                         <div

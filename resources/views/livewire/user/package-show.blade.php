@@ -84,13 +84,22 @@
         <div class="container">
             <div class="row">
                 <article class="col-lg-8 pr-xl-7">
-                    <section class="pb-2 border-bottom">
-                        <div class="d-sm-flex justify-content-sm-between align-items-start">
-                            <div class="flex-grow-1">
-                                <div class="d-flex align-items-center mb-3">
-                                    <div class="d-flex align-items-center flex-grow-1">
-                                        <h2 class="font-weight-600 text-heading mb-0">{{ $package->name }}</h2>
-                                        <div class="d-flex align-items-center ml-4 pl-4 border-left">
+                    <!-- Package Details Section -->
+                    <section class="package-details py-3 border-bottom">
+                        <!-- Package Header -->
+                        <div class="row">
+                            <!-- Package Info Column -->
+                            <div class="col-12 col-md-8 mb-3 mb-md-0">
+                                <!-- Package Title and Partner Info -->
+                                <div
+                                    class="d-flex flex-column flex-sm-row align-items-start align-items-sm-center mb-3">
+                                    <h2 class="h4 font-weight-600 text-heading mb-2 mb-sm-0">{{ $package->name }}</h2>
+
+                                    <!-- Partner Info - Moves to new line on extra small screens -->
+                                    <div
+                                        class="d-flex align-items-center ml-0 ml-sm-4 mt-2 mt-sm-0 border-left-sm pl-sm-4">
+                                        <!-- Partner Profile Photo -->
+                                        <div class="partner-photo">
                                             @if ($package->user && $package->user->profile_photo_path)
                                                 <img src="{{ Storage::url($package->user->profile_photo_path) }}"
                                                     alt="{{ $package->user->name }}"
@@ -102,6 +111,10 @@
                                                     <i class="fas fa-user-circle"></i>
                                                 </div>
                                             @endif
+                                        </div>
+
+                                        <!-- Partner Name -->
+                                        <div class="partner-name">
                                             @if ($package->assignedPartner)
                                                 <a href="{{ route('partner.packages', ['partnerSlug' => str_replace(' ', '-', strtolower($package->assignedPartner->name))]) }}"
                                                     class="text-decoration-none">
@@ -120,101 +133,222 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="d-flex align-items-center text-muted mb-2">
-                                    <i class="fal fa-map-marker-alt mr-2"></i>
-                                    {{ $package->address }}
+
+                                <!-- Address and Map Link -->
+                                <div class="d-flex flex-wrap align-items-center text-muted mb-2">
+                                    <div class="d-flex align-items-center mr-3 mb-2 mb-sm-0">
+                                        <i class="fal fa-map-marker-alt mr-2"></i>
+                                        <span class="text-break">{{ $package->address }}</span>
+                                    </div>
                                     @if ($package->map_link)
                                         <a href="{{ $package->map_link }}" target="_blank"
-                                            class="ml-3 btn btn-sm btn-outline-secondary">
+                                            class="btn btn-sm btn-outline-secondary">
                                             <i class="fas fa-map mr-1"></i>View Map
                                         </a>
                                     @endif
                                 </div>
                             </div>
 
-                            <!-- Price Display Section -->
-                            <div class="ml-sm-4">
-                                @php
-                                    $roomPrices = $package->rooms->flatMap(function ($room) {
-                                        return $room->roomPrices;
-                                    });
-                                    $firstPrice = $roomPrices->first();
-                                    $priceType = $firstPrice ? $firstPrice->type : null;
-                                @endphp
+                            <!-- Price Display Column -->
+                            <div class="col-12 col-md-4">
+                                <div class="price-section text-left text-md-right">
+                                    @php
+                                        $roomPrices = $package->rooms->flatMap(function ($room) {
+                                            return $room->roomPrices;
+                                        });
+                                        $firstPrice = $roomPrices->first();
+                                        $priceType = $firstPrice ? $firstPrice->type : null;
+                                    @endphp
 
-                                @if ($firstPrice)
-                                    <div class="dropdown">
-                                        <button class="btn btn-outline-secondary dropdown-toggle" type="button"
-                                            id="priceDropdown" data-toggle="dropdown" aria-haspopup="true"
-                                            aria-expanded="false">
-                                            @if ($firstPrice->discount_price)
-                                                <del
-                                                    class="text-muted mr-2">£{{ number_format($firstPrice->fixed_price, 2) }}</del>
-                                                £{{ number_format($firstPrice->discount_price, 2) }}
-                                            @else
-                                                £{{ number_format($firstPrice->fixed_price, 2) }}
-                                            @endif
-                                            <small class="d-block text-muted">{{ ucfirst($priceType) }} Rate</small>
-                                        </button>
-
-                                        <div class="dropdown-menu dropdown-menu-right p-3"
-                                            style="min-width: 300px; max-height: 400px; overflow-y: auto;">
-                                            @foreach ($package->rooms as $room)
-                                                <div class="mb-3">
-                                                    <h6 class="border-bottom pb-2">
-                                                        <i class="fas fa-bed mr-2 text-primary"></i>
-                                                        {{ $room->name }}
-                                                    </h6>
-                                                    @php
-                                                        $pricesByType = $room->roomPrices->groupBy('type');
-                                                    @endphp
-                                                    @foreach ($pricesByType as $type => $prices)
-                                                        <div class="mb-2">
-                                                            <div class="text-muted small mb-1">{{ ucfirst($type) }}
-                                                                Rates</div>
-                                                            @foreach ($prices as $price)
-                                                                <div
-                                                                    class="d-flex justify-content-between align-items-center py-1">
-                                                                    <div>
-                                                                        @if ($price->discount_price)
-                                                                            <del
-                                                                                class="text-muted small">£{{ number_format($price->fixed_price, 2) }}</del>
-                                                                            <span
-                                                                                class="text-success">£{{ number_format($price->discount_price, 2) }}</span>
-                                                                        @else
-                                                                            <span>£{{ number_format($price->fixed_price, 2) }}</span>
-                                                                        @endif
-                                                                    </div>
-                                                                    <small class="text-muted">
-                                                                        +£{{ number_format($price->booking_price, 2) }}
-                                                                        booking fee
-                                                                    </small>
-                                                                </div>
-                                                            @endforeach
+                                    @if ($firstPrice)
+                                        <div class="dropdown">
+                                            <button class="btn btn-outline-secondary w-100 w-md-auto position-relative"
+                                                type="button" id="priceDropdown" data-toggle="dropdown"
+                                                aria-haspopup="true" aria-expanded="false">
+                                                <div class="d-flex align-items-center justify-content-between">
+                                                    <div class="d-flex flex-column align-items-start">
+                                                        <!-- Main Price -->
+                                                        <span class="h5 mb-0 font-weight-bold">
+                                                            @if ($firstPrice->discount_price)
+                                                                £{{ number_format($firstPrice->discount_price, 2) }}
+                                                            @else
+                                                                £{{ number_format($firstPrice->fixed_price, 2) }}
+                                                            @endif
+                                                        </span>
+                                                        <!-- Deleted Price and Rate Type -->
+                                                        <div class="d-flex align-items-center">
+                                                            @if ($firstPrice->discount_price)
+                                                                <del
+                                                                    class="small text-muted mr-1">£{{ number_format($firstPrice->fixed_price, 2) }}</del>
+                                                            @endif
+                                                            <small class="text-muted">{{ ucfirst($priceType) }}
+                                                                Rate</small>
                                                         </div>
-                                                    @endforeach
+                                                    </div>
+                                                    <!-- Dropdown Icon -->
+                                                    <i class="fas fa-chevron-down ml-2"></i>
                                                 </div>
-                                            @endforeach
-                                        </div>
-                                    </div>
-                                @endif
-                            </div>
+                                            </button>
 
+                                            <!-- Price Dropdown Menu -->
+                                            <div class="dropdown-menu dropdown-menu-right p-3 w-100"
+                                                style="min-width: 280px; max-width: 100%; max-height: 400px; overflow-y: auto;">
+                                                @foreach ($package->rooms as $room)
+                                                    <div class="room-price-item mb-3">
+                                                        <h6 class="border-bottom pb-2">
+                                                            <i class="fas fa-bed mr-2 text-primary"></i>
+                                                            {{ $room->name }}
+                                                        </h6>
+                                                        @php
+                                                            $pricesByType = $room->roomPrices->groupBy('type');
+                                                        @endphp
+                                                        @foreach ($pricesByType as $type => $prices)
+                                                            <div class="price-type-group mb-2">
+                                                                <div class="text-muted small mb-1">{{ ucfirst($type) }}
+                                                                    Rates</div>
+                                                                @foreach ($prices as $price)
+                                                                    <div
+                                                                        class="price-item d-flex justify-content-between align-items-center py-1">
+                                                                        <div class="price-amount">
+                                                                            @if ($price->discount_price)
+                                                                                <del
+                                                                                    class="text-muted small">£{{ number_format($price->fixed_price, 2) }}</del>
+                                                                                <span
+                                                                                    class="text-success">£{{ number_format($price->discount_price, 2) }}</span>
+                                                                            @else
+                                                                                <span>£{{ number_format($price->fixed_price, 2) }}</span>
+                                                                            @endif
+                                                                        </div>
+                                                                        <small class="text-muted booking-fee">
+                                                                            +£{{ number_format($price->booking_price, 2) }}
+                                                                            booking fee
+                                                                        </small>
+                                                                    </div>
+                                                                @endforeach
+                                                            </div>
+                                                        @endforeach
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
                         </div>
-                        <h4 class="text-heading mt-3 mb-2">Description</h4>
-                        <p class="mb-0 lh-214">
-                            @php
-                                $words = explode(' ', $package->details);
-                                $limitedWords = array_slice($words, 0, 50);
-                                $remainingWords = array_slice($words, 50);
-                            @endphp
-                            {{ implode(' ', $viewMore ? $words : $limitedWords) }}
-                            @if (count($words) > 50)
-                                <span wire:click="toggleViewMore"
-                                    class="text-primary cursor-pointer">{{ $viewMore ? 'View less' : 'View more' }}</span>
-                            @endif
-                        </p>
+
+                        <!-- Description Section -->
+                        <div class="description-section mt-4">
+                            <h4 class="h5 text-heading mb-3">Description</h4>
+                            <div class="description-content">
+                                @php
+                                    $words = explode(' ', $package->details);
+                                    $limitedWords = array_slice($words, 0, 50);
+                                    $remainingWords = array_slice($words, 50);
+                                @endphp
+                                <p class="mb-0 text-break">
+                                    {{ implode(' ', $viewMore ? $words : $limitedWords) }}
+                                    @if (count($words) > 50)
+                                        <span wire:click="toggleViewMore" class="text-primary cursor-pointer">
+                                            {{ $viewMore ? 'View less' : 'View more' }}
+                                        </span>
+                                    @endif
+                                </p>
+                            </div>
+                        </div>
                     </section>
+
+                    <style>
+                        /* Custom CSS for enhanced mobile responsiveness */
+                        @media (max-width: 575.98px) {
+                            .package-details h2 {
+                                font-size: 1.25rem;
+                            }
+
+                            .border-left-sm {
+                                border-left: none !important;
+                            }
+
+                            .price-section {
+                                margin-top: 1rem;
+                            }
+
+                            .dropdown-menu {
+                                width: 100%;
+                                min-width: 100% !important;
+                                margin-top: 0.5rem;
+                            }
+
+                            .price-item {
+                                flex-direction: column;
+                                align-items: flex-start !important;
+                            }
+
+                            .booking-fee {
+                                margin-top: 0.25rem;
+                                margin-left: 0.5rem;
+                            }
+                        }
+
+                        @media (min-width: 576px) {
+                            .border-left-sm {
+                                border-left: 1px solid #dee2e6;
+                            }
+                        }
+
+                        /* General styling improvements */
+                        .package-details {
+                            background-color: #fff;
+                        }
+
+                        .cursor-pointer {
+                            cursor: pointer;
+                        }
+
+                        .text-break {
+                            word-break: break-word;
+                        }
+
+                        .description-content {
+                            line-height: 1.6;
+                        }
+
+                        /* Dropdown improvements */
+                        .dropdown-menu {
+                            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                        }
+
+                        .room-price-item:last-child {
+                            margin-bottom: 0;
+                        }
+
+                        .price-type-group:last-child {
+                            margin-bottom: 0;
+                        }
+
+                        #priceDropdown {
+                            padding: 0.5rem 1rem;
+                        }
+
+                        #priceDropdown .h5 {
+                            line-height: 1.2;
+                            color: #333;
+                        }
+
+                        #priceDropdown .fa-chevron-down {
+                            font-size: 0.875rem;
+                            transition: transform 0.2s ease;
+                        }
+
+                        #priceDropdown[aria-expanded="true"] .fa-chevron-down {
+                            transform: rotate(180deg);
+                        }
+
+                        @media (max-width: 767.98px) {
+                            #priceDropdown {
+                                text-align: left;
+                            }
+                        }
+                    </style>
 
 
                     <section>

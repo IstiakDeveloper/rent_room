@@ -119,69 +119,251 @@
         <div class="sticky-area">
             <div class="container">
                 <nav class="navbar navbar-expand-lg px-0">
-                    <div class="container-fluid">
-                        @livewire('user.logo-component')
-
-                        <!-- Rent & Rooms Service Link -->
-                        <div class="d-flex align-items-center mr-4">
-                            <a href="https://rapidhandyworks.com" target="_blank" rel="noopener noreferrer"
-                                class="nav-link text-dark d-flex align-items-center hover-s">
-                                <i class="fas fa-home mr-1"></i>
-                                <span class="fs-13 font-weight-500">Rapid Handyworks</span>
-                                <i class="fas fa-external-link-alt ml-1" style="font-size: 12px;"></i>
-                            </a>
+                    <div class="container-fluid px-0">
+                        <!-- Logo -->
+                        <div class="navbar-brand">
+                            @livewire('user.logo-component')
                         </div>
 
+                        <!-- Mobile Toggle Button -->
+                        <button class="navbar-toggler border-0 d-lg-none" type="button" data-toggle="collapse"
+                            data-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false"
+                            aria-label="Toggle navigation">
+                            <span class="navbar-toggler-icon"></span>
+                        </button>
 
-                        <div class="">
-                            @livewire('user.customer-support-component')
-                        </div>
-
-
-                        <div>
-                            @if (auth()->check())
-                                <div class="dropdown px-3">
-                                    <a href="#" class="dropdown-toggle d-flex align-items-center text-heading"
-                                        data-toggle="dropdown">
-                                        <div class="w-48px">
-                                            <img src="{{ auth()->user()->photo ? asset('images/' . auth()->user()->photo) : asset('profile.png') }}"
-                                                alt="{{ auth()->user()->name }}" class="rounded-circle">
-                                        </div>
-                                        <span class="fs-13 font-weight-500 d-none d-sm-inline ml-2">
-                                            {{ auth()->user()->name }}
-                                        </span>
+                        <!-- Main Navigation Content -->
+                        <div class="collapse navbar-collapse" id="navbarContent">
+                            <div class="d-lg-flex align-items-center w-100">
+                                <!-- Rapid Handyworks Link -->
+                                <div class="nav-item d-lg-flex align-items-center mr-lg-4 py-2 py-lg-0">
+                                    <a href="https://rapidhandyworks.com" target="_blank" rel="noopener noreferrer"
+                                        class="nav-link text-dark d-flex align-items-center hover-s">
+                                        <i class="fas fa-tools mr-1"></i>
+                                        <span class="fs-13 font-weight-500">Rapid Handyworks</span>
+                                        <i class="fas fa-external-link-alt ml-1" style="font-size: 12px;"></i>
                                     </a>
-                                    <div class="dropdown-menu dropdown-menu-right">
-                                        @role('User')
-                                            <a class="dropdown-item" href="{{ route('user.bookings.index') }}">My
-                                                Packages</a>
-                                        @endrole
-                                        @role('Super Admin|Admin')
-                                            <a class="dropdown-item" href="{{ route('dashboard') }}">Dashboard</a>
-                                        @endrole
-                                        <a class="dropdown-item" href="{{ route('profile') }}">My Profile</a>
-                                        <a class="dropdown-item" href="{{ route('logout') }}"
-                                            onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Logout</a>
-                                    </div>
-                                    <form id="logout-form" action="{{ route('logout') }}" method="POST"
-                                        style="display: none;">
-                                        @csrf
-                                    </form>
                                 </div>
-                            @else
-                                <a class="nav-link px-2 text-dark hover-s" data-toggle="modal"
-                                    href="#signInModal">SIGN
-                                    IN</a>
-                                <a class="nav-link px-2 text-dark hover-s" data-toggle="modal"
-                                    href="#signUpModal">SIGN UP
-                                </a>
-                            @endif
+
+                                <!-- Right Side Items -->
+                                <div class="d-lg-flex align-items-center ml-lg-auto">
+                                    <!-- Customer Support -->
+                                    <div class="nav-item mr-lg-4 py-2 py-lg-0">
+                                        @livewire('user.customer-support-component')
+                                    </div>
+
+                                    <!-- Auth Section -->
+                                    <div class="nav-item py-2 py-lg-0">
+                                        @if (auth()->check())
+                                            <div class="dropdown">
+                                                <a href="#"
+                                                    class="dropdown-toggle d-flex align-items-center text-heading"
+                                                    data-toggle="dropdown">
+                                                    <div class="user-avatar">
+                                                        <img src="{{ auth()->user()->photo ? asset('images/' . auth()->user()->photo) : asset('profile.png') }}"
+                                                            alt="{{ auth()->user()->name }}" class="rounded-circle"
+                                                            style="width: 32px; height: 32px; object-fit: cover;">
+                                                    </div>
+                                                    <span class="fs-13 font-weight-500 d-none d-sm-inline ml-2">
+                                                        {{ auth()->user()->name }}
+                                                    </span>
+                                                </a>
+                                                <div class="dropdown-menu dropdown-menu-right">
+                                                    @role('User')
+                                                        <a class="dropdown-item"
+                                                            href="{{ route('user.bookings.index') }}">
+                                                            <i class="fas fa-bookmark mr-2"></i>My Packages
+                                                        </a>
+                                                    @endrole
+                                                    @role('Super Admin|Admin')
+                                                        <a class="dropdown-item" href="{{ route('dashboard') }}">
+                                                            <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
+                                                        </a>
+                                                    @endrole
+                                                    <a class="dropdown-item" href="{{ route('profile') }}">
+                                                        <i class="fas fa-user mr-2"></i>My Profile
+                                                    </a>
+                                                    <div class="dropdown-divider"></div>
+                                                    <a class="dropdown-item" href="{{ route('logout') }}"
+                                                        onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                                                        <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                                                    </a>
+                                                </div>
+                                                <form id="logout-form" action="{{ route('logout') }}" method="POST"
+                                                    class="d-none">
+                                                    @csrf
+                                                </form>
+                                            </div>
+                                        @else
+                                            <div
+                                                class="d-flex flex-column flex-lg-row align-items-start align-items-lg-center">
+                                                <a class="nav-link px-2 text-dark hover-s mb-2 mb-lg-0 mr-lg-2"
+                                                    data-toggle="modal" href="#signInModal">
+                                                    <i class="fas fa-sign-in-alt mr-1"></i>SIGN IN
+                                                </a>
+                                                <a class="nav-link px-2 text-dark hover-s" data-toggle="modal"
+                                                    href="#signUpModal">
+                                                    <i class="fas fa-user-plus mr-1"></i>SIGN UP
+                                                </a>
+                                            </div>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </nav>
             </div>
         </div>
     </header>
+
+
+    <style>
+        /* Header Styles */
+        .main-header {
+            background: #fff;
+            transition: all 0.3s ease;
+        }
+
+        .header-sticky-smart {
+            position: fixed;
+            top: 0;
+            right: 0;
+            left: 0;
+            z-index: 1020;
+        }
+
+        /* Sticky Header Animation */
+        .header-sticky-smart.sticky {
+            transform: translateY(0);
+            box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-sticky-smart.sticky-up {
+            transform: translateY(-100%);
+        }
+
+        /* Navigation Items */
+        .nav-link {
+            padding: 0.5rem 1rem;
+            transition: color 0.2s ease;
+        }
+
+        .hover-s:hover {
+            color: #007bff !important;
+        }
+
+        /* User Dropdown */
+        .dropdown-menu {
+            border: 0;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            border-radius: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .dropdown-item {
+            padding: 0.5rem 1.5rem;
+            font-size: 0.875rem;
+        }
+
+        .dropdown-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        /* Mobile Specific Styles */
+        @media (max-width: 991.98px) {
+            .navbar-collapse {
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                background: #fff;
+                padding: 1rem;
+                border-top: 1px solid #eee;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                /* Center align items in the menu */
+                justify-content: center;
+                /* Center align the content vertically */
+            }
+
+            .nav-item {
+                width: 100%;
+                /* Make each item take up full width */
+                text-align: center;
+                /* Ensure text is centered in each item */
+                border-bottom: 1px solid #eee;
+            }
+
+            .nav-item:last-child {
+                border-bottom: none;
+            }
+
+            .navbar-toggler {
+                position: absolute;
+                right: 20px;
+                top: 20px;
+            }
+        }
+
+        /* Desktop Specific Styles */
+        @media (min-width: 992px) {
+            .navbar {
+                padding: 0;
+                height: 70px;
+            }
+
+            .nav-item {
+                margin: 0 0.25rem;
+            }
+
+            .navbar-collapse {
+                display: flex !important;
+                justify-content: center !important;
+            }
+        }
+
+        /* Utility Classes */
+        .fs-13 {
+            font-size: 13px;
+        }
+
+        .w-48px {
+            width: 48px !important;
+        }
+    </style>
+
+    <script>
+        // Sticky Header Logic
+        document.addEventListener('DOMContentLoaded', function() {
+            let lastScroll = 0;
+            const header = document.querySelector('.header-sticky-smart');
+
+            window.addEventListener('scroll', () => {
+                const currentScroll = window.pageYOffset;
+
+                if (currentScroll <= 0) {
+                    header.classList.remove('sticky', 'sticky-up');
+                    return;
+                }
+
+                if (currentScroll > lastScroll && currentScroll > 70) {
+                    // Scrolling down
+                    header.classList.remove('sticky');
+                    header.classList.add('sticky-up');
+                } else {
+                    // Scrolling up
+                    header.classList.remove('sticky-up');
+                    header.classList.add('sticky');
+                }
+
+                lastScroll = currentScroll;
+            });
+        });
+    </script>
+
 
 
 
