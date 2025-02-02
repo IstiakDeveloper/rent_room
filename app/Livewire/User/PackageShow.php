@@ -35,6 +35,7 @@ class PackageShow extends Component
     public $calendarView = false;
     public $roomPrices = [];
 
+
     protected $rules = [
         'fromDate' => 'required|date',
         'toDate' => 'required|date|after:fromDate',

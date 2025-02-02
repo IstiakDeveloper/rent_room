@@ -23,40 +23,348 @@
         <div>
 
 
-            <div class="container mt-4">
-                <!-- Main Image with Lightbox Link -->
-                <div class="mb-3">
-                    <div class="w">
-                        <a href="#img{{ $currentPhotoIndex }}" class="lightbox-trigger"
-                            data-imgsrc="{{ asset('storage/' . $package->photos[$currentPhotoIndex]->url) }}">
-                            <img src="{{ asset('storage/' . $package->photos[$currentPhotoIndex]->url) }}"
-                                class="img-fluid rounded w-100" alt="Large Image"
-                                style="max-height: 60vh; object-fit: cover;">
-                        </a>
+            <div class="container px-0 mt-4">
+                <div class="slider-section" id="imageSlider">
+                    <!-- Main Image -->
+                    <div class="main-image-wrapper">
+                        <img src="{{ asset('storage/' . $package->photos[0]->url) }}" class="main-image" alt="Main Image"
+                            id="mainImage">
                     </div>
-                </div>
 
-                <div class="d-flex package-gallery">
-                    @foreach ($package->photos as $index => $photo)
-                        <div class="mb-2 mr-2">
-                            <a href="#" class="lightbox-trigger"
-                                data-imgsrc="{{ asset('storage/' . $photo->url) }}">
-                                <img src="{{ asset('storage/' . $photo->url) }}"
-                                    class="img-thumbnail package-gallery-img" alt="Thumbnail">
-                            </a>
+                    <!-- Navigation Controls -->
+                    <div class="slider-controls">
+                        <button class="nav-btn prev" id="prevBtn">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <div class="image-counter" id="imageCounter">
+                            1 / {{ count($package->photos) }}
                         </div>
-                    @endforeach
+                        <button class="nav-btn next" id="nextBtn">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
                 </div>
 
-                <section class="lightbox-container">
-                    <span class="fas fa-chevron-left lightbox-btn left" id="left"></span>
-                    <span class="fas fa-chevron-right lightbox-btn right" id="right"></span>
-                    <span id="close" class="close fas fa-times"></span>
-                    <div class="lightbox-image-wrapper">
-                        <img alt="lightboximage" class="lightbox-image">
+                <!-- Lightbox -->
+                <div class="lightbox-overlay" id="lightbox">
+                    <div class="lightbox-content">
+                        <img src="" alt="Lightbox Image" class="lightbox-image" id="lightboxImage">
+
+                        <button class="lightbox-nav prev" id="lightboxPrev">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <button class="lightbox-nav next" id="lightboxNext">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+
+                        <button class="lightbox-close" id="lightboxClose">
+                            <i class="fas fa-times"></i>
+                        </button>
                     </div>
-                </section>
+                </div>
             </div>
+
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    // Get all images from PHP/Blade
+                    const images = @json(
+                        $package->photos->map(function ($photo) {
+                            return asset('storage/' . $photo->url);
+                        }));
+
+                    // Initialize variables
+                    let currentIndex = 0;
+                    const totalImages = images.length;
+
+                    // Get DOM elements
+                    const mainImage = document.getElementById('mainImage');
+                    const prevBtn = document.getElementById('prevBtn');
+                    const nextBtn = document.getElementById('nextBtn');
+                    const imageCounter = document.getElementById('imageCounter');
+                    const lightbox = document.getElementById('lightbox');
+                    const lightboxImage = document.getElementById('lightboxImage');
+                    const lightboxPrev = document.getElementById('lightboxPrev');
+                    const lightboxNext = document.getElementById('lightboxNext');
+                    const lightboxClose = document.getElementById('lightboxClose');
+
+                    // Update display
+                    function updateDisplay(index) {
+                        mainImage.src = images[index];
+                        imageCounter.textContent = `${index + 1} / ${totalImages}`;
+
+                        // Optional: Add fade effect
+                        mainImage.style.opacity = '0';
+                        setTimeout(() => mainImage.style.opacity = '1', 50);
+                    }
+
+                    // Navigation functions
+                    function showPrevImage() {
+                        currentIndex = (currentIndex - 1 + totalImages) % totalImages;
+                        updateDisplay(currentIndex);
+                    }
+
+                    function showNextImage() {
+                        currentIndex = (currentIndex + 1) % totalImages;
+                        updateDisplay(currentIndex);
+                    }
+
+                    // Event listeners for main slider
+                    prevBtn.addEventListener('click', showPrevImage);
+                    nextBtn.addEventListener('click', showNextImage);
+
+                    // Keyboard navigation
+                    document.addEventListener('keydown', (e) => {
+                        if (e.key === 'ArrowLeft') {
+                            showPrevImage();
+                        } else if (e.key === 'ArrowRight') {
+                            showNextImage();
+                        }
+                    });
+
+                    // Lightbox functions
+                    function openLightbox() {
+                        lightbox.style.display = 'flex';
+                        lightboxImage.src = images[currentIndex];
+                        document.body.style.overflow = 'hidden'; // Prevent scrolling
+                    }
+
+                    function closeLightbox() {
+                        lightbox.style.display = 'none';
+                        document.body.style.overflow = '';
+                    }
+
+                    function updateLightboxImage() {
+                        lightboxImage.src = images[currentIndex];
+                        imageCounter.textContent = `${currentIndex + 1} / ${totalImages}`;
+                    }
+
+                    // Event listeners for lightbox
+                    mainImage.addEventListener('click', openLightbox);
+                    lightboxClose.addEventListener('click', closeLightbox);
+                    lightboxPrev.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        showPrevImage();
+                        updateLightboxImage();
+                    });
+                    lightboxNext.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        showNextImage();
+                        updateLightboxImage();
+                    });
+
+                    // Close lightbox when clicking outside
+                    lightbox.addEventListener('click', (e) => {
+                        if (e.target === lightbox) {
+                            closeLightbox();
+                        }
+                    });
+
+                    // Add touch swipe support
+                    let touchStartX = 0;
+                    let touchEndX = 0;
+
+                    mainImage.addEventListener('touchstart', e => {
+                        touchStartX = e.changedTouches[0].screenX;
+                    });
+
+                    mainImage.addEventListener('touchend', e => {
+                        touchEndX = e.changedTouches[0].screenX;
+                        handleSwipe();
+                    });
+
+                    function handleSwipe() {
+                        const swipeThreshold = 50;
+                        const swipeLength = touchEndX - touchStartX;
+
+                        if (Math.abs(swipeLength) > swipeThreshold) {
+                            if (swipeLength > 0) {
+                                showPrevImage();
+                            } else {
+                                showNextImage();
+                            }
+                        }
+                    }
+
+                    // Initialize display
+                    updateDisplay(currentIndex);
+                    lightbox.style.display = 'none';
+                });
+            </script>
+
+            <style>
+                /* Main Slider Styles */
+                .slider-section {
+                    position: relative;
+                    width: 100%;
+                    margin-bottom: 20px;
+                }
+
+                .main-image-wrapper {
+                    position: relative;
+                    width: 100%;
+                    overflow: hidden;
+                }
+
+                .main-image {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                    cursor: pointer;
+                    display: block;
+                    transition: opacity 0.3s ease;
+                }
+
+                /* Navigation Controls */
+                .slider-controls {
+                    position: absolute;
+                    top: 50%;
+                    left: 0;
+                    right: 0;
+                    transform: translateY(-50%);
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 0 20px;
+                    z-index: 10;
+                }
+
+                .nav-btn {
+                    background: rgba(255, 255, 255, 0.9);
+                    border: none;
+                    border-radius: 50%;
+                    width: 44px;
+                    height: 44px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+                }
+
+                .nav-btn:hover {
+                    background: #fff;
+                    transform: scale(1.1);
+                }
+
+                .nav-btn i {
+                    color: #333;
+                    font-size: 1.2rem;
+                }
+
+                .image-counter {
+                    position: absolute;
+                    bottom: 20px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background: rgba(0, 0, 0, 0.7);
+                    color: white;
+                    padding: 8px 16px;
+                    border-radius: 20px;
+                    font-size: 14px;
+                    font-weight: 500;
+                    display: none;
+                }
+
+                /* Lightbox Styles */
+                .lightbox-overlay {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0, 0, 0, 0.9);
+                    display: none;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 1050;
+                }
+
+                .lightbox-content {
+                    position: relative;
+                    max-width: 90vw;
+                    max-height: 90vh;
+                }
+
+                .lightbox-image {
+                    max-width: 100%;
+                    max-height: 90vh;
+                    object-fit: contain;
+                }
+
+                .lightbox-nav {
+                    position: absolute;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    background: rgba(255, 255, 255, 0.2);
+                    border: none;
+                    color: white;
+                    width: 50px;
+                    height: 50px;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                }
+
+                .lightbox-nav:hover {
+                    background: rgba(255, 255, 255, 0.3);
+                }
+
+                .lightbox-nav.prev {
+                    left: -70px;
+                }
+
+                .lightbox-nav.next {
+                    right: -70px;
+                }
+
+                .lightbox-close {
+                    position: absolute;
+                    top: -40px;
+                    right: 0;
+                    background: none;
+                    border: none;
+                    color: white;
+                    font-size: 24px;
+                    cursor: pointer;
+                }
+
+                /* Mobile Responsive */
+                @media (max-width: 768px) {
+                    .main-image-wrapper {
+                        height: 40vh;
+                    }
+
+                    .nav-btn {
+                        width: 36px;
+                        height: 36px;
+                    }
+
+                    .nav-btn i {
+                        font-size: 1rem;
+                    }
+
+                    .image-counter {
+                        padding: 6px 12px;
+                        font-size: 12px;
+                    }
+
+                    .lightbox-nav.prev {
+                        left: 10px;
+                    }
+
+                    .lightbox-nav.next {
+                        right: 10px;
+                    }
+
+                    .slider-controls {
+                        padding: 0 10px;
+                    }
+                }
+            </style>
 
 
 
@@ -89,61 +397,23 @@
                         <!-- Package Header -->
                         <div class="row">
                             <!-- Package Info Column -->
-                            <div class="col-12 col-md-8 mb-3 mb-md-0">
+                            <div class="col-12 col-md-8 mb-md-0">
                                 <!-- Package Title and Partner Info -->
-                                <div
-                                    class="d-flex flex-column flex-sm-row align-items-start align-items-sm-center mb-3">
-                                    <h2 class="h4 font-weight-600 text-heading mb-2 mb-sm-0">{{ $package->name }}</h2>
+                                <div class="d-flex flex-column flex-sm-row align-items-start align-items-sm-center">
+                                    <h2 class="h4 font-weight-600 text-heading mb-1 mb-sm-0">{{ $package->name }}</h2>
 
-                                    <!-- Partner Info - Moves to new line on extra small screens -->
-                                    <div
-                                        class="d-flex align-items-center ml-0 ml-sm-4 mt-2 mt-sm-0 border-left-sm pl-sm-4">
-                                        <!-- Partner Profile Photo -->
-                                        <div class="partner-photo">
-                                            @if ($package->user && $package->user->profile_photo_path)
-                                                <img src="{{ Storage::url($package->user->profile_photo_path) }}"
-                                                    alt="{{ $package->user->name }}"
-                                                    class="rounded-circle border shadow-sm"
-                                                    style="width: 32px; height: 32px; object-fit: cover;">
-                                            @else
-                                                <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center border shadow-sm"
-                                                    style="width: 32px; height: 32px;">
-                                                    <i class="fas fa-user-circle"></i>
-                                                </div>
-                                            @endif
-                                        </div>
-
-                                        <!-- Partner Name -->
-                                        <div class="partner-name">
-                                            @if ($package->assignedPartner)
-                                                <a href="{{ route('partner.packages', ['partnerSlug' => str_replace(' ', '-', strtolower($package->assignedPartner->name))]) }}"
-                                                    class="text-decoration-none">
-                                                    <span class="font-weight-medium ml-2 text-success">
-                                                        {{ $package->assignedPartner->name }}
-                                                    </span>
-                                                </a>
-                                            @else
-                                                <a href="{{ route('partner.packages', ['partnerSlug' => str_replace(' ', '-', strtolower($package->creator->name))]) }}"
-                                                    class="text-decoration-none">
-                                                    <span class="font-weight-medium ml-2 text-success">
-                                                        {{ $package->creator->name }}
-                                                    </span>
-                                                </a>
-                                            @endif
-                                        </div>
-                                    </div>
                                 </div>
 
                                 <!-- Address and Map Link -->
-                                <div class="d-flex flex-wrap align-items-center text-muted mb-2">
-                                    <div class="d-flex align-items-center mr-3 mb-2 mb-sm-0">
+                                <div class="d-flex flex-wrap align-items-center text-muted">
+                                    <div class="d-flex align-items-center mr-3 mb-sm-0">
                                         <i class="fal fa-map-marker-alt mr-2"></i>
                                         <span class="text-break">{{ $package->address }}</span>
                                     </div>
                                     @if ($package->map_link)
                                         <a href="{{ $package->map_link }}" target="_blank"
                                             class="btn btn-sm btn-outline-secondary">
-                                            <i class="fas fa-map mr-1"></i>View Map
+                                            Map
                                         </a>
                                     @endif
                                 </div>
@@ -154,7 +424,10 @@
                                 <div class="price-section text-left text-md-right">
                                     @php
                                         $roomPrices = $package->rooms->flatMap(function ($room) {
-                                            return $room->roomPrices;
+                                            return $room->roomPrices->map(function ($price) use ($room) {
+                                                $price->room_name = $room->name; // Add room name to each price
+                                                return $price;
+                                            });
                                         });
                                         $firstPrice = $roomPrices->first();
                                         $priceType = $firstPrice ? $firstPrice->type : null;
@@ -174,15 +447,18 @@
                                                             @else
                                                                 £{{ number_format($firstPrice->fixed_price, 2) }}
                                                             @endif
+                                                            <small class="text-muted" style="font-size: 0.65rem;">
+                                                                Per {{ ucfirst($priceType) }}
+                                                            </small>
                                                         </span>
-                                                        <!-- Deleted Price and Rate Type -->
+                                                        <!-- Deleted Price, Rate Type and Room Name -->
                                                         <div class="d-flex align-items-center">
                                                             @if ($firstPrice->discount_price)
                                                                 <del
                                                                     class="small text-muted mr-1">£{{ number_format($firstPrice->fixed_price, 2) }}</del>
                                                             @endif
-                                                            <small class="text-muted">{{ ucfirst($priceType) }}
-                                                                Rate</small>
+                                                            <small class="text-muted"
+                                                                style="font-size: 0.65rem;">{{ $firstPrice->room_name }}</small>
                                                         </div>
                                                     </div>
                                                     <!-- Dropdown Icon -->
@@ -237,8 +513,49 @@
                         </div>
 
                         <!-- Description Section -->
-                        <div class="description-section mt-4">
-                            <h4 class="h5 text-heading mb-3">Description</h4>
+                        <div class="description-section mt-1">
+                            <div class="d-flex align-items-center justify-content-between mb-1">
+                                <div class="mt-2">
+                                    <h4 class="h5 text-heading">Description</h4>
+                                </div>
+                                <!-- Partner Info - Moves to new line on extra small screens -->
+                                <div class="d-flex align-items-center ml-0 ml-sm-4 mt-2 mt-sm-0 border-left-sm pl-sm-4">
+                                    <!-- Partner Profile Photo -->
+                                    <div class="partner-photo">
+                                        @if ($package->user && $package->user->profile_photo_path)
+                                            <img src="{{ Storage::url($package->user->profile_photo_path) }}"
+                                                alt="{{ $package->user->name }}"
+                                                class="rounded-circle border shadow-sm"
+                                                style="width: 32px; height: 32px; object-fit: cover;">
+                                        @else
+                                            <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center border shadow-sm"
+                                                style="width: 32px; height: 32px;">
+                                                <i class="fas fa-user-circle"></i>
+                                            </div>
+                                        @endif
+                                    </div>
+
+                                    <!-- Partner Name -->
+                                    <div class="partner-name">
+                                        @if ($package->assignedPartner)
+                                            <a href="{{ route('partner.packages', ['partnerSlug' => str_replace(' ', '-', strtolower($package->assignedPartner->name))]) }}"
+                                                class="text-decoration-none">
+                                                <span class="font-weight-medium ml-2 text-success">
+                                                    {{ $package->assignedPartner->name }}
+                                                </span>
+                                            </a>
+                                        @else
+                                            <a href="{{ route('partner.packages', ['partnerSlug' => str_replace(' ', '-', strtolower($package->creator->name))]) }}"
+                                                class="text-decoration-none">
+                                                <span class="font-weight-medium ml-2 text-success">
+                                                    {{ $package->creator->name }}
+                                                </span>
+                                            </a>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+
                             <div class="description-content">
                                 @php
                                     $words = explode(' ', $package->details);
@@ -287,6 +604,35 @@
                                 margin-top: 0.25rem;
                                 margin-left: 0.5rem;
                             }
+                        }
+
+                        /* Base button styles */
+                        .btn-outline-secondary {
+                            transition: all 0.3s ease;
+                            border: 1px solid #6c757d;
+                        }
+
+                        /* Hover styles */
+                        .btn-outline-secondary:hover {
+                            background-color: #f8f9fa;
+                            border-color: #6c757d;
+                            color: #495057;
+                        }
+
+                        /* Ensure price remains visible on hover */
+                        .btn-outline-secondary:hover .h5,
+                        .btn-outline-secondary:hover .text-muted {
+                            color: #495057 !important;
+                        }
+
+                        /* Deleted price hover state */
+                        .btn-outline-secondary:hover del.text-muted {
+                            color: #6c757d !important;
+                        }
+
+                        /* Smooth transition for the dropdown icon */
+                        .btn-outline-secondary:hover .fa-chevron-down {
+                            color: #495057;
                         }
 
                         @media (min-width: 576px) {
