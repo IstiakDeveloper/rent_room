@@ -18,12 +18,25 @@ class DashboardComponent extends Component
     public $monthlyRevenue;
     public $totalBookingRevenue;
 
+    public $activePackages = 0;
+    public $upcomingBookings = 0;
+    public $totalSpent = 0;
+    public $recentBookings = [];
+
     public function mount()
     {
         $user = Auth::user();
 
         // Fetch total number of users
         $this->totalUsers = User::role('User')->count();
+
+        $this->activePackages = $user->bookings()->active()->count();
+        $this->upcomingBookings = $user->bookings()->upcoming()->count();
+        $this->totalSpent = $user->bookings()->where('payment_status', 'completed')->sum('total_amount');
+        $this->recentBookings = $user->bookings()
+            ->latest()
+            ->take(5)
+            ->get();
 
         // Fetch total number of partners
         $this->totalPartner = User::role('Partner')->count();
@@ -39,7 +52,7 @@ class DashboardComponent extends Component
         if ($user->hasRole('Super Admin')) {
             $this->totalBookings = Booking::count();
         } else {
-            $this->totalBookings = Booking::whereHas('package', function($query) use ($user) {
+            $this->totalBookings = Booking::whereHas('package', function ($query) use ($user) {
                 $query->where('user_id', $user->id);
             })->count();
         }

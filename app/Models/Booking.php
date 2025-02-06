@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Carbon\Carbon;
+use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -123,6 +124,28 @@ class Booking extends Model
                 'is_booking_fee' => $i === 0 ? true : false
             ]);
         }
+    }
+
+   /**
+     * Scope a query to only include active bookings.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeActive(Builder $query)
+    {
+        return $query->where('payment_status', 'completed');
+    }
+
+    /**
+     * Scope a query to only include upcoming bookings.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeUpcoming(Builder $query)
+    {
+        return $query->where('payment_status', 'pending');
     }
 
 }

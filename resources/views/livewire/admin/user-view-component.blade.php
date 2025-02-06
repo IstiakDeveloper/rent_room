@@ -36,7 +36,6 @@
 
     @if ($user->hasRole('User'))
         <div class="container-fluid">
-            {{-- Booking List --}}
             @if ($bookings && count($bookings))
                 <div class="row">
                     @foreach ($bookings as $booking)

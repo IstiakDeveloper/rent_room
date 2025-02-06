@@ -37,6 +37,8 @@ class ProfileComponent extends Component
     public $editPayslip;
     public $editStudentCard;
     public $isDetailEditing = false;
+    public $showDeleteModal = false;
+
 
 
     public $agreementDetail = [
