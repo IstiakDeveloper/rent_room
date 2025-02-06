@@ -150,4 +150,9 @@ class Package extends Model
             'packageSlug' => $packageSlug
         ]);
     }
+
+    public function documents()
+    {
+        return $this->hasMany(PackageDocument::class);
+    }
 }

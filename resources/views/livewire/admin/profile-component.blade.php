@@ -315,340 +315,488 @@
 
         <!-- Partner Role Content -->
         @role('Partner')
-            <div class="row">
-                <!-- Partner Documents -->
-                <div class="col-md-4 mb-4">
-                    <div class="card shadow-sm">
-                        <div class="card-header bg-primary text-white">
-                            <h5 class="card-title mb-0">
-                                <i class="fas fa-file-upload mr-2"></i>Partner Documents
-                            </h5>
-                        </div>
-                        <div class="card-body">
-                            <form action="{{ route('profile.update') }}" method="POST" enctype="multipart/form-data">
-                                @csrf
-                                <div class="form-group">
-                                    <label class="font-weight-bold">
-                                        <i class="fas fa-file-contract mr-1"></i>Gas Certificate
-                                    </label>
-                                    <input type="hidden" name="proof_type_1" value="Gas Certificate">
-                                    <div class="custom-file">
-                                        <input type="file" class="custom-file-input" id="proof_path_1"
-                                            name="proof_path_1">
-                                        <label class="custom-file-label" for="proof_path_1">Choose file</label>
-                                    </div>
-                                    @error('proof_path_1')
-                                        <small class="text-danger">
-                                            <i class="fas fa-exclamation-circle mr-1"></i>{{ $message }}
-                                        </small>
-                                    @enderror
-                                </div>
-
-                                <div class="form-group mt-3">
-                                    <label class="font-weight-bold">
-                                        <i class="fas fa-bolt mr-1"></i>Electric Certificate
-                                    </label>
-                                    <input type="hidden" name="proof_type_2" value="Electric Certificate">
-                                    <div class="custom-file">
-                                        <input type="file" class="custom-file-input" id="proof_path_2"
-                                            name="proof_path_2">
-                                        <label class="custom-file-label" for="proof_path_2">Choose file</label>
-                                    </div>
-                                    @error('proof_path_2')
-                                        <small class="text-danger">
-                                            <i class="fas fa-exclamation-circle mr-1"></i>{{ $message }}
-                                        </small>
-                                    @enderror
-                                </div>
-
-                                <div class="form-group mt-3">
-                                    <label class="font-weight-bold">
-                                        <i class="fas fa-home mr-1"></i>Landlord Certificate (HMO/Other)
-                                    </label>
-                                    <input type="hidden" name="proof_type_3" value="Landlord Certificate (HMO/Other)">
-                                    <div class="custom-file">
-                                        <input type="file" class="custom-file-input" id="proof_path_3"
-                                            name="proof_path_3">
-                                        <label class="custom-file-label" for="proof_path_3">Choose file</label>
-                                    </div>
-                                    @error('proof_path_3')
-                                        <small class="text-danger">
-                                            <i class="fas fa-exclamation-circle mr-1"></i>{{ $message }}
-                                        </small>
-                                    @enderror
-                                </div>
-
-                                <div class="form-group mt-3">
-                                    <label class="font-weight-bold">
-                                        <i class="fas fa-shield-alt mr-1"></i>Building Insurance Certificate
-                                    </label>
-                                    <input type="hidden" name="proof_type_4" value="Building Insurance Certificate">
-                                    <div class="custom-file">
-                                        <input type="file" class="custom-file-input" id="proof_path_4"
-                                            name="proof_path_4">
-                                        <label class="custom-file-label" for="proof_path_4">Choose file</label>
-                                    </div>
-                                    @error('proof_path_4')
-                                        <small class="text-danger">
-                                            <i class="fas fa-exclamation-circle mr-1"></i>{{ $message }}
-                                        </small>
-                                    @enderror
-                                </div>
-
-                                <div class="text-center mt-4">
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="fas fa-save mr-1"></i>Update Documents
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-user-shield mr-2"></i>Partner Dashboard
+                    </h5>
                 </div>
 
-                <!-- Bank Details -->
-                <div class="col-md-4 mb-4">
-                    <div class="card shadow-sm">
-                        <div class="card-header bg-primary text-white">
-                            <h5 class="card-title mb-0">
-                                <i class="fas fa-university mr-2"></i>Bank Details
-                            </h5>
-                        </div>
-                        <div class="card-body">
-                            <form wire:submit.prevent="saveBankDetails">
-                                <div class="form-group">
-                                    <label class="font-weight-bold">
-                                        <i class="fas fa-user mr-1"></i>Account Holder Name
-                                    </label>
-                                    <input type="text" class="form-control" placeholder="Enter account holder name"
-                                        wire:model="bankDetail.name">
-                                    @error('bankDetail.name')
-                                        <small class="text-danger">
-                                            <i class="fas fa-exclamation-circle mr-1"></i>{{ $message }}
-                                        </small>
-                                    @enderror
-                                </div>
+                <div class="card-body">
+                    <!-- Tab Navigation -->
+                    <ul class="nav nav-tabs mb-4" id="partnerTabs" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" id="documents-tab" data-toggle="tab" href="#documents"
+                                role="tab">
+                                <i class="fas fa-file-alt mr-2"></i>Package Documents
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link btn-outline" id="overview-tab" data-toggle="tab" href="#overview" role="tab">
+                                <i class="fas fa-clipboard-check mr-2"></i>Documents Overview
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="details-tab" data-toggle="tab" href="#details" role="tab">
+                                <i class="fas fa-info-circle mr-2"></i>Business Details
+                            </a>
+                        </li>
+                    </ul>
 
-                                <div class="form-group mt-3">
-                                    <label class="font-weight-bold">
-                                        <i class="fas fa-sort-numeric-up mr-1"></i>Sort Code
-                                    </label>
-                                    <input type="text" class="form-control" placeholder="Enter sort code"
-                                        wire:model="bankDetail.sort_code">
-                                    @error('bankDetail.sort_code')
-                                        <small class="text-danger">
-                                            <i class="fas fa-exclamation-circle mr-1"></i>{{ $message }}
-                                        </small>
-                                    @enderror
-                                </div>
-
-                                <div class="form-group mt-3">
-                                    <label class="font-weight-bold">
-                                        <i class="fas fa-hashtag mr-1"></i>Account Number
-                                    </label>
-                                    <input type="text" class="form-control" placeholder="Enter account number"
-                                        wire:model="bankDetail.account">
-                                    @error('bankDetail.account')
-                                        <small class="text-danger">
-                                            <i class="fas fa-exclamation-circle mr-1"></i>{{ $message }}
-                                        </small>
-                                    @enderror
-                                </div>
-
-                                <div class="text-center mt-4">
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="fas fa-save mr-1"></i>Save Bank Details
-                                    </button>
-                                </div>
-
-                                @if (session()->has('message'))
-                                    <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
-                                        <i class="fas fa-check-circle mr-1"></i>{{ session('message') }}
-                                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                            <span aria-hidden="true">&times;</span>
+                    <!-- Tab Content -->
+                    <div class="tab-content" id="partnerTabContent">
+                        <!-- Package Documents Tab -->
+                        <div class="tab-pane fade show active" id="documents" role="tabpanel">
+                            @forelse($packages as $package)
+                                <div class="border-bottom mb-4 pb-4">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h6 class="mb-0">
+                                            <i class="fas fa-box mr-2"></i>{{ $package->name }}
+                                            <span class="badge badge-info ml-2">ID: {{ $package->id }}</span>
+                                        </h6>
+                                        <button type="submit" form="package-form-{{ $package->id }}"
+                                            class="btn btn-primary btn-sm">
+                                            <i class="fas fa-save mr-1"></i>Update Documents
                                         </button>
                                     </div>
-                                @endif
-                            </form>
+
+                                    <form id="package-form-{{ $package->id }}"
+                                        action="{{ route('partner.package.documents.update', $package->id) }}"
+                                        method="POST" enctype="multipart/form-data">
+                                        @csrf
+                                        @method('PUT')
+
+                                        <div class="row">
+                                            <!-- Document Cards -->
+                                            @foreach ([
+            'gas_certificate' => ['icon' => 'file-contract', 'label' => 'Gas Certificate'],
+            'electric_certificate' => ['icon' => 'bolt', 'label' => 'Electric Certificate'],
+            'landlord_certificate' => ['icon' => 'home', 'label' => 'Landlord Certificate'],
+            'building_insurance' => ['icon' => 'shield-alt', 'label' => 'Building Insurance'],
+        ] as $type => $details)
+                                                <div class="col-md-6 col-lg-3 mb-3">
+                                                    <div class="card border h-100">
+                                                        <div class="card-body p-3">
+                                                            <input type="hidden" name="document_types[]"
+                                                                value="{{ $type }}">
+
+                                                            <div
+                                                                class="d-flex justify-content-between align-items-center mb-2">
+                                                                <label class="mb-0 text-primary">
+                                                                    <i class="fas fa-{{ $details['icon'] }} mr-1"></i>
+                                                                    {{ $details['label'] }}
+                                                                </label>
+                                                                @if ($doc = $package->documents->where('type', $type)->first())
+                                                                    <span class="badge badge-success">
+                                                                        <i class="fas fa-check-circle"></i>
+                                                                    </span>
+                                                                @endif
+                                                            </div>
+
+                                                            <div class="custom-file">
+                                                                <input type="file" class="custom-file-input"
+                                                                    id="{{ $type }}_{{ $package->id }}"
+                                                                    name="documents[{{ $type }}]">
+                                                                <label class="custom-file-label"
+                                                                    for="{{ $type }}_{{ $package->id }}">
+                                                                    Choose file
+                                                                </label>
+                                                            </div>
+
+                                                            @if ($doc)
+                                                                <div class="mt-2">
+                                                                    <a href="{{ Storage::url($doc->path) }}"
+                                                                        class="btn btn-sm btn-outline-primary btn-block"
+                                                                        target="_blank">
+                                                                        <i class="fas fa-eye mr-1"></i>View
+                                                                    </a>
+                                                                    <small class="d-block text-muted text-center mt-1">
+                                                                        Expires:
+                                                                        {{ $doc->expires_at ? \Carbon\Carbon::parse($doc->expires_at)->format('d/m/Y') : 'N/A' }}
+                                                                    </small>
+                                                                </div>
+                                                            @endif
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </form>
+                                </div>
+                            @empty
+                                <div class="text-center py-4">
+                                    <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                                    <p class="mb-0">No packages found.</p>
+                                    <small class="text-muted">Add packages to manage their documents.</small>
+                                </div>
+                            @endforelse
                         </div>
-                    </div>
-                </div>
 
-                <!-- Agreement Details -->
-                <div class="col-md-4 mb-4">
-                    <div class="card shadow-sm">
-                        <div class="card-header bg-primary text-white">
-                            <h5 class="card-title mb-0">
-                                <i class="fas fa-file-contract mr-2"></i>Agreement Details
-                            </h5>
-                        </div>
-                        <div class="card-body">
-                            <form wire:submit.prevent="saveAgreement">
-                                <div class="form-group">
-                                    <label class="font-weight-bold">
-                                        <i class="fas fa-file-signature mr-1"></i>Agreement Type
-                                    </label>
-                                    <input type="text" class="form-control" placeholder="Enter agreement type"
-                                        wire:model="agreementDetail.agreement_type">
-                                    @error('agreementDetail.agreement_type')
-                                        <small class="text-danger">
-                                            <i class="fas fa-exclamation-circle mr-1"></i>{{ $message }}
-                                        </small>
-                                    @enderror
-                                </div>
-
-                                <div class="form-group mt-3">
-                                    <label class="font-weight-bold">
-                                        <i class="fas fa-calendar-alt mr-1"></i>Duration
-                                    </label>
-                                    <input type="text" class="form-control" placeholder="Enter duration"
-                                        wire:model="agreementDetail.duration">
-                                    @error('agreementDetail.duration')
-                                        <small class="text-danger">
-                                            <i class="fas fa-exclamation-circle mr-1"></i>{{ $message }}
-                                        </small>
-                                    @enderror
-                                </div>
-
-                                <div class="form-group mt-3">
-                                    <label class="font-weight-bold">
-                                        <i class="fas fa-pound-sign mr-1"></i>Amount
-                                    </label>
-                                    <input type="number" step="0.01" class="form-control" placeholder="Enter amount"
-                                        wire:model="agreementDetail.amount">
-                                    @error('agreementDetail.amount')
-                                        <small class="text-danger">
-                                            <i class="fas fa-exclamation-circle mr-1"></i>{{ $message }}
-                                        </small>
-                                    @enderror
-                                </div>
-
-                                <div class="form-group mt-3">
-                                    <label class="font-weight-bold">
-                                        <i class="fas fa-piggy-bank mr-1"></i>Deposit
-                                    </label>
-                                    <input type="number" step="0.01" class="form-control"
-                                        placeholder="Enter deposit amount" wire:model="agreementDetail.deposit">
-                                    @error('agreementDetail.deposit')
-                                        <small class="text-danger">
-                                            <i class="fas fa-exclamation-circle mr-1"></i>{{ $message }}
-                                        </small>
-                                    @enderror
-                                </div>
-
-                                <div class="text-center mt-4">
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="fas fa-save mr-1"></i>Save Agreement
-                                    </button>
-                                </div>
-
-                                @if (session()->has('message'))
-                                    <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
-                                        <i class="fas fa-check-circle mr-1"></i>{{ session('message') }}
-                                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                            <span aria-hidden="true">&times;</span>
-                                        </button>
-                                    </div>
-                                @endif
-                            </form>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Partner Uploaded Documents Table -->
-                <div class="col-12">
-                    <div class="card shadow-sm">
-                        <div class="card-header bg-primary text-white">
-                            <h5 class="card-title mb-0">
-                                <i class="fas fa-file-alt mr-2"></i>Uploaded Documents
-                            </h5>
-                        </div>
-                        <div class="card-body">
+                        <!-- Documents Overview Tab -->
+                        <div class="tab-pane fade" id="overview" role="tabpanel">
                             <div class="table-responsive">
-                                <table class="table table-hover table-bordered">
-                                    <thead class="thead-light">
+                                <table class="table table-hover">
+                                    <thead>
                                         <tr>
-                                            <th width="5%">#</th>
-                                            <th width="30%">Document Type</th>
-                                            <th width="20%">Status</th>
-                                            <th width="45%">Actions</th>
+                                            <th>Package</th>
+                                            <th>Documents</th>
+                                            <th>Status</th>
+                                            <th>Last Updated</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @php
-                                            $documents = [
-                                                [
-                                                    'type' => Auth::user()->proof_type_1,
-                                                    'path' => Auth::user()->proof_path_1,
-                                                ],
-                                                [
-                                                    'type' => Auth::user()->proof_type_2,
-                                                    'path' => Auth::user()->proof_path_2,
-                                                ],
-                                                [
-                                                    'type' => Auth::user()->proof_type_3,
-                                                    'path' => Auth::user()->proof_path_3,
-                                                ],
-                                                [
-                                                    'type' => Auth::user()->proof_type_4,
-                                                    'path' => Auth::user()->proof_path_4,
-                                                ],
-                                            ];
-                                        @endphp
-
-                                        @forelse($documents as $index => $document)
+                                        @forelse($packages as $package)
                                             <tr>
-                                                <td class="align-middle">{{ $index + 1 }}</td>
-                                                <td class="align-middle">
-                                                    <i class="fas fa-file-alt text-primary mr-1"></i>
-                                                    {{ $document['type'] }}
+                                                <td>
+                                                    <strong>{{ $package->name }}</strong>
+                                                    <small class="d-block text-muted">ID: {{ $package->id }}</small>
                                                 </td>
-                                                <td class="align-middle">
-                                                    @if ($document['path'])
-                                                        <span class="badge badge-success">
-                                                            <i class="fas fa-check-circle mr-1"></i>Uploaded
-                                                        </span>
-                                                    @else
-                                                        <span class="badge badge-warning">
-                                                            <i class="fas fa-exclamation-circle mr-1"></i>Pending
-                                                        </span>
-                                                    @endif
+                                                <td>
+                                                    <div class="d-flex flex-wrap">
+                                                        @foreach (['gas_certificate', 'electric_certificate', 'landlord_certificate', 'building_insurance'] as $docType)
+                                                            <div class="mr-2 mb-1">
+                                                                @if ($doc = $package->documents->where('type', $docType)->first())
+                                                                    <span class="badge badge-success">
+                                                                        <i
+                                                                            class="fas fa-check-circle mr-1"></i>{{ ucfirst(str_replace('_', ' ', $docType)) }}
+                                                                    </span>
+                                                                @else
+                                                                    <span class="badge badge-warning">
+                                                                        <i
+                                                                            class="fas fa-exclamation-circle mr-1"></i>{{ ucfirst(str_replace('_', ' ', $docType)) }}
+                                                                    </span>
+                                                                @endif
+                                                            </div>
+                                                        @endforeach
+                                                    </div>
                                                 </td>
-                                                <td class="align-middle">
-                                                    @if ($document['path'])
-                                                        <a href="{{ asset('storage/' . $document['path']) }}"
-                                                            class="btn btn-sm btn-primary mr-2" download>
-                                                            <i class="fas fa-download mr-1"></i>Download
-                                                        </a>
-                                                        <button type="button" class="btn btn-sm btn-info"
-                                                            onclick="document.getElementById('proof_path_{{ $index + 1 }}').click();">
-                                                            <i class="fas fa-upload mr-1"></i>Update
-                                                        </button>
-                                                    @else
-                                                        <button type="button" class="btn btn-sm btn-primary"
-                                                            onclick="document.getElementById('proof_path_{{ $index + 1 }}').click();">
-                                                            <i class="fas fa-upload mr-1"></i>Upload
-                                                        </button>
-                                                    @endif
+                                                <td>
+                                                    @php
+                                                        $totalDocs = $package->documents->count();
+                                                        $requiredDocs = 4;
+                                                        $percentage = ($totalDocs / $requiredDocs) * 100;
+                                                    @endphp
+                                                    <div class="progress" style="height: 20px;">
+                                                        <div class="progress-bar bg-{{ $percentage == 100 ? 'success' : ($percentage >= 50 ? 'warning' : 'danger') }}"
+                                                            role="progressbar" style="width: {{ $percentage }}%"
+                                                            aria-valuenow="{{ $percentage }}" aria-valuemin="0"
+                                                            aria-valuemax="100">
+                                                            {{ $totalDocs }}/{{ $requiredDocs }}
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <small class="text-muted">
+                                                        {{ optional($package->documents->max('updated_at'))->format('d/m/Y H:i') ?? 'Never' }}
+                                                    </small>
                                                 </td>
                                             </tr>
                                         @empty
                                             <tr>
-                                                <td colspan="4" class="text-center py-4">
-                                                    <div class="text-muted">
-                                                        <i class="fas fa-folder-open fa-2x mb-3"></i>
-                                                        <p class="mb-0">No documents have been uploaded yet.</p>
-                                                        <small>Upload your documents using the form above.</small>
-                                                    </div>
-                                                </td>
+                                                <td colspan="4" class="text-center">No packages found</td>
                                             </tr>
                                         @endforelse
                                     </tbody>
                                 </table>
                             </div>
                         </div>
+
+                        <!-- Business Details Tab -->
+                        <div class="tab-pane fade" id="details" role="tabpanel">
+                            <div class="row">
+                                <!-- Bank Details -->
+                                <div class="col-md-6 mb-4">
+                                    <h6 class="border-bottom pb-2 mb-3">
+                                        <i class="fas fa-university mr-2"></i>Bank Details
+                                    </h6>
+                                    <form wire:submit.prevent="saveBankDetails">
+                                        <div class="form-group">
+                                            <label><i class="fas fa-user mr-1"></i>Account Holder Name</label>
+                                            <input type="text" class="form-control" wire:model="bankDetail.name">
+                                            @error('bankDetail.name')
+                                                <small class="text-danger">{{ $message }}</small>
+                                            @enderror
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="form-group">
+                                                    <label><i class="fas fa-sort-numeric-up mr-1"></i>Sort Code</label>
+                                                    <input type="text" class="form-control"
+                                                        wire:model="bankDetail.sort_code">
+                                                    @error('bankDetail.sort_code')
+                                                        <small class="text-danger">{{ $message }}</small>
+                                                    @enderror
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="form-group">
+                                                    <label><i class="fas fa-hashtag mr-1"></i>Account Number</label>
+                                                    <input type="text" class="form-control"
+                                                        wire:model="bankDetail.account">
+                                                    @error('bankDetail.account')
+                                                        <small class="text-danger">{{ $message }}</small>
+                                                    @enderror
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-save mr-1"></i>Save Bank Details
+                                        </button>
+                                    </form>
+                                </div>
+
+                                <!-- Agreement Details -->
+                                <div class="col-md-6 mb-4">
+                                    <h6 class="border-bottom pb-2 mb-3">
+                                        <i class="fas fa-file-contract mr-2"></i>Agreement Details
+                                    </h6>
+                                    <form wire:submit.prevent="saveAgreement">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="form-group">
+                                                    <label><i class="fas fa-file-signature mr-1"></i>Agreement Type</label>
+                                                    <input type="text" class="form-control"
+                                                        wire:model="agreementDetail.agreement_type">
+                                                    @error('agreementDetail.agreement_type')
+                                                        <small class="text-danger">{{ $message }}</small>
+                                                    @enderror
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="form-group">
+                                                    <label><i class="fas fa-calendar-alt mr-1"></i>Duration</label>
+                                                    <input type="text" class="form-control"
+                                                        wire:model="agreementDetail.duration">
+                                                    @error('agreementDetail.duration')
+                                                        <small class="text-danger">{{ $message }}</small>
+                                                    @enderror
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="form-group">
+                                                    <label><i class="fas fa-pound-sign mr-1"></i>Amount</label>
+                                                    <input type="number" step="0.01" class="form-control"
+                                                        wire:model="agreementDetail.amount">
+                                                    @error('agreementDetail.amount')
+                                                        <small class="text-danger">{{ $message }}</small>
+                                                    @enderror
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="form-group">
+                                                    <label><i class="fas fa-piggy-bank mr-1"></i>Deposit</label>
+                                                    <input type="number" step="0.01" class="form-control"
+                                                        wire:model="agreementDetail.deposit">
+                                                    @error('agreementDetail.deposit')
+                                                        <small class="text-danger">{{ $message }}</small>
+                                                    @enderror
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-save mr-1"></i>Save Agreement
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    // Initialize Bootstrap tabs
+                    $('a[data-toggle="tab"]').on('shown.bs.tab', function(e) {
+                        localStorage.setItem('lastPartnerTab', $(e.target).attr('href'));
+                    });
+
+                    // Get last active tab
+                    var lastTab = localStorage.getItem('lastPartnerTab');
+                    if (lastTab) {
+                        $('a[href="' + lastTab + '"]').tab('show');
+                    }
+
+                    // Handle custom file inputs
+                    const handleFileInput = () => {
+                        const fileInputs = document.querySelectorAll('.custom-file-input');
+                        fileInputs.forEach(input => {
+                            input.addEventListener('change', function() {
+                                const fileName = this.value.split('\\').pop();
+                                const label = this.nextElementSibling;
+                                if (label) {
+                                    label.classList.add('selected');
+                                    label.innerHTML = fileName || 'Choose file';
+                                }
+                            });
+                        });
+                    };
+
+                    // Handle form submissions
+                    const handleFormSubmission = () => {
+                        const forms = document.querySelectorAll('form');
+                        forms.forEach(form => {
+                            form.addEventListener('submit', function(e) {
+                                const submitButton = this.querySelector('button[type="submit"]');
+                                if (submitButton) {
+                                    // Store original button text
+                                    const originalText = submitButton.innerHTML;
+                                    submitButton.setAttribute('data-original-text', originalText);
+
+                                    // Disable button and show loading state
+                                    submitButton.disabled = true;
+                                    submitButton.innerHTML =
+                                        '<i class="fas fa-spinner fa-spin mr-1"></i>Processing...';
+                                }
+                            });
+                        });
+                    };
+
+                    // Initialize tooltips
+                    const initTooltips = () => {
+                        $('[data-toggle="tooltip"]').tooltip();
+                    };
+
+                    // Initialize all handlers
+                    handleFileInput();
+                    handleFormSubmission();
+                    initTooltips();
+                });
+            </script>
+
+            <!-- Additional Styling -->
+            <style>
+                /* Tab Styling */
+                .nav-tabs {
+                    border-bottom: 2px solid #dee2e6;
+                }
+
+                .nav-tabs .nav-link {
+                    color: #ffffff;
+                    border: 1px solid;
+                    border-bottom: 3px solid transparent;
+                    padding: 0.75rem 1rem;
+                    font-weight: 500;
+                    background: transparent;
+                    transition: all 0.3s ease;
+                }
+
+                .nav-tabs .nav-link:hover {
+                    border-color: #e9ecef #e9ecef #dee2e6;
+                    background: #f8f9fa;
+                }
+
+                .nav-tabs .nav-link.active {
+                    color: #252525;
+                    border-bottom: 3px solid #252525;
+                    background: transparent;
+                }
+
+                /* Card Styling */
+                .card {
+                    transition: all 0.3s ease;
+                    border: none;
+                    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+                }
+
+                .card:hover {
+                    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+                }
+
+                .card-header {
+                    background-color: #252525;
+                    border-bottom: none;
+                    padding: 1rem 1.25rem;
+                }
+
+                /* Form Styling */
+                .form-control {
+                    border-radius: 0.25rem;
+                    border: 1px solid #ced4da;
+                    padding: 0.5rem 0.75rem;
+                    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+                }
+
+                .form-control:focus {
+                    border-color: #252525;
+                    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+                }
+
+                /* Custom File Input */
+                .custom-file-label {
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                }
+
+                .custom-file-label::after {
+                    content: "Browse";
+                }
+
+                /* Progress Bar */
+                .progress {
+                    height: 20px;
+                    border-radius: 10px;
+                    background-color: #e9ecef;
+                    margin: 0.5rem 0;
+                }
+
+                .progress-bar {
+                    border-radius: 10px;
+                    transition: width 0.6s ease;
+                }
+
+                /* Badge Styling */
+                .badge {
+                    padding: 0.5em 0.75em;
+                    font-weight: 500;
+                }
+
+                /* Alert Styling */
+                .alert {
+                    border: none;
+                    border-radius: 0.25rem;
+                }
+
+                .alert-success {
+                    background-color: #d4edda;
+                    color: #155724;
+                }
+
+                /* Table Styling */
+                .table {
+                    margin-bottom: 0;
+                }
+
+                .table thead th {
+                    border-top: none;
+                    border-bottom: 2px solid #dee2e6;
+                    font-weight: 600;
+                    color: #495057;
+                }
+
+                .table td {
+                    vertical-align: middle;
+                    padding: 1rem 0.75rem;
+                }
+
+                /* Responsive Adjustments */
+                @media (max-width: 768px) {
+                    .nav-tabs .nav-link {
+                        padding: 0.5rem 0.75rem;
+                        font-size: 0.9rem;
+                    }
+
+                    .card-body {
+                        padding: 1rem;
+                    }
+
+                    .btn {
+                        padding: 0.375rem 0.75rem;
+                    }
+                }
+            </style>
         @endrole
 
         <!-- Edit Document Modal -->

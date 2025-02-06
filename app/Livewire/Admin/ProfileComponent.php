@@ -9,6 +9,7 @@ use App\Models\PackagePayment;
 use App\Models\User;
 use App\Models\UserDetail;
 use App\Models\UserDocument;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -91,9 +92,26 @@ class ProfileComponent extends Component
         $this->loadAgreementDetail();
         $this->loadUserDetail();
         $this->loadBankDetail();
-        $this->packages = Package::all();
+        $this->refreshPackages();
         $this->loadBookings();
 
+    }
+
+    private function refreshPackages()
+    {
+        $user = Auth::user();
+        $with = ['creator', 'assignedPartner', 'assignedBy', 'country', 'city', 'area', 'property'];
+
+        if ($user->roles->pluck('name')->contains('Super Admin')) {
+            $this->packages = Package::with($with)->get();
+        } else {
+            $this->packages = Package::with($with)
+                ->where(function ($query) use ($user) {
+                    $query->where('user_id', $user->id)
+                        ->orWhere('assigned_to', $user->id);
+                })
+                ->get();
+        }
     }
 
 
@@ -105,7 +123,7 @@ class ProfileComponent extends Component
     private function loadBookings()
     {
         $this->bookings = $this->user->bookings->map(function ($booking) {
-            $totalPrice = (float)$booking->price + (float)$booking->booking_price;
+            $totalPrice = (float) $booking->price + (float) $booking->booking_price;
             $totalPaid = $booking->payments->where('status', 'Paid')->sum('amount');
             $remainingBalance = $totalPrice - $totalPaid;
             $paymentPercentage = $totalPrice > 0 ? ($totalPaid / $totalPrice * 100) : 0;
@@ -223,6 +241,27 @@ class ProfileComponent extends Component
         $this->showEditModal = true;  // Show the modal
     }
 
+    public function updateDocuments(Request $request, Package $package)
+    {
+        $request->validate([
+            'documents.*' => 'required|file|mimes:pdf,jpg,jpeg,png|max:2048',
+        ]);
+
+        foreach ($request->file('documents') as $type => $file) {
+            $path = $file->store('package-documents', 'public');
+
+            $package->documents()->updateOrCreate(
+                ['type' => $type],
+                [
+                    'path' => $path,
+                    'expires_at' => Carbon::now()->addYear(), // Adjust expiry as needed
+                ]
+            );
+        }
+
+        return back()->with('success', 'Documents updated successfully');
+    }
+
     public function updateDocument()
     {
         $this->validate([
@@ -285,7 +324,8 @@ class ProfileComponent extends Component
         $this->user->load('documents');
     }
 
-    public function saveAgreement() {
+    public function saveAgreement()
+    {
 
         AgreementDetail::updateOrCreate(
             ['user_id' => $this->user->id],
@@ -301,7 +341,8 @@ class ProfileComponent extends Component
         return redirect()->back();
 
     }
-    public function saveBankDetails() {
+    public function saveBankDetails()
+    {
 
         BankDetail::updateOrCreate(
             ['user_id' => $this->user->id],
@@ -325,7 +366,8 @@ class ProfileComponent extends Component
         }
     }
 
-    public function saveUserDetail() {
+    public function saveUserDetail()
+    {
 
         $userDetailData = [
             'stay_status' => $this->userDetail['stay_status'],

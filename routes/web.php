@@ -234,6 +234,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/user/messages', UserMessages::class)->name('user.messages')->middleware('can:massage');
 
 
+    Route::put('/packages/{package}/documents', [ProfileComponent::class, 'updateDocuments'])
+        ->name('partner.package.documents.update');
 
 
 
