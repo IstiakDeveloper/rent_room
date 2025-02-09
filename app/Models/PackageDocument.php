@@ -19,4 +19,8 @@ class PackageDocument extends Model
     {
         return $this->belongsTo(Package::class);
     }
+    public function updatedBy()
+{
+    return $this->belongsTo(User::class, 'updated_by');
+}
 }

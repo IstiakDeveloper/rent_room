@@ -239,6 +239,12 @@ Route::middleware(['auth'])->group(function () {
 
 
 
+        Route::prefix('admin/packages/{package}/documents')->name('admin.packages.documents.')->group(function () {
+            Route::post('/update', [UserViewComponent::class, 'updateDocuments'])->name('update');
+            Route::delete('/{type}', [UserViewComponent::class, 'deletePartnerDocument'])->name('delete');
+        });
+
+
     Route::get('/admin/logo', HeaderSettings::class)->name('logo');
     Route::get('/admin/hero-section', HeroSettings::class)->name('hero-section');
     Route::get('/admin/home-data', HomeDataSettings::class)->name('home-data');

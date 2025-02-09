@@ -99,8 +99,26 @@ class UserViewComponent extends Component
         }
 
         $this->packages = Package::all();
+
+
+        $this->refreshPackages();
     }
 
+    private function refreshPackages()
+    {
+        $user = $this->user;
+
+
+        $with = ['creator', 'assignedPartner', 'assignedBy', 'country', 'city', 'area', 'property'];
+
+            $this->packages = Package::with($with)
+                ->where(function ($query) use ($user) {
+                    $query->where('user_id', $user->id)
+                        ->orWhere('assigned_to', $user->id);
+                })
+                ->get();
+
+    }
 
 
     private function loadPaymentLinks()
@@ -544,6 +562,8 @@ class UserViewComponent extends Component
             $this->showForm = true;
         }
     }
+
+
     private function resetEditForm()
     {
         $this->editPersonName = '';
@@ -551,6 +571,99 @@ class UserViewComponent extends Component
         $this->editNidOrOther = null;
         $this->editingDocumentId = null;
     }
+
+
+    public function updateDocuments(Request $request, Package $package)
+    {
+        $request->validate([
+            'documents.gas_certificate' => 'nullable|mimes:pdf,jpg,jpeg,png|max:10240',
+            'documents.electric_certificate' => 'nullable|mimes:pdf,jpg,jpeg,png|max:10240',
+            'documents.landlord_certificate' => 'nullable|mimes:pdf,jpg,jpeg,png|max:10240',
+            'documents.building_insurance' => 'nullable|mimes:pdf,jpg,jpeg,png|max:10240',
+            'documents.pat_certificate' => 'nullable|mimes:pdf,jpg,jpeg,png|max:10240',
+            'documents.epc_certificate' => 'nullable|mimes:pdf,jpg,jpeg,png|max:10240',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            // Check if package belongs to user OR is assigned to user
+            if ($package->user_id !== $this->user->id && $package->assigned_to !== $this->user->id) {
+                throw new \Exception('Package does not belong to this user');
+            }
+
+            foreach ($request->file('documents', []) as $type => $file) {
+                if ($file) {
+                    $existingDoc = $package->documents()
+                        ->where('type', $type)
+                        ->first();
+
+                    if ($existingDoc && Storage::exists($existingDoc->path)) {
+                        Storage::delete($existingDoc->path);
+                    }
+
+                    $path = $file->store('package-documents', 'public');
+
+                    $package->documents()->updateOrCreate(
+                        ['type' => $type],
+                        [
+                            'path' => $path,
+                            'expires_at' => now()->addYear(),
+                            'updated_by' => auth()->id(),
+                            'status' => 'active'
+                        ]
+                    );
+                }
+            }
+
+            DB::commit();
+            flash()->success('Package documents updated successfully');
+            return redirect()->back();
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Error updating package documents', [
+                'user_id' => $this->user->id,
+                'package_id' => $package->id,
+                'error' => $e->getMessage()
+            ]);
+            flash()->error('Error updating documents: ' . $e->getMessage());
+            return redirect()->back();
+        }
+    }
+/**
+ * Delete a document
+ */
+public function deletePartnerDocument(User $user, Package $package, $type)
+{
+    try {
+        DB::beginTransaction();
+
+        if ($package->user_id !== $user->id) {
+            throw new \Exception('Package does not belong to this user');
+        }
+
+        $document = $package->documents()
+            ->where('type', $type)
+            ->first();
+
+        if ($document) {
+            if (Storage::exists($document->path)) {
+                Storage::delete($document->path);
+            }
+            $document->delete();
+        }
+
+        DB::commit();
+        flash()->success('Document deleted successfully');
+        return redirect()->back();
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        flash()->error('Error deleting document: ' . $e->getMessage());
+        return redirect()->back();
+    }
+}
 
     public function saveBankDetails()
     {

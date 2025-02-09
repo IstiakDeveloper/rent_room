@@ -1,10 +1,6 @@
 <div class="container mt-5">
     <div class="row">
-        @if ($user->packages && $user->hasRole('Partner'))
-            <div class="col-6 col-lg-6">
-            @else
-                <div class="col-12 col-lg-12">
-        @endif
+    <div class="col-12 col-lg-12">
         <div class="card shadow-sm p-4 mb-4">
             <h3>User Information</h3>
             <p><strong>Name:</strong> {{ $user->name }}</p>
@@ -514,163 +510,8 @@
         </div>
     @endif
 
-    @if ($user->hasRole('Partner'))
-        <div class="col-12 col-md-6 col-lg-4">
-            <div class="card shadow-sm p-4 mb-2">
-                <h2 class="h4">Partner Documents</h2>
-                <div>
-                    <form wire:submit.prevent="updatePartner">
-                        <div class="form-group mb-4">
-                            <label for="proof_path_1" class="form-label">Gas Certificate</label>
-                            <input type="hidden" wire:model="proof_type_1" value="Gas Certificate">
-                            <input type="file" class="form-control" id="proof_path_1" wire:model="proof_path_1">
-                            @error('proof_path_1')
-                                <span class="text-danger">{{ $message }}</span>
-                            @enderror
-                        </div>
+    </div>
 
-                        <div class="form-group mb-4">
-                            <label for="proof_path_2" class="form-label">Electric Certificate</label>
-                            <input type="hidden" wire:model="proof_type_2" value="Electric Certificate">
-                            <input type="file" class="form-control" id="proof_path_2" wire:model="proof_path_2">
-                            @error('proof_path_2')
-                                <span class="text-danger">{{ $message }}</span>
-                            @enderror
-                        </div>
-
-                        <div class="form-group mb-4">
-                            <label for="proof_path_3" class="form-label">Landlord Certificate (HMO/Other)</label>
-                            <input type="hidden" wire:model="proof_type_3" value="Landlord Certificate (HMO/Other)">
-                            <input type="file" class="form-control" id="proof_path_3" wire:model="proof_path_3">
-                            @error('proof_path_3')
-                                <span class="text-danger">{{ $message }}</span>
-                            @enderror
-                        </div>
-
-                        <div class="form-group mb-4">
-                            <label for="proof_path_4" class="form-label">Building Insurance Certificate</label>
-                            <input type="hidden" wire:model="proof_type_4" value="Building Insurance Certificate">
-                            <input type="file" class="form-control" id="proof_path_4" wire:model="proof_path_4">
-                            @error('proof_path_4')
-                                <span class="text-danger">{{ $message }}</span>
-                            @enderror
-                        </div>
-
-                        <div class="text-center">
-                            <button type="submit" class="btn btn-primary">Update Document</button>
-                        </div>
-
-                        <!-- Success Message -->
-                        @if (session()->has('success'))
-                            <div class="alert alert-success mt-2">{{ session('success') }}</div>
-                        @endif
-                    </form>
-                </div>
-
-            </div>
-        </div>
-
-
-
-        <div class="col-12 col-md-6 col-lg-4">
-            <div class="card shadow-sm p-4">
-                <h4>Bank Details</h4>
-                <form wire:submit.prevent="saveBankDetails">
-                    <div class="form-group mt-2">
-                        <input type="text" class="form-control" placeholder="name" wire:model="bankDetail.name"
-                            value="{{ old('bankDetail.name', $bankDetail['name']) }}">
-                    </div>
-                    <div class="form-group mt-2">
-                        <input type="text" class="form-control" placeholder="Sort Code"
-                            wire:model="bankDetail.sort_code"
-                            value="{{ old('bankDetail.sort_code', $bankDetail['sort_code']) }}">
-                    </div>
-                    <div class="form-group mt-2">
-                        <input type="text" class="form-control" placeholder="Account"
-                            wire:model="bankDetail.account"
-                            value="{{ old('bankDetail.account', $bankDetail['account']) }}">
-                    </div>
-                    <button type="submit" class="btn btn-primary mt-4">Save Bank Details</button>
-                </form>
-            </div>
-        </div>
-
-        <div class="col-12 col-md-6 col-lg-4">
-            <div class="card shadow-sm p-4">
-                <h4>Agreement Details</h4>
-                <form wire:submit.prevent="saveAgreement">
-                    <div class="form-group mt-2">
-                        <input type="text" class="form-control" placeholder="Agreement Type"
-                            wire:model="agreementDetail.agreement_type"
-                            value="{{ old('agreementDetail.agreement_type', $agreementDetail['agreement_type']) }}">
-                    </div>
-                    <div class="form-group mt-2">
-                        <input type="text" class="form-control" placeholder="Duration"
-                            wire:model="agreementDetail.duration"
-                            value="{{ old('agreementDetail.duration', $agreementDetail['duration']) }}">
-                    </div>
-                    <div class="form-group mt-2">
-                        <input type="number" step="0.01" class="form-control" placeholder="Amount"
-                            wire:model="agreementDetail.amount"
-                            value="{{ old('agreementDetail.amount', $agreementDetail['amount']) }}">
-                    </div>
-                    <div class="form-group mt-2">
-                        <input type="number" step="0.01" class="form-control" placeholder="Deposit"
-                            wire:model="agreementDetail.deposit"
-                            value="{{ old('agreementDetail.deposit', $agreementDetail['deposit']) }}">
-                    </div>
-                    <button type="submit" class="btn btn-primary mt-4">Save Agreement</button>
-                </form>
-            </div>
-        </div>
-    @endif
-</div>
-
-<div class="mt-5">
-    @if ($user->hasRole('Partner'))
-        <div class="mt-5 shadow-sm p-2">
-            <h4>Uploaded Documents</h4>
-            <table class="table table-striped table-bordered">
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Document Type</th>
-                        <th>File</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @php
-                        $documents = [
-                            ['type' => $user->proof_type_1, 'path' => $user->proof_path_1],
-                            ['type' => $user->proof_type_2, 'path' => $user->proof_path_2],
-                            ['type' => $user->proof_type_3, 'path' => $user->proof_path_3],
-                            ['type' => $user->proof_type_4, 'path' => $user->proof_path_4],
-                        ];
-                    @endphp
-
-                    @foreach ($documents as $index => $document)
-                        @if ($document['path'])
-                            <tr>
-                                <td>{{ $index + 1 }}</td>
-                                <td>{{ $document['type'] }}</td>
-                                <td>
-                                    <a href="{{ asset('storage/' . $document['path']) }}"
-                                        class="btn btn-primary btn-sm" download>Download</a>
-                                </td>
-                            </tr>
-                        @endif
-                    @endforeach
-
-                    @if (!array_filter($documents, fn($doc) => $doc['path']))
-                        <tr>
-                            <td colspan="3" class="text-center">No documents uploaded yet.</td>
-                        </tr>
-                    @endif
-                </tbody>
-            </table>
-        </div>
-    @endif
-</div>
 
 @if ($showMilestoneSelectionModal)
     <div class="modal fade show" style="display: block; background: rgba(0,0,0,0.5);">
@@ -808,6 +649,230 @@
                         <button type="submit" class="btn btn-primary">Save changes</button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+@endif
+
+
+
+@if($user->hasRole('Partner'))
+    <!-- Partner Information Section -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-dark text-white">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-user-tie mr-2"></i>Partner Information
+            </h5>
+        </div>
+        <div class="card-body">
+            <!-- Tab Navigation -->
+            <ul class="nav nav-tabs" id="partnerTabs" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link active" id="packages-tab" data-toggle="tab" href="#packages" role="tab">
+                        <i class="fas fa-box mr-2"></i>Package Documents
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="details-tab" data-toggle="tab" href="#details" role="tab">
+                        <i class="fas fa-info-circle mr-2"></i>Partner Details
+                    </a>
+                </li>
+            </ul>
+
+            <!-- Tab Content -->
+            <div class="tab-content" id="partnerTabContent">
+                <!-- Package Documents Tab -->
+                <div class="tab-pane fade show active" id="documents" role="tabpanel">
+                    @forelse($packages as $package)
+                        <div class="border-bottom mb-4 pb-4">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-box mr-2"></i>{{ $package->name }}
+                                    <span class="badge badge-info ml-2">ID: {{ $package->id }}</span>
+                                </h6>
+                                <button type="submit" form="package-form-{{ $package->id }}"
+                                    class="btn btn-primary btn-sm">
+                                    <i class="fas fa-save mr-1"></i>Update Documents
+                                </button>
+                            </div>
+
+                            <form id="package-form-{{ $package->id }}"
+                                action="{{ route('admin.packages.documents.update', $package->id) }}"
+                                method="POST"
+                                enctype="multipart/form-data">
+                              @csrf
+
+                                <div class="row">
+                                    <!-- Document Cards -->
+                                    @foreach ([
+                        'gas_certificate' => ['icon' => 'file-contract', 'label' => 'Gas Certificate'],
+                        'electric_certificate' => ['icon' => 'bolt', 'label' => 'Electric Certificate'],
+                        'landlord_certificate' => ['icon' => 'home', 'label' => 'Landlord Certificate'],
+                        'building_insurance' => ['icon' => 'shield-alt', 'label' => 'Building Insurance'],
+                    ] as $type => $details)
+                                        <div class="col-md-6 col-lg-3 mb-3">
+                                            <div class="card border h-100">
+                                                <div class="card-body p-3">
+                                                    <input type="hidden" name="document_types[]"
+                                                        value="{{ $type }}">
+
+                                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                                        <label class="mb-0 text-primary">
+                                                            <i class="fas fa-{{ $details['icon'] }} mr-1"></i>
+                                                            {{ $details['label'] }}
+                                                        </label>
+                                                        @if ($doc = $package->documents->where('type', $type)->first())
+                                                            <span class="badge badge-success">
+                                                                <i class="fas fa-check-circle"></i>
+                                                            </span>
+                                                        @endif
+                                                    </div>
+
+                                                    <div class="custom-file">
+                                                        <input type="file" class="custom-file-input"
+                                                            id="{{ $type }}_{{ $package->id }}"
+                                                            name="documents[{{ $type }}]">
+                                                        <label class="custom-file-label"
+                                                            for="{{ $type }}_{{ $package->id }}">
+                                                            Choose file
+                                                        </label>
+                                                    </div>
+
+                                                    @if ($doc)
+                                                        <div class="mt-2">
+                                                            <a href="{{ Storage::url($doc->path) }}"
+                                                                class="btn btn-sm btn-outline-primary btn-block"
+                                                                target="_blank">
+                                                                <i class="fas fa-eye mr-1"></i>View
+                                                            </a>
+                                                            <small class="d-block text-muted text-center mt-1">
+                                                                Expires:
+                                                                {{ $doc->expires_at ? \Carbon\Carbon::parse($doc->expires_at)->format('d/m/Y') : 'N/A' }}
+                                                            </small>
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </form>
+                        </div>
+                    @empty
+                        <div class="text-center py-4">
+                            <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                            <p class="mb-0">No packages found.</p>
+                            <small class="text-muted">Add packages to manage their documents.</small>
+                        </div>
+                    @endforelse
+                </div>
+
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+    // Handle custom file inputs
+    const handleFileInput = () => {
+        const fileInputs = document.querySelectorAll('.custom-file-input');
+        fileInputs.forEach(input => {
+            input.addEventListener('change', function() {
+                const fileName = this.value.split('\\').pop();
+                const label = this.nextElementSibling;
+                if (label) {
+                    label.classList.add('selected');
+                    label.innerHTML = fileName || 'Choose file';
+                }
+            });
+        });
+    };
+
+    handleFileInput();
+});
+                    </script>
+
+                <!-- Partner Details Tab -->
+                <div class="tab-pane fade" id="details" role="tabpanel">
+                    <div class="row">
+                        <!-- Bank Details -->
+                        <div class="col-md-6 mb-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6 class="card-title border-bottom pb-2">
+                                        <i class="fas fa-university mr-2"></i>Bank Details
+                                    </h6>
+                                    <form wire:submit.prevent="updateBankDetails">
+                                        <div class="form-group">
+                                            <label>Account Holder Name</label>
+                                            <input type="text" class="form-control" wire:model="bankDetail.name">
+                                            @error('bankDetail.name') <span class="text-danger small">{{ $message }}</span> @enderror
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Sort Code</label>
+                                            <input type="text" class="form-control" wire:model="bankDetail.sort_code">
+                                            @error('bankDetail.sort_code') <span class="text-danger small">{{ $message }}</span> @enderror
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Account Number</label>
+                                            <input type="text" class="form-control" wire:model="bankDetail.account">
+                                            @error('bankDetail.account') <span class="text-danger small">{{ $message }}</span> @enderror
+                                        </div>
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-save mr-1"></i>Update Bank Details
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Agreement Details -->
+                        <div class="col-md-6 mb-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6 class="card-title border-bottom pb-2">
+                                        <i class="fas fa-file-contract mr-2"></i>Agreement Details
+                                    </h6>
+                                    <form wire:submit.prevent="updateAgreement">
+                                        <div class="form-group">
+                                            <label>Agreement Type</label>
+                                            <input type="text" class="form-control" wire:model="agreementDetail.agreement_type">
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Duration</label>
+                                            <input type="text" class="form-control" wire:model="agreementDetail.duration">
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="form-group">
+                                                    <label>Amount</label>
+                                                    <div class="input-group">
+                                                        <div class="input-group-prepend">
+                                                            <span class="input-group-text">£</span>
+                                                        </div>
+                                                        <input type="number" step="0.01" class="form-control"
+                                                               wire:model="agreementDetail.amount">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="form-group">
+                                                    <label>Deposit</label>
+                                                    <div class="input-group">
+                                                        <div class="input-group-prepend">
+                                                            <span class="input-group-text">£</span>
+                                                        </div>
+                                                        <input type="number" step="0.01" class="form-control"
+                                                               wire:model="agreementDetail.deposit">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-save mr-1"></i>Update Agreement
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
