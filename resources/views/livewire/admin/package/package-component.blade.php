@@ -24,7 +24,6 @@
                             <th>Address</th>
                             <th>Created By</th>
                             <th>Assigned To</th>
-                            <th>Assigned By</th>
                             <th>Current Bookings</th>
                             <th width="150">Actions</th>
                         </tr>
@@ -74,23 +73,6 @@
                                                 <i class="fas fa-user-slash mr-1"></i>
                                                 Not assigned
                                             </span>
-                                        @endif
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        @if ($package->assigned_by)
-                                            <div class="rounded-circle bg-light p-2 mr-2">
-                                                <i class="fas fa-user-shield text-info"></i>
-                                            </div>
-                                            <div>
-                                                <div>{{ $package->assignedBy->name }}</div>
-                                                <small class="text-muted">
-                                                    {{ $package->assigned_at ? $package->assigned_at->diffForHumans() : '' }}
-                                                </small>
-                                            </div>
-                                        @else
-                                            <span class="text-muted">-</span>
                                         @endif
                                     </div>
                                 </td>

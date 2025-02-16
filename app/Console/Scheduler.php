@@ -8,9 +8,9 @@ class Scheduler
 {
     public function schedule(Schedule $schedule): void
     {
-        // Run auto-renewal check daily at midnight
+        // Run auto-renewal check hourly
         $schedule->command('bookings:process-renewals')
-            ->dailyAt('00:00')
+            ->hourly()
             ->withoutOverlapping()
             ->emailOutputOnFailure(config('mail.admin_email'));
     }

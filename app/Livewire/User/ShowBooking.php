@@ -33,6 +33,8 @@ class ShowBooking extends Component
     public int $renewalPeriodDays = 30;
 
     public bool $showAutoRenewalModal = false;
+    public bool $canManageAutoRenewal = false;
+
 
 
     protected $rules = [
@@ -43,26 +45,6 @@ class ShowBooking extends Component
         'renewalPeriodDays' => 'integer|min:1|max:365'
     ];
 
-    public function mount($id)
-    {
-        $this->booking = Booking::with([
-            'package.instructions',
-            'payments',
-            'bookingPayments'
-        ])->findOrFail($id);
-
-        // Fixed: Properly cast values and use $this->booking instead of $booking
-        $this->autoRenewal = (bool) $this->booking->auto_renewal;
-        $this->renewalPeriodDays = (int) ($this->booking->renewal_period_days ?? 30);
-
-
-        $this->payments = $this->booking->payments ?? collect();
-
-        $totalPrice = (float) $this->booking->price + (float) $this->booking->booking_price;
-        $totalPaid = $this->payments->where('status', 'Paid')->sum('amount');
-        $this->dueBill = $totalPrice - $totalPaid;
-        $this->paymentPercentage = $totalPrice > 0 ? ($totalPaid / $totalPrice * 100) : 0;
-    }
 
 
     public function closeAutoRenewalModal()
@@ -92,21 +74,75 @@ class ShowBooking extends Component
             && $toDate->isFuture();
     }
 
+    public function mount($id)
+    {
+        $this->booking = Booking::with([
+            'package.instructions',
+            'payments',
+            'bookingPayments'
+        ])->findOrFail($id);
+
+        $this->autoRenewal = (bool) $this->booking->auto_renewal;
+        $this->renewalPeriodDays = (int) ($this->booking->renewal_period_days ?? 30);
+
+        // Set canManageAutoRenewal
+        $this->updateCanManageAutoRenewal();
+
+        $this->payments = $this->booking->payments ?? collect();
+
+        $totalPrice = (float) $this->booking->price + (float) $this->booking->booking_price;
+        $totalPaid = $this->payments->where('status', 'Paid')->sum('amount');
+        $this->dueBill = $totalPrice - $totalPaid;
+        $this->paymentPercentage = $totalPrice > 0 ? ($totalPaid / $totalPrice * 100) : 0;
+    }
+
+    private function updateCanManageAutoRenewal(): void
+    {
+        if (!$this->booking) {
+            $this->canManageAutoRenewal = false;
+            return;
+        }
+
+        // Allow managing if already enabled
+        if ($this->booking->auto_renewal) {
+            $this->canManageAutoRenewal = true;
+            return;
+        }
+
+        // For new auto-renewals, check conditions
+        $toDate = Carbon::parse($this->booking->to_date);
+
+        $this->canManageAutoRenewal =
+            $this->booking->price_type === 'Month' && // Only for monthly packages
+            !in_array($this->booking->payment_status, ['cancelled', 'finished']) &&
+            $this->booking->from_date &&
+            $this->booking->to_date &&
+            $toDate->isFuture();
+    }
+
     public function toggleAutoRenewal()
     {
-        $this->validate([
-            'renewalPeriodDays' => 'required|integer|min:1|max:365'
-        ]);
+        if (!$this->canManageAutoRenewal) {
+            $this->dispatch('notify', [
+                'message' => 'Cannot manage auto-renewal for this booking.',
+                'type' => 'error'
+            ]);
+            return;
+        }
 
         try {
             $newState = !$this->booking->auto_renewal;
 
-            // If trying to enable and can't enable, block it
-            if ($newState && !$this->canEnableAutoRenewal()) {
-                throw new \Exception($this->getAutoRenewalBlockReason() ?? 'Cannot enable auto-renewal.');
+            // Only allow auto-renewal for monthly packages
+            if ($newState && $this->booking->price_type !== 'Month') {
+                $this->dispatch('notify', [
+                    'message' => 'Auto-renewal is only available for monthly packages.',
+                    'type' => 'error'
+                ]);
+                return;
             }
 
-            // Calculate next renewal date if enabling
+            // Calculate next renewal date (7 days before package end)
             $nextRenewalDate = $newState
                 ? Carbon::parse($this->booking->to_date)->subDays(7)
                 : null;
@@ -114,28 +150,32 @@ class ShowBooking extends Component
             // Update booking
             $this->booking->update([
                 'auto_renewal' => $newState,
-                'renewal_period_days' => $this->renewalPeriodDays,
+                'renewal_period_days' => 30, // Fixed to 30 days for monthly packages
                 'next_renewal_date' => $nextRenewalDate,
                 'renewal_status' => $newState ? 'pending' : null
             ]);
 
-            // Update local state
+            // Update local property
             $this->autoRenewal = $newState;
 
-            // Show success message and close modal
+            // Update canManageAutoRenewal
+            $this->updateCanManageAutoRenewal();
+
+            // Close modal and show success message
             $this->dispatch('closeModal', 'autoRenewalModal');
             $this->dispatch('notify', [
                 'message' => $newState
-                    ? "Auto-renewal enabled. Will renew every {$this->renewalPeriodDays} days."
+                    ? "Auto-renewal enabled. Package will be automatically extended by 1 month."
                     : 'Auto-renewal disabled successfully.',
                 'type' => 'success'
             ]);
-        } catch (\Exception $e) {
-            // Reset local state on error
-            $this->autoRenewal = $this->booking->auto_renewal;
 
+        } catch (\Exception $e) {
+            // Reset local state and show error
+            $this->autoRenewal = $this->booking->auto_renewal;
+            $this->updateCanManageAutoRenewal();
             $this->dispatch('notify', [
-                'message' => $e->getMessage(),
+                'message' => 'Failed to update auto-renewal settings: ' . $e->getMessage(),
                 'type' => 'error'
             ]);
         }
@@ -232,9 +272,19 @@ class ShowBooking extends Component
             // Calculate current milestone and due bill
             $this->calculatePayments();
 
-            // Store the selected payment details
-            $this->selectedMilestoneId = $milestoneId ?? $this->currentMilestone?->id;
-            $this->selectedMilestoneAmount = $amount ?? $this->dueBill;
+            // Set selected milestone details
+            if ($milestoneId) {
+                $this->selectedMilestoneId = $milestoneId;
+                $this->selectedMilestoneAmount = $amount;
+
+                // Get the specific milestone
+                $this->currentMilestone = $this->booking->bookingPayments
+                    ->where('id', $milestoneId)
+                    ->first();
+            } else {
+                $this->selectedMilestoneId = $this->currentMilestone?->id;
+                $this->selectedMilestoneAmount = $this->dueBill;
+            }
 
             if (!$this->selectedMilestoneId && !$this->currentMilestone) {
                 session()->flash('error', 'No pending payments found.');
@@ -246,6 +296,10 @@ class ShowBooking extends Component
                 ->where('payment_status', '!=', 'paid')
                 ->where('due_date', '<', now())
                 ->isNotEmpty();
+
+            // Reset payment form
+            $this->paymentMethod = 'bank_transfer';
+            $this->bankTransferReference = '';
 
             // Dispatch modal open event
             $this->dispatch('openModal', 'paymentModal');

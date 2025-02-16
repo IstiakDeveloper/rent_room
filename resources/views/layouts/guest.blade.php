@@ -217,7 +217,156 @@
         </div>
     </header>
 
+<!-- Mobile Bottom Navigation Bar -->
+<div class="d-lg-none fixed-bottom bg-white border-top shadow-sm">
+    <div class="d-flex justify-content-around align-items-center py-2">
+        <!-- Home Button -->
+        <a href="{{ route('home') }}" class="text-center text-decoration-none">
+            <div class="d-flex flex-column align-items-center">
+                <i class="fas fa-home text-primary" style="font-size: 20px;"></i>
+                <span class="text-dark mt-1" style="font-size: 12px;">Home</span>
+            </div>
+        </a>
 
+        <!-- Call Button -->
+        <a href="tel:+1234567890" class="text-center text-decoration-none">
+            <div class="d-flex flex-column align-items-center">
+                <i class="fas fa-phone-alt text-primary" style="font-size: 20px;"></i>
+                <span class="text-dark mt-1" style="font-size: 12px;">Call</span>
+            </div>
+        </a>
+
+        <!-- Auth Button -->
+        @if (auth()->check())
+            <div class="dropdown position-relative">
+                <a href="#" class="text-center text-decoration-none" data-toggle="dropdown">
+                    <div class="d-flex flex-column align-items-center">
+                        <div class="position-relative">
+                            <img src="{{ auth()->user()->photo ? asset('images/' . auth()->user()->photo) : asset('profile.png') }}"
+                                alt="{{ auth()->user()->name }}"
+                                class="rounded-circle"
+                                style="width: 24px; height: 24px; object-fit: cover;">
+                        </div>
+                        <span class="text-dark mt-1" style="font-size: 12px;">Profile</span>
+                    </div>
+                </a>
+                <div class="dropdown-menu dropdown-menu-right">
+                    @role('User')
+                        <a class="dropdown-item" href="{{ route('user.bookings.index') }}">
+                            <i class="fas fa-bookmark mr-2"></i>My Packages
+                        </a>
+                    @endrole
+                    @role('Super Admin|Admin')
+                        <a class="dropdown-item" href="{{ route('dashboard') }}">
+                            <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
+                        </a>
+                    @endrole
+                    <a class="dropdown-item" href="{{ route('profile') }}">
+                        <i class="fas fa-user mr-2"></i>My Profile
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <a class="dropdown-item" href="{{ route('logout') }}"
+                        onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                    </a>
+                </div>
+            </div>
+        @else
+            <a href="#" class="text-center text-decoration-none" data-toggle="modal" data-target="#signInModal">
+                <div class="d-flex flex-column align-items-center">
+                    <i class="fas fa-user text-primary" style="font-size: 20px;"></i>
+                    <span class="text-dark mt-1" style="font-size: 12px;">Sign In</span>
+                </div>
+            </a>
+        @endif
+    </div>
+</div>
+
+<style>
+/* Bottom Navigation Styles */
+.fixed-bottom {
+    z-index: 1030;
+}
+
+/* Improve tap target size for mobile */
+.fixed-bottom a {
+    padding: 8px 12px;
+}
+
+/* Active state for navigation items */
+.fixed-bottom a.active {
+    color: #007bff !important;
+}
+
+/* Dropdown menu positioning for bottom nav */
+.fixed-bottom .dropdown-menu {
+    position: fixed !important;
+    bottom: 60px !important;
+    transform: none !important;
+    margin-bottom: 0 !important;
+    border-radius: 8px 8px 0 0;
+    border: none;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    width: 200px;
+    right: 20px !important;
+    left: auto !important;
+}
+
+/* Enhance touch targets for dropdown items */
+.fixed-bottom .dropdown-item {
+    padding: 0.75rem 1.5rem;
+    font-size: 14px;
+}
+
+/* Prevent content from being hidden behind the bottom nav */
+main {
+    margin-bottom: 60px;
+}
+
+/* Animation for active state */
+.fixed-bottom a:active {
+    transform: scale(0.95);
+    transition: transform 0.1s;
+}
+
+/* Prevent default bootstrap dropdown positioning */
+.fixed-bottom .dropdown {
+    position: static !important;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add active state to current route
+    const currentPath = window.location.pathname;
+    const navLinks = document.querySelectorAll('.fixed-bottom a');
+
+    navLinks.forEach(link => {
+        if (link.getAttribute('href') === currentPath) {
+            link.classList.add('active');
+        }
+    });
+
+    // Override Bootstrap's dropdown positioning
+    const dropdownToggle = document.querySelector('.fixed-bottom .dropdown-toggle');
+    if (dropdownToggle) {
+        dropdownToggle.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const dropdown = this.closest('.dropdown');
+            const menu = dropdown.querySelector('.dropdown-menu');
+            menu.classList.toggle('show');
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.dropdown')) {
+                const menus = document.querySelectorAll('.fixed-bottom .dropdown-menu');
+                menus.forEach(menu => menu.classList.remove('show'));
+            }
+        });
+    }
+});
+</script>
     <style>
         /* Header Styles */
         .main-header {

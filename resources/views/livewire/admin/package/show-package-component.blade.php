@@ -51,7 +51,7 @@
                             <tr>
                                 <th scope="col">Guest</th>
                                 <th scope="col">Booked Place</th>
-                                <th scope="col">Stay Period</th>
+                                <th scope="col">Auto Renewal</th>
                                 <th scope="col">Duration</th>
                                 <th scope="col">Amount</th>
                                 <th scope="col">Status</th>
@@ -79,7 +79,7 @@
                                     <td>
                                         <div class="d-flex flex-column gap-1">
                                             @foreach ($rooms as $room)
-                                                <span class="badge bg-info">
+                                                <span class="badge bg-info text-light">
                                                     <i class="fas fa-bed me-1"></i>
                                                     {{ $room->name }}
                                                 </span>
@@ -88,14 +88,15 @@
                                     </td>
                                     <td>
                                         <div class="d-flex align-items-center">
-                                            <i class="fas fa-calendar-alt text-primary me-2"></i>
-                                            <div>
-                                                <div>{{ \Carbon\Carbon::parse($booking->from_date)->format('d M Y') }}
-                                                </div>
-                                                <div class="text-muted">to</div>
-                                                <div>{{ \Carbon\Carbon::parse($booking->to_date)->format('d M Y') }}
-                                                </div>
-                                            </div>
+                                            @if ($booking['auto_renewal'])
+                                                <span class="text-success">
+                                                    <i class="fas fa-check-circle mr-1"></i>Enabled
+                                                </span>
+                                            @else
+                                                <span class="text-secondary">
+                                                    <i class="fas fa-times-circle mr-1"></i>Disabled
+                                                </span>
+                                            @endif
                                         </div>
                                     </td>
                                     <td>
@@ -130,7 +131,7 @@
                                                 default => 'info-circle',
                                             };
                                         @endphp
-                                        <span class="badge bg-{{ $statusColor }}">
+                                        <span class="badge bg-{{ $statusColor }} text-light">
                                             <i class="fas fa-{{ $statusIcon }} me-1"></i>
                                             {{ ucfirst($booking->payment_status) }}
                                         </span>

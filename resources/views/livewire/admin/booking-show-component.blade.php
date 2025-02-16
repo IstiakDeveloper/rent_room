@@ -220,93 +220,109 @@
             </div>
 
             <!-- Auto-Renewal Card -->
-            <div class="card shadow-sm mb-4">
-                <div class="card-body">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body p-4">
                     <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h6 class="text-primary mb-0">Auto-Renewal Status</h6>
-                        <button wire:click="toggleAutoRenewal"
-                            class="btn btn-sm {{ $booking->auto_renewal ? 'btn-danger' : 'btn-success' }}"
-                            {{ $canManageAutoRenewal ? '' : 'disabled' }}>
-                            {{ $booking->auto_renewal ? 'Disable' : 'Enable' }} Auto-Renewal
-                        </button>
-                    </div>
-
-                    <div class="border rounded p-3 mb-3">
-                        <div class="d-flex align-items-center mb-2">
-                            @if ($booking->auto_renewal)
-                                <span class="badge text-white mr-2" style="background-color: #252525;">
-                                    <i class="fas fa-check-circle"></i> Enabled
-                                </span>
-                            @else
-                                <span class="badge text-white mr-2" style="background-color: #808080;">
-                                    <i class="fas fa-times-circle"></i> Disabled
-                                </span>
-                            @endif
+                        <div>
+                            <h5 class="text-dark mb-1 font-weight-bold">Auto-Renewal</h5>
+                            <p class="text-muted small mb-0">Monthly Package Management</p>
                         </div>
 
-                        @if ($booking->auto_renewal)
-                            <div class="small text-muted mb-2">
-                                Renews every {{ $booking->renewal_period_days }} days
-                            </div>
-
-                            @if ($booking->next_renewal_date)
-                                <div class="bg-light p-2 rounded">
-                                    <div class="small">
-                                        <i class="fas fa-calendar-alt text-primary mr-1"></i>
-                                        Next Renewal:
-                                        <strong>
-                                            {{ $booking->next_renewal_date->format('M d, Y') }}
-                                            <small class="text-muted">
-                                                ({{ $booking->next_renewal_date->diffForHumans() }})
-                                            </small>
-                                        </strong>
-                                    </div>
-                                </div>
-                            @endif
-
-                            <!-- Renewal Period Update -->
-                            <div class="mt-3">
-                                <div class="input-group input-group-sm">
-                                    <input type="number" class="form-control" wire:model.defer="renewalPeriodDays"
-                                        placeholder="Days" min="1" max="365">
-                                    <div class="input-group-append">
-                                        <button class="btn btn-outline-primary" wire:click="updateRenewalPeriod"
-                                            type="button">
-                                            Update Period
-                                        </button>
-                                    </div>
-                                </div>
-                                @error('renewalPeriodDays')
-                                    <small class="text-danger">{{ $message }}</small>
-                                @enderror
+                        @if ($booking->price_type === 'Month')
+                            <div class="custom-control custom-switch">
+                                <input type="checkbox" class="custom-control-input" id="autoRenewalSwitch"
+                                    wire:click="toggleAutoRenewal" {{ $booking->auto_renewal ? 'checked' : '' }}
+                                    {{ $canManageAutoRenewal ? '' : 'disabled' }}>
+                                <label class="custom-control-label" for="autoRenewalSwitch">
+                                    <span class="switch-status text-muted small">
+                                        {{ $booking->auto_renewal ? 'On' : 'Off' }}
+                                    </span>
+                                </label>
                             </div>
                         @endif
                     </div>
 
-                    @if (!$canManageAutoRenewal && !$booking->auto_renewal)
-                        <div class="alert alert-warning mb-0">
-                            <small>
-                                <i class="fas fa-exclamation-triangle mr-1"></i>
-                                Auto-renewal cannot be managed because:
-                                <ul class="mb-0 mt-1">
-                                    @if ($booking->payment_status === 'cancelled')
-                                        <li>This booking has been cancelled</li>
-                                    @endif
-                                    @if ($booking->payment_status === 'finished')
-                                        <li>This booking has been marked as finished</li>
-                                    @endif
-                                    @if (!$booking->from_date || !$booking->to_date)
-                                        <li>Booking dates are not properly set</li>
-                                    @endif
-                                    @if ($booking->to_date && Carbon\Carbon::parse($booking->to_date)->isPast())
-                                        <li>This booking has expired</li>
-                                    @endif
-                                </ul>
-                            </small>
+                    <!-- Rest of the card content remains the same as in previous example -->
+                    <div class="bg-light rounded-lg p-3">
+                        @if ($booking->price_type !== 'Month')
+                            <div class="alert alert-info mb-0 d-flex align-items-center">
+                                <i class="fas fa-info-circle mr-2 text-primary"></i>
+                                <span>Auto-renewal is only available for monthly packages.</span>
+                            </div>
+                        @else
+                            @if ($booking->auto_renewal)
+                                <div class="d-flex align-items-center mb-3">
+                                    <span class="badge badge-success mr-2">
+                                        <i class="fas fa-check-circle mr-1"></i> Active
+                                    </span>
+                                    <small class="text-muted">Package will auto-extend</small>
+                                </div>
+
+                                @if ($booking->next_renewal_date)
+                                    <div class="bg-white border rounded p-2 mb-3">
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-calendar-alt text-primary mr-2"></i>
+                                            <div>
+                                                <span class="font-weight-bold">
+                                                    {{ Carbon\Carbon::parse($booking->next_renewal_date)->format('M d, Y') }}
+                                                </span>
+                                                <small class="text-muted d-block">
+                                                    {{ Carbon\Carbon::parse($booking->next_renewal_date)->diffForHumans() }}
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endif
+
+                                <div class="alert alert-soft-info">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-info-circle mr-2 text-info"></i>
+                                        <span class="small">
+                                            Package will automatically extend 7 days before expiry.
+                                            A new payment milestone will be created.
+                                        </span>
+                                    </div>
+                                </div>
+                            @endif
+                        @endif
+                    </div>
+
+                    @if (!$canManageAutoRenewal && !$booking->auto_renewal && $booking->price_type === 'Month')
+                        <div class="alert alert-warning mt-3">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-exclamation-triangle mr-2"></i>
+                                <div>
+                                    <strong>Auto-renewal cannot be managed</strong>
+                                    <ul class="pl-3 mb-0 mt-1 small">
+                                        @if ($booking->payment_status === 'cancelled')
+                                            <li>Booking has been cancelled</li>
+                                        @endif
+                                        @if ($booking->payment_status === 'finished')
+                                            <li>Booking has been marked as finished</li>
+                                        @endif
+                                        @if (!$booking->from_date || !$booking->to_date)
+                                            <li>Booking dates are not properly set</li>
+                                        @endif
+                                        @if ($booking->to_date && Carbon\Carbon::parse($booking->to_date)->isPast())
+                                            <li>Booking has expired</li>
+                                        @endif
+                                    </ul>
+                                </div>
+                            </div>
                         </div>
                     @endif
                 </div>
             </div>
+
+            <style>
+                .custom-control-input:checked~.switch-status {
+                    color: #28a745 !important;
+                }
+
+                .custom-control-input:not(:checked)~.switch-status {
+                    color: #6c757d !important;
+                }
+            </style>
 
             <!-- Cancel Booking -->
             @if ($booking->payment_status !== 'cancelled')

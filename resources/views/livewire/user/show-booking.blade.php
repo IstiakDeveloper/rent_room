@@ -1,5 +1,5 @@
-<!-- resources/views/livewire/booking-details.blade.php -->
 <div>
+
     <!-- Auto Renewal Modal -->
     <div class="modal fade" id="autoRenewalModal" tabindex="-1" wire:ignore.self>
         <div class="modal-dialog">
@@ -8,66 +8,94 @@
                     <h5 class="modal-title text-white">
                         <i class="fas fa-sync-alt mr-2"></i>Auto-Renewal Settings
                     </h5>
-                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close"
-                        wire:click="closeAutoRenewalModal">
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
                 <div class="modal-body">
-                    <div class="form-group mb-4">
-                        <div class="custom-control custom-switch">
-                            <input type="checkbox" class="custom-control-input" id="autoRenewalToggle"
-                                wire:model.live="autoRenewal">
-                            <label class="custom-control-label" for="autoRenewalToggle">
-                                Enable Auto-Renewal
-                            </label>
+                    @if ($booking->price_type !== 'Month')
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            Auto-renewal is only available for monthly packages.
                         </div>
-                    </div>
-
-                    <div class="form-group" x-show="$wire.autoRenewal">
-                        <label for="renewalPeriodDays">Renewal Period (Days)</label>
-                        <div class="input-group">
-                            <input type="number" class="form-control" id="renewalPeriodDays"
-                                wire:model="renewalPeriodDays" min="1" max="365">
-                            <div class="input-group-append">
-                                <span class="input-group-text">Days</span>
+                    @else
+                        <div class="form-group mb-4">
+                            <div class="custom-control custom-switch">
+                                <input type="checkbox" class="custom-control-input" id="autoRenewalToggle"
+                                    wire:model.live="autoRenewal" {{ !$canManageAutoRenewal ? 'disabled' : '' }}>
+                                <label class="custom-control-label" for="autoRenewalToggle">
+                                    Enable Auto-Renewal
+                                </label>
                             </div>
                         </div>
-                        @error('renewalPeriodDays')
-                            <small class="text-danger">{{ $message }}</small>
-                        @enderror
-                    </div>
 
-                    <div class="alert alert-info mt-4">
-                        <div class="d-flex">
-                            <div class="mr-3">
-                                <i class="fas fa-info-circle fa-2x"></i>
+                        @if ($autoRenewal)
+                            <div class="bg-light p-3 rounded mb-3">
+                                <div class="small">
+                                    <i class="fas fa-calendar-alt text-primary mr-1"></i>
+                                    Next Renewal:
+                                    <strong>
+                                        {{ Carbon\Carbon::parse($booking->to_date)->subDays(7)->format('M d, Y') }}
+                                    </strong>
+                                </div>
                             </div>
-                            <div>
-                                <h6 class="alert-heading">How Auto-Renewal Works</h6>
-                                <p class="mb-0 small">
-                                    When enabled, your booking will be automatically renewed 7 days before it expires.
-                                    You'll receive an email notification when the renewal is processed.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
+                        @endif
 
-                    @if ($booking->auto_renewal)
-                        <div class="alert alert-warning mt-3">
+                        <div class="alert alert-info mt-3">
                             <div class="d-flex">
                                 <div class="mr-3">
-                                    <i class="fas fa-exclamation-triangle fa-2x"></i>
+                                    <i class="fas fa-info-circle fa-2x"></i>
                                 </div>
                                 <div>
-                                    <h6 class="alert-heading">Important Note</h6>
+                                    <h6 class="alert-heading">How Auto-Renewal Works</h6>
                                     <p class="mb-0 small">
-                                        Disabling auto-renewal will prevent future automatic renewals,
-                                        but won't affect your current booking period.
+                                        When enabled, your booking will be automatically renewed 7 days before it
+                                        expires.
+                                        A new milestone payment will be created for the next month.
                                     </p>
                                 </div>
                             </div>
                         </div>
+
+                        @if ($booking->auto_renewal)
+                            <div class="alert alert-warning mt-3">
+                                <div class="d-flex">
+                                    <div class="mr-3">
+                                        <i class="fas fa-exclamation-triangle fa-2x"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="alert-heading">Important Note</h6>
+                                        <p class="mb-0 small">
+                                            Disabling auto-renewal will prevent future automatic renewals,
+                                            but won't affect your current booking period.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
+
+                        @if (!$canManageAutoRenewal && !$booking->auto_renewal)
+                            <div class="alert alert-warning mt-3">
+                                <small>
+                                    <i class="fas fa-exclamation-triangle mr-1"></i>
+                                    Auto-renewal cannot be managed because:
+                                    <ul class="mb-0 mt-1">
+                                        @if ($booking->payment_status === 'cancelled')
+                                            <li>This booking has been cancelled</li>
+                                        @endif
+                                        @if ($booking->payment_status === 'finished')
+                                            <li>This booking has been marked as finished</li>
+                                        @endif
+                                        @if (!$booking->from_date || !$booking->to_date)
+                                            <li>Booking dates are not properly set</li>
+                                        @endif
+                                        @if ($booking->to_date && Carbon\Carbon::parse($booking->to_date)->isPast())
+                                            <li>This booking has expired</li>
+                                        @endif
+                                    </ul>
+                                </small>
+                            </div>
+                        @endif
                     @endif
                 </div>
                 <div class="modal-footer">
@@ -83,9 +111,7 @@
     </div>
 
     <div class="container my-5">
-        <!-- Main Card Container -->
         <div class="card shadow">
-            <!-- Main Card Header -->
             <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                 <div>
                     <h5 class="mb-0 text-white">Booking Ref #{{ $booking->id }}</h5>
@@ -121,12 +147,12 @@
                             </div>
                             <div class="card-body">
                                 <div class="row">
-                                    <div class="col-md-6">
+                                    <div class="col-md-12">
                                         <!-- Package Info -->
                                         <div class="bg-light p-3 rounded mb-3">
                                             <h6 class="text-primary mb-3">Package Details</h6>
                                             <div class="row mb-2">
-                                                <div class="col-sm-4 text-muted">Package Name:</div>
+                                                <div class="col-sm-4 text-muted">Package:</div>
                                                 <div class="col-sm-8">{{ $booking->package->name }}</div>
                                             </div>
                                             <div class="row mb-2">
@@ -134,7 +160,7 @@
                                                 <div class="col-sm-8">{{ $booking->package->address }}</div>
                                             </div>
                                             <div class="row mb-2">
-                                                <div class="col-sm-4 text-muted">Booked Date:</div>
+                                                <div class="col-sm-4 text-muted">Booked:</div>
                                                 <div class="col-sm-8">{{ $booking->created_at->format('M d, Y') }}
                                                 </div>
                                             </div>
@@ -155,11 +181,8 @@
                                                 <div class="col-sm-8">{{ $booking->number_of_days }} Days</div>
                                             </div>
                                         </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <!-- Booked Rooms -->
                                         <div class="bg-light p-3 rounded">
-                                            <h6 class="text-primary mb-3">Booked Rooms</h6>
+                                            <h6 class="text-primary mb-3">Place</h6>
                                             <div class="rooms-container">
                                                 @php
                                                     $roomIds = json_decode($booking->room_ids, true) ?? [];
@@ -187,6 +210,7 @@
                                             </div>
                                         </div>
                                     </div>
+
                                 </div>
                             </div>
                         </div>
@@ -200,13 +224,29 @@
                                     <h5 class="modal-title">
                                         <i class="fas fa-credit-card mr-2"></i>Make Payment
                                     </h5>
-                                    @if ($dueBill > 0 && $booking->payment_status != 'finished')
-                                        <button class="btn btn-primary btn-sm text-white" wire:click="showPaymentM()">
-                                            <i class="fas fa-credit-card mr-2"></i>Make Payment
-                                        </button>
-                                    @endif
+                                    <button type="button" class="close text-white" data-dismiss="modal">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
                                 </div>
                                 <div class="modal-body">
+                                    <!-- Payment Details Alert -->
+                                    <div class="alert alert-info mb-4">
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-info-circle fa-2x mr-3"></i>
+                                            <div>
+                                                <h6 class="mb-1">Payment Details</h6>
+                                                <p class="mb-0">
+                                                    {{ $currentMilestone?->milestone_type }} Payment - Phase
+                                                    {{ $currentMilestone?->milestone_number }}
+                                                    <br>
+                                                    <small class="text-muted">Due Date:
+                                                        {{ $currentMilestone ? Carbon\Carbon::parse($currentMilestone->due_date)->format('d M Y') : '' }}</small>
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Amount -->
                                     <div class="form-group">
                                         <label for="paymentAmount">Payment Amount</label>
                                         <div class="input-group">
@@ -218,6 +258,7 @@
                                         </div>
                                     </div>
 
+                                    <!-- Payment Method -->
                                     <div class="form-group">
                                         <label for="paymentMethod">Payment Method</label>
                                         <select class="form-control @error('paymentMethod') is-invalid @enderror"
@@ -231,6 +272,7 @@
                                         @enderror
                                     </div>
 
+                                    <!-- Bank Transfer Section -->
                                     @if ($paymentMethod === 'bank_transfer')
                                         <div class="form-group">
                                             <label for="bankTransferReference">Bank Transfer Reference</label>
@@ -243,16 +285,18 @@
                                             @enderror
                                         </div>
 
-                                        <div class="alert alert-info">
-                                            <i class="fas fa-info-circle mr-2"></i>
-                                            <strong>Bank Details:</strong><br>
-                                            {{ $bankDetails }}<br><br>
-                                            <small>Please use the reference: BOK-{{ $booking->id }}</small>
+                                        <div class="alert alert-light border">
+                                            <h6 class="alert-heading mb-2"><i class="fas fa-university mr-2"></i>Bank
+                                                Details</h6>
+                                            <p class="mb-2">{{ $bankDetails }}</p>
+                                            <small class="d-block text-muted">Please use the reference:
+                                                BOK-{{ $booking->id }}</small>
                                         </div>
                                     @endif
 
+                                    <!-- Card Payment Info -->
                                     @if ($paymentMethod === 'card')
-                                        <div class="alert alert-info">
+                                        <div class="alert alert-light border">
                                             <i class="fas fa-info-circle mr-2"></i>
                                             You will be redirected to our secure payment gateway to complete your card
                                             payment.
@@ -260,19 +304,50 @@
                                     @endif
                                 </div>
                                 <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary" data-dismiss="modal"
-                                        wire:click="closePaymentModal">
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
                                         <i class="fas fa-times mr-2"></i>Cancel
                                     </button>
-                                    <button type="button" class="btn btn-primary" wire:click="processPayment">
-                                        <i class="fas fa-check mr-2"></i>Proceed Payment
+                                    <button type="button" class="btn btn-primary" wire:click="proceedPayment"
+                                        wire:loading.attr="disabled">
+                                        <span wire:loading wire:target="proceedPayment">
+                                            <span class="spinner-border spinner-border-sm" role="status"
+                                                aria-hidden="true"></span>
+                                            Processing...
+                                        </span>
+                                        <span wire:loading.remove>
+                                            <i class="fas fa-check mr-2"></i>Proceed Payment
+                                        </span>
                                     </button>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Payment Section with Updated Modal Integration -->
+                    <script>
+                        document.addEventListener('livewire:initialized', () => {
+                            // Get all modals
+                            const paymentModal = new bootstrap.Modal(document.getElementById('paymentModal'));
+                            const autoRenewalModal = new bootstrap.Modal(document.getElementById('autoRenewalModal'));
+
+                            // Handle modal events
+                            Livewire.on('openModal', (modalId) => {
+                                if (modalId === 'paymentModal') {
+                                    paymentModal.show();
+                                } else if (modalId === 'autoRenewalModal') {
+                                    autoRenewalModal.show();
+                                }
+                            });
+
+                            Livewire.on('closeModal', (modalId) => {
+                                if (modalId === 'paymentModal') {
+                                    paymentModal.hide();
+                                } else if (modalId === 'autoRenewalModal') {
+                                    autoRenewalModal.hide();
+                                }
+                            });
+                        });
+                    </script>
+
                     <div class="col-12">
                         <div class="card mb-4">
                             <div class="card-header bg-light">
@@ -284,19 +359,6 @@
                                 <!-- Payment Summary -->
                                 <div class="row mb-4">
                                     <div class="col-12">
-                                        <h6 class="text-primary mb-3">Payment Summary</h6>
-                                        @if ($dueBill > 0 && $booking->payment_status != 'finished')
-                                            <button class="btn btn-primary btn-sm text-white"
-                                                wire:click="showPaymentM({{ $currentMilestone?->id ?? null }}, {{ $currentMilestone?->amount ?? $dueBill }})">
-                                                <i class="fas fa-credit-card mr-2"></i>Make Payment
-                                            </button>
-                                        @endif
-                                        <div class="progress mb-3" style="height: 25px;">
-                                            <div class="progress-bar bg-success" role="progressbar"
-                                                style="width: {{ $paymentPercentage }}%">
-                                                <strong>{{ number_format($paymentPercentage, 1) }}% Paid</strong>
-                                            </div>
-                                        </div>
                                         <div class="row">
                                             <div class="col-md-4">
                                                 <div class="bg-light p-3 rounded text-center">
@@ -310,7 +372,7 @@
                                                 <div class="bg-light p-3 rounded text-center">
                                                     <div class="text-muted mb-2">Paid Amount</div>
                                                     <h5 class="text-success mb-0">
-                                                        £{{ number_format($payments ? $payments->where('status', 'completed')->sum('amount') : 0, 2) }}
+                                                        £{{ number_format($payments ? $payments->where('status', 'Paid')->sum('amount') : 0, 2) }}
                                                     </h5>
                                                 </div>
                                             </div>
@@ -502,18 +564,7 @@
                                                 @endforeach
                                             </div>
 
-                                            <div class="alert alert-info mt-4 mb-0">
-                                                <div class="d-flex align-items-center">
-                                                    <i class="fas fa-info-circle fa-lg mr-3"></i>
-                                                    <div>
-                                                        <h6 class="alert-heading mb-1">Important Note</h6>
-                                                        <p class="mb-0 small">Please follow these instructions
-                                                            carefully to ensure a smooth stay.
-                                                            If you have any questions, don't hesitate to contact
-                                                            support.</p>
-                                                    </div>
-                                                </div>
-                                            </div>
+
                                         @endif
                                     </div>
                                 </div>
@@ -722,24 +773,34 @@
         }
     </style>
 
+    <!-- Place this at the bottom of your blade file -->
     <script>
         document.addEventListener('livewire:initialized', () => {
-            const modal = new bootstrap.Modal(document.getElementById('autoRenewalModal'));
+            // Get the payment modal
+            const paymentModalEl = document.getElementById('paymentModal');
+            const paymentModal = new bootstrap.Modal(paymentModalEl);
 
-            // Modal handling
+            // Get the auto renewal modal
+            const autoRenewalModalEl = document.getElementById('autoRenewalModal');
+            const autoRenewalModal = new bootstrap.Modal(autoRenewalModalEl);
+
+            // Handle modal events
             Livewire.on('openModal', (modalId) => {
-                modal.show();
+                // Check which modal to open
+                if (modalId[0] === 'paymentModal') {
+                    paymentModal.show();
+                } else if (modalId[0] === 'autoRenewalModal') {
+                    autoRenewalModal.show();
+                }
             });
 
+            // Handle modal close events
             Livewire.on('closeModal', (modalId) => {
-                modal.hide();
-            });
-
-            // Notifications
-            Livewire.on('notify', (event) => {
-                window.dispatchEvent(new CustomEvent('notify', {
-                    detail: event[0]
-                }));
+                if (modalId[0] === 'paymentModal') {
+                    paymentModal.hide();
+                } else if (modalId[0] === 'autoRenewalModal') {
+                    autoRenewalModal.hide();
+                }
             });
 
             // Initialize tooltips

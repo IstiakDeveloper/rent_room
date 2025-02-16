@@ -11,6 +11,7 @@ use App\Mail\InvoiceMail;
 use App\Models\Payment;
 use App\Models\Room;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class BookingShowComponent extends Component
 {
@@ -52,6 +53,149 @@ class BookingShowComponent extends Component
         // Load room information
         $roomIds = json_decode($this->booking->room_ids, true) ?? [];
         $this->rooms = Room::whereIn('id', $roomIds)->get();
+    }
+
+    public function toggleAutoRenewal()
+    {
+        if (!$this->canManageAutoRenewal) {
+            session()->flash('error', 'Cannot manage auto-renewal for this booking.');
+            return;
+        }
+
+        try {
+            $newState = !$this->booking->auto_renewal;
+
+            // Only allow auto-renewal for monthly packages
+            if ($newState && $this->booking->price_type !== 'Month') {
+                session()->flash('error', 'Auto-renewal is only available for monthly packages.');
+                return;
+            }
+
+            // Calculate next renewal date (7 days before package end)
+            $nextRenewalDate = $newState
+                ? Carbon::parse($this->booking->to_date)->subDays(7)
+                : null;
+
+            $this->booking->update([
+                'auto_renewal' => $newState,
+                'renewal_period_days' => 30, // Fixed to 30 days for monthly packages
+                'next_renewal_date' => $nextRenewalDate,
+                'renewal_status' => $newState ? 'pending' : null
+            ]);
+
+            session()->flash('message', $newState
+                ? "Auto-renewal enabled. Package will be automatically extended by 1 month."
+                : 'Auto-renewal disabled successfully.');
+
+        } catch (\Exception $e) {
+            session()->flash('error', 'Failed to update auto-renewal settings: ' . $e->getMessage());
+        }
+    }
+
+    public function processAutoRenewal()
+    {
+        if (!$this->booking->auto_renewal || $this->booking->price_type !== 'Month') {
+            return;
+        }
+
+        DB::beginTransaction();
+        try {
+            // Get the room with prices
+            $roomIds = json_decode($this->booking->room_ids, true);
+            $room = Room::with('roomPrices')->find($roomIds[0]);
+
+            if (!$room) {
+                throw new \Exception('Room not found');
+            }
+
+            // Get monthly price
+            $monthlyPrice = $room->roomPrices
+                ->where('type', 'Month')
+                ->first();
+
+            if (!$monthlyPrice) {
+                throw new \Exception('Monthly price not found');
+            }
+
+            $price = $monthlyPrice->discount_price ?? $monthlyPrice->fixed_price;
+
+            // Calculate new dates
+            $newToDate = Carbon::parse($this->booking->to_date)->addMonth();
+
+            // Create milestone payment
+            $milestone = [
+                'type' => 'Month',
+                'quantity' => 1,
+                'price' => $price,
+                'total' => $price,
+                'description' => $newToDate->format('F Y'),
+            ];
+
+            // Update booking
+            $this->booking->update([
+                'to_date' => $newToDate,
+                'number_of_days' => Carbon::parse($this->booking->from_date)->diffInDays($newToDate),
+                'price' => $this->booking->price + $price,
+                'total_amount' => $this->booking->total_amount + $price,
+                'next_renewal_date' => $newToDate->copy()->subDays(7),
+                'milestone_breakdown' => array_merge(
+                    $this->booking->milestone_breakdown ?? [],
+                    [$milestone]
+                )
+            ]);
+
+            // Create new payment record
+            DB::table('booking_payments')->insert([
+                'booking_id' => $this->booking->id,
+                'milestone_type' => 'Month',
+                'milestone_number' => $this->getNextMilestoneNumber(),
+                'due_date' => $newToDate->copy()->startOfMonth(),
+                'amount' => $price,
+                'payment_status' => 'pending',
+                'payment_method' => $this->booking->payments->last()?->payment_method ?? 'bank_transfer',
+                'created_at' => now(),
+                'updated_at' => now()
+            ]);
+
+            DB::commit();
+            session()->flash('message', 'Booking automatically extended for another month.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            session()->flash('error', 'Auto-renewal failed: ' . $e->getMessage());
+        }
+    }
+
+    private function getNextMilestoneNumber()
+    {
+        return DB::table('booking_payments')
+            ->where('booking_id', $this->booking->id)
+            ->where('milestone_number', '>', 0)
+            ->orderByDesc('milestone_number')
+            ->value('milestone_number') + 1;
+    }
+
+    protected function updateCanManageAutoRenewal(): void
+    {
+        if (!$this->booking) {
+            $this->canManageAutoRenewal = false;
+            return;
+        }
+
+        // Allow managing if already enabled
+        if ($this->booking->auto_renewal) {
+            $this->canManageAutoRenewal = true;
+            return;
+        }
+
+        $toDate = Carbon::parse($this->booking->to_date);
+
+        $this->canManageAutoRenewal =
+            $this->booking->price_type === 'Month' && // Only for monthly packages
+            !in_array($this->booking->payment_status, ['cancelled', 'finished']) &&
+            $this->booking->from_date &&
+            $this->booking->to_date &&
+            $toDate->isFuture();
     }
 
     public function updateStatus()
@@ -175,60 +319,7 @@ class BookingShowComponent extends Component
         };
     }
 
-    protected function updateCanManageAutoRenewal(): void
-    {
-        if (!$this->booking) {
-            $this->canManageAutoRenewal = false;
-            return;
-        }
 
-        // Allow managing if already enabled
-        if ($this->booking->auto_renewal) {
-            $this->canManageAutoRenewal = true;
-            return;
-        }
-
-        $toDate = Carbon::parse($this->booking->to_date);
-
-        $this->canManageAutoRenewal =
-            !in_array($this->booking->payment_status, ['cancelled', 'finished']) &&
-            $this->booking->from_date &&
-            $this->booking->to_date &&
-            $toDate->isFuture();
-    }
-
-    public function toggleAutoRenewal()
-    {
-        if (!$this->canManageAutoRenewal) {
-            session()->flash('error', 'Cannot manage auto-renewal for this booking.');
-            return;
-        }
-
-        try {
-            $newState = !$this->booking->auto_renewal;
-
-            // Calculate next renewal date
-            $nextRenewalDate = $newState
-                ? Carbon::parse($this->booking->to_date)->subDays(7)
-                : null;
-
-            $this->booking->update([
-                'auto_renewal' => $newState,
-                'renewal_period_days' => $this->renewalPeriodDays,
-                'next_renewal_date' => $nextRenewalDate,
-                'renewal_status' => $newState ? 'pending' : null
-            ]);
-
-            // Update local state
-            $this->updateCanManageAutoRenewal();
-
-            session()->flash('message', $newState
-                ? "Auto-renewal enabled. Will renew every {$this->renewalPeriodDays} days."
-                : 'Auto-renewal disabled successfully.');
-        } catch (\Exception $e) {
-            session()->flash('error', 'Failed to update auto-renewal settings: ' . $e->getMessage());
-        }
-    }
     public function getCanManageAutoRenewalProperty(): bool
     {
         if (!$this->booking) {

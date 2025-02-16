@@ -53,26 +53,125 @@ class CheckoutComponent extends Component
             return redirect()->route('home')->with('error', 'No checkout data found.');
         }
 
-        // Existing assignments
         $this->packageId = $data['packageId'];
         $this->fromDate = $data['fromDate'];
         $this->toDate = $data['toDate'];
         $this->name = $data['name'];
         $this->email = $data['email'];
         $this->phone = $data['phone'];
-        $this->selectedRoom = Room::find($data['selectedRoom']);
+        $this->selectedRoom = Room::with('roomPrices')->find($data['selectedRoom']);
         $this->selectedMaintains = $data['selectedMaintains'] ?? [];
         $this->selectedAmenities = $data['selectedAmenities'] ?? [];
         $this->totalNights = Carbon::parse($this->fromDate)->diffInDays(Carbon::parse($this->toDate));
         $this->package = Package::findOrFail($this->packageId);
+        $this->bankDetails = "Netsoftuk Solution A/C 17855008 S/C 04-06-05";
 
-        // New price breakdown handling
-        $this->priceBreakdown = $data['priceBreakdown'] ?? [];
-        $this->totalAmount = $data['roomTotal'];
-        $this->bookingPrice = $data['roomDetails']['booking_price'];
+        if ($this->selectedRoom) {
+            $this->priceBreakdown = $this->calculatePriceBreakdown();
+
+            // Calculate total amount from breakdown
+            $this->totalAmount = collect($this->priceBreakdown)->sum('total');
+
+            // Get booking price based on price type
+            $this->bookingPrice = $this->selectedRoom->roomPrices
+                ->firstWhere('type', $this->priceType)->booking_price ?? 0;
+        }
+
         $this->amenitiesTotal = collect($this->selectedAmenities)->sum('price');
         $this->maintainsTotal = collect($this->selectedMaintains)->sum('price');
-        $this->bankDetails = "Netsoftuk Solution A/C 17855008 S/C 04-06-05";
+    }
+
+
+    private function determinePriceType()
+    {
+        $availableTypes = collect($this->selectedRoom->roomPrices)->pluck('type')->unique();
+        $totalDays = $this->totalNights;
+        $daysInMonth = Carbon::parse($this->fromDate)->daysInMonth;
+
+        // If only one type available, use that regardless of duration
+        if ($availableTypes->count() === 1) {
+            return $availableTypes->first();
+        }
+
+        // If multiple types available
+        if ($availableTypes->contains('Month')) {
+            if ($totalDays >= $daysInMonth) {
+                return 'Month';
+            }
+        }
+
+        if ($availableTypes->contains('Week')) {
+            if ($totalDays < $daysInMonth && $totalDays >= 7) {
+                return 'Week';
+            }
+        }
+
+        if ($availableTypes->contains('Day')) {
+            if ($totalDays < 7) {
+                return 'Day';
+            }
+        }
+
+        // Default fallbacks based on available types
+        if ($availableTypes->contains('Month')) return 'Month';
+        if ($availableTypes->contains('Week')) return 'Week';
+        if ($availableTypes->contains('Day')) return 'Day';
+
+        throw new \Exception("No valid price type found");
+    }
+
+    private function calculatePriceBreakdown()
+    {
+        $this->priceType = $this->determinePriceType();
+        $totalDays = $this->totalNights;
+        $breakdown = [];
+
+        switch ($this->priceType) {
+            case 'Month':
+                $monthlyPrice = $this->selectedRoom->roomPrices->firstWhere('type', 'Month');
+                $price = $monthlyPrice->discount_price ?? $monthlyPrice->fixed_price;
+                $months = ceil($totalDays / Carbon::parse($this->fromDate)->daysInMonth);
+
+                for ($i = 0; $i < $months; $i++) {
+                    $breakdown[] = [
+                        'type' => 'Month',
+                        'quantity' => 1,
+                        'price' => $price,
+                        'total' => $price,
+                        'description' => Carbon::parse($this->fromDate)->addMonths($i)->format('F Y')
+                    ];
+                }
+                break;
+
+            case 'Week':
+                $weeklyPrice = $this->selectedRoom->roomPrices->firstWhere('type', 'Week');
+                $price = $weeklyPrice->discount_price ?? $weeklyPrice->fixed_price;
+                $weeks = ceil($totalDays / 7);
+
+                $breakdown[] = [
+                    'type' => 'Week',
+                    'quantity' => $weeks,
+                    'price' => $price,
+                    'total' => $price * $weeks,
+                    'description' => "{$weeks} " . ($weeks > 1 ? 'Weeks' : 'Week')
+                ];
+                break;
+
+            case 'Day':
+                $dailyPrice = $this->selectedRoom->roomPrices->firstWhere('type', 'Day');
+                $price = $dailyPrice->discount_price ?? $dailyPrice->fixed_price;
+
+                $breakdown[] = [
+                    'type' => 'Day',
+                    'quantity' => $totalDays,
+                    'price' => $price,
+                    'total' => $price * $totalDays,
+                    'description' => "{$totalDays} " . ($totalDays > 1 ? 'Days' : 'Day')
+                ];
+                break;
+        }
+
+        return $breakdown;
     }
 
     public function calculateTotalAmount()
@@ -127,27 +226,43 @@ class CheckoutComponent extends Component
 
     private function createBooking($paymentAmount)
     {
-        // Calculate total milestones and milestone amount based on price type
-        $priceBreakdown = session('checkout_data.priceBreakdown', []);
-        $priceType = session('checkout_data.priceType', 'Day');
+        // Get room with prices
+        $room = Room::with('roomPrices')->find($this->selectedRoom->id);
+        if (!$room) {
+            throw new \Exception('Room not found');
+        }
 
-        // Count total milestones based on the breakdown
-        $totalMilestones = collect($priceBreakdown)->count();
+        // First determine price type based on available rates
+        $this->priceType = $this->determinePriceType();
 
-        // Calculate amount per milestone
-        $milestoneAmount = collect($priceBreakdown)->pluck('total')->first() ?? 0;
+        // Calculate price breakdown based on determined type
+        $this->priceBreakdown = $this->calculatePriceBreakdown();
 
-        // Add a booking fee milestone (you can adjust this based on your logic)
+        // Get booking price for the determined price type
+        $roomPrice = $room->roomPrices->firstWhere('type', $this->priceType);
+        if (!$roomPrice) {
+            throw new \Exception("Price not found for type: {$this->priceType}");
+        }
+
+        $this->bookingPrice = $roomPrice->booking_price;
+        $this->totalAmount = collect($this->priceBreakdown)->sum('total');
+
+        // Add booking fee milestone
         $bookingFeeMilestone = [
             'type' => 'Booking Fee',
-            'total' => $this->bookingPrice, // Assuming the booking fee is the booking price
+            'quantity' => 1,
+            'price' => $this->bookingPrice,
+            'total' => $this->bookingPrice,
+            'description' => 'Initial Booking Fee'
         ];
 
-        // Add the booking fee milestone to the breakdown
-        $priceBreakdown[] = $bookingFeeMilestone;
-        $totalMilestones = count($priceBreakdown); // Update total milestones count
+        // Combine all milestones
+        $fullBreakdown = array_merge($this->priceBreakdown, [$bookingFeeMilestone]);
 
-        // Create the booking
+        // Calculate total amount including amenities and maintains
+        $totalWithExtras = $this->totalAmount + $this->amenitiesTotal + $this->maintainsTotal;
+
+        // Create booking record
         $booking = Booking::create([
             'user_id' => Auth::id(),
             'package_id' => $this->packageId,
@@ -155,49 +270,74 @@ class CheckoutComponent extends Component
             'to_date' => $this->toDate,
             'room_ids' => json_encode([$this->selectedRoom->id]),
             'number_of_days' => $this->totalNights,
-            'price_type' => $priceType,
-            'price' => $this->totalAmount,
+            'price_type' => $this->priceType,
+            'price' => $totalWithExtras,
             'booking_price' => $this->bookingPrice,
             'payment_option' => $this->paymentOption,
             'total_amount' => $paymentAmount,
             'payment_status' => 'pending',
-            'total_milestones' => $totalMilestones,
-            'milestone_amount' => $milestoneAmount,
-            'milestone_breakdown' => $priceBreakdown
+            'total_milestones' => count($this->priceBreakdown),
+            'milestone_amount' => $this->totalAmount / count($this->priceBreakdown),
+            'milestone_breakdown' => $fullBreakdown,
+            'auto_renewal' => false,
+            'renewal_period_days' => 30
         ]);
 
-        // Generate milestone payments
-        $this->createMilestonePayments($booking, $priceBreakdown);
+        // Create room prices record
+        $this->createBookingRoomPrices($booking);
+
+        // Create milestone payments
+        $this->createMilestonePayments($booking, $fullBreakdown);
 
         return $booking;
     }
 
+    private function createBookingRoomPrices($booking)
+    {
+        $roomPrice = $this->selectedRoom->roomPrices->firstWhere('type', $this->priceType);
 
-    private function createMilestonePayments($booking, $priceBreakdown)
+        if ($roomPrice) {
+            DB::table('booking_room_prices')->insert([
+                'booking_id' => $booking->id,
+                'room_id' => $this->selectedRoom->id,
+                'price_type' => $this->priceType,
+                'fixed_price' => $roomPrice->fixed_price,
+                'discount_price' => $roomPrice->discount_price,
+                'booking_price' => $roomPrice->booking_price,
+                'created_at' => now(),
+                'updated_at' => now()
+            ]);
+        }
+    }
+
+    private function createMilestonePayments($booking, $milestones)
     {
         $startDate = Carbon::parse($booking->from_date);
 
-        foreach ($priceBreakdown as $index => $milestone) {
+        foreach ($milestones as $index => $milestone) {
+            // Calculate due date based on milestone type
             $dueDate = match ($milestone['type']) {
                 'Month' => $startDate->copy()->addMonths($index),
                 'Week' => $startDate->copy()->addWeeks($index),
                 'Day' => $startDate->copy()->addDays($index),
                 'Booking Fee' => now(),
+                default => $startDate->copy()
             };
 
-            // Create booking payment record for the milestone
             DB::table('booking_payments')->insert([
                 'booking_id' => $booking->id,
                 'milestone_type' => $milestone['type'],
                 'milestone_number' => $index + 1,
                 'due_date' => $dueDate,
                 'amount' => $milestone['total'],
-                'payment_status' => $index === 0 ? 'pending' : 'pending', // First payment will be handled separately
+                'payment_status' => 'pending',
+                'payment_method' => $this->paymentMethod,
                 'created_at' => now(),
                 'updated_at' => now()
             ]);
         }
     }
+
 
 
     private function createPayment($booking, $paymentAmount)

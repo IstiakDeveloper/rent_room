@@ -708,6 +708,54 @@ public function deletePartnerDocument(User $user, Package $package, $type)
         flash()->success(message: 'Agreement is saved.');
     }
 
+    public function createPaymentLinkForMilestone($milestoneId)
+    {
+        try {
+            $milestone = BookingPayment::findOrFail($milestoneId);
+
+            // Prevent creating a link for already paid milestones
+            if ($milestone->payment_status === 'paid') {
+                session()->flash('error', 'This milestone has already been paid.');
+                return null;
+            }
+
+            // Check for existing payment link
+            $existingLink = PaymentLink::where('booking_payment_id', $milestoneId)
+                ->where('status', 'pending')
+                ->first();
+
+            if ($existingLink) {
+                // Update existing link
+                $existingLink->update([
+                    'amount' => $milestone->amount,
+                    'updated_at' => now()
+                ]);
+
+                $paymentLink = $existingLink;
+            } else {
+                // Create new payment link if none exists
+                $paymentLink = PaymentLink::create([
+                    'unique_id' => Str::uuid(),
+                    'user_id' => $this->user->id,
+                    'booking_id' => $this->currentBookingId,
+                    'booking_payment_id' => $milestoneId,
+                    'amount' => $milestone->amount,
+                    'status' => 'pending'
+                ]);
+            }
+
+            // Refresh the milestones to update the view
+            $this->generatePaymentLink($this->currentBookingId);
+
+            session()->flash('message', $existingLink ?
+                'Payment link updated successfully!' :
+                'Payment link generated successfully!');
+
+        } catch (\Exception $e) {
+            session()->flash('error', 'Error managing payment link: ' . $e->getMessage());
+        }
+    }
+
     public function generatePaymentLink($bookingId)
     {
         try {
@@ -725,9 +773,10 @@ public function deletePartnerDocument(User $user, Package $package, $type)
                 ->orderBy('due_date')
                 ->get()
                 ->map(function ($payment) {
-                    // Fetch existing payment link if any
+                    // Get the most recent pending payment link
                     $existingPaymentLink = PaymentLink::where('booking_payment_id', $payment->id)
                         ->where('status', 'pending')
+                        ->latest()
                         ->first();
 
                     return [
@@ -739,7 +788,8 @@ public function deletePartnerDocument(User $user, Package $package, $type)
                         'due_date' => Carbon::parse($payment->due_date)->format('d M Y'),
                         'status' => $payment->payment_status,
                         'is_booking_fee' => $payment->is_booking_fee,
-                        'payment_link' => $existingPaymentLink ? route('payment.page', $existingPaymentLink->unique_id) : null
+                        'payment_link' => $existingPaymentLink ? route('payment.page', $existingPaymentLink->unique_id) : null,
+                        'last_updated' => $existingPaymentLink ? $existingPaymentLink->updated_at->format('d M Y H:i') : null
                     ];
                 })->toArray();
 
@@ -750,40 +800,10 @@ public function deletePartnerDocument(User $user, Package $package, $type)
 
             $this->milestoneOptions = $milestones;
             $this->showMilestoneSelectionModal = true;
+
         } catch (\Exception $e) {
             session()->flash('error', 'Error: ' . $e->getMessage());
             return null;
-        }
-    }
-
-    public function createPaymentLinkForMilestone($milestoneId)
-    {
-        try {
-            $milestone = BookingPayment::findOrFail($milestoneId);
-
-            // Prevent creating a link for already paid milestones
-            if ($milestone->payment_status === 'paid') {
-                session()->flash('error', 'This milestone has already been paid.');
-                return null;
-            }
-
-            // Create new payment link
-            $paymentLink = PaymentLink::create([
-                'unique_id' => Str::uuid(),
-                'user_id' => $this->user->id,
-                'booking_id' => $this->currentBookingId,
-                'booking_payment_id' => $milestoneId,
-                'amount' => $milestone->amount,
-                'status' => 'pending'
-            ]);
-
-
-            // Refresh the milestones to update the view
-            $this->generatePaymentLink($this->currentBookingId);
-
-            session()->flash('message', 'Payment link generated successfully!');
-        } catch (\Exception $e) {
-            session()->flash('error', 'Error generating payment link: ' . $e->getMessage());
         }
     }
 

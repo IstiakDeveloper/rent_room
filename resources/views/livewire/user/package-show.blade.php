@@ -515,11 +515,9 @@
                         <!-- Description Section -->
                         <div class="description-section mt-1">
                             <div class="d-flex align-items-center justify-content-between mb-1">
-                                <div class="mt-2">
-                                    <h4 class="h5 text-heading">Description</h4>
-                                </div>
                                 <!-- Partner Info - Moves to new line on extra small screens -->
-                                <div class="d-flex align-items-center ml-0 ml-sm-4 mt-2 mt-sm-0 border-left-sm pl-sm-4">
+                                @if ($package->assignedPartner)
+                                <div class="d-flex align-items-center">
                                     <!-- Partner Profile Photo -->
                                     <div class="partner-photo">
                                         @if ($package->user && $package->user->profile_photo_path)
@@ -544,16 +542,10 @@
                                                     {{ $package->assignedPartner->name }}
                                                 </span>
                                             </a>
-                                        @else
-                                            <a href="{{ route('partner.packages', ['partnerSlug' => str_replace(' ', '-', strtolower($package->creator->name))]) }}"
-                                                class="text-decoration-none">
-                                                <span class="font-weight-medium ml-2 text-success">
-                                                    {{ $package->creator->name }}
-                                                </span>
-                                            </a>
                                         @endif
                                     </div>
                                 </div>
+                                @endif
                             </div>
 
                             <div class="description-content">
