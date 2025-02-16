@@ -448,7 +448,7 @@
                                                                 £{{ number_format($firstPrice->fixed_price, 2) }}
                                                             @endif
                                                             <small class="text-muted" style="font-size: 0.65rem;">
-                                                                Per {{ ucfirst($priceType) }}
+                                                                {{ ucfirst($priceType) }}ly
                                                             </small>
                                                         </span>
                                                         <!-- Deleted Price, Rate Type and Room Name -->
@@ -480,8 +480,8 @@
                                                         @endphp
                                                         @foreach ($pricesByType as $type => $prices)
                                                             <div class="price-type-group mb-2">
-                                                                <div class="text-muted small mb-1">{{ ucfirst($type) }}
-                                                                    Rates</div>
+                                                                <div class="text-muted small mb-1">
+                                                                    {{ ucfirst($type) }}ly</div>
                                                                 @foreach ($prices as $price)
                                                                     <div
                                                                         class="price-item d-flex justify-content-between align-items-center py-1">
@@ -497,7 +497,7 @@
                                                                         </div>
                                                                         <small class="text-muted booking-fee">
                                                                             +£{{ number_format($price->booking_price, 2) }}
-                                                                            booking fee
+                                                                            booking
                                                                         </small>
                                                                     </div>
                                                                 @endforeach
@@ -517,34 +517,34 @@
                             <div class="d-flex align-items-center justify-content-between mb-1">
                                 <!-- Partner Info - Moves to new line on extra small screens -->
                                 @if ($package->assignedPartner)
-                                <div class="d-flex align-items-center">
-                                    <!-- Partner Profile Photo -->
-                                    <div class="partner-photo">
-                                        @if ($package->user && $package->user->profile_photo_path)
-                                            <img src="{{ Storage::url($package->user->profile_photo_path) }}"
-                                                alt="{{ $package->user->name }}"
-                                                class="rounded-circle border shadow-sm"
-                                                style="width: 32px; height: 32px; object-fit: cover;">
-                                        @else
-                                            <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center border shadow-sm"
-                                                style="width: 32px; height: 32px;">
-                                                <i class="fas fa-user-circle"></i>
-                                            </div>
-                                        @endif
-                                    </div>
+                                    <div class="d-flex align-items-center">
+                                        <!-- Partner Profile Photo -->
+                                        <div class="partner-photo">
+                                            @if ($package->user && $package->user->profile_photo_path)
+                                                <img src="{{ Storage::url($package->user->profile_photo_path) }}"
+                                                    alt="{{ $package->user->name }}"
+                                                    class="rounded-circle border shadow-sm"
+                                                    style="width: 32px; height: 32px; object-fit: cover;">
+                                            @else
+                                                <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center border shadow-sm"
+                                                    style="width: 32px; height: 32px;">
+                                                    <i class="fas fa-user-circle"></i>
+                                                </div>
+                                            @endif
+                                        </div>
 
-                                    <!-- Partner Name -->
-                                    <div class="partner-name">
-                                        @if ($package->assignedPartner)
-                                            <a href="{{ route('partner.packages', ['partnerSlug' => str_replace(' ', '-', strtolower($package->assignedPartner->name))]) }}"
-                                                class="text-decoration-none">
-                                                <span class="font-weight-medium ml-2 text-success">
-                                                    {{ $package->assignedPartner->name }}
-                                                </span>
-                                            </a>
-                                        @endif
+                                        <!-- Partner Name -->
+                                        <div class="partner-name">
+                                            @if ($package->assignedPartner)
+                                                <a href="{{ route('partner.packages', ['partnerSlug' => str_replace(' ', '-', strtolower($package->assignedPartner->name))]) }}"
+                                                    class="text-decoration-none">
+                                                    <span class="font-weight-medium ml-2 text-success">
+                                                        {{ $package->assignedPartner->name }}
+                                                    </span>
+                                                </a>
+                                            @endif
+                                        </div>
                                     </div>
-                                </div>
                                 @endif
                             </div>
 

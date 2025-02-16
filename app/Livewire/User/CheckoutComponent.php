@@ -257,7 +257,8 @@ class CheckoutComponent extends Component
         ];
 
         // Combine all milestones
-        $fullBreakdown = array_merge($this->priceBreakdown, [$bookingFeeMilestone]);
+
+        $fullBreakdown = array_merge([$bookingFeeMilestone], $this->priceBreakdown);
 
         // Calculate total amount including amenities and maintains
         $totalWithExtras = $this->totalAmount + $this->amenitiesTotal + $this->maintainsTotal;
@@ -315,19 +316,33 @@ class CheckoutComponent extends Component
         $startDate = Carbon::parse($booking->from_date);
 
         foreach ($milestones as $index => $milestone) {
-            // Calculate due date based on milestone type
+            if ($milestone['type'] === 'Booking Fee') {
+                DB::table('booking_payments')->insert([
+                    'booking_id' => $booking->id,
+                    'milestone_type' => 'Booking Fee',
+                    'milestone_number' => 0,
+                    'due_date' => now(),
+                    'amount' => $milestone['total'],
+                    'payment_status' => 'pending',
+                    'payment_method' => $this->paymentMethod,
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ]);
+                continue;
+            }
+
+            // For other payment types, start from check-in date
             $dueDate = match ($milestone['type']) {
-                'Month' => $startDate->copy()->addMonths($index),
-                'Week' => $startDate->copy()->addWeeks($index),
-                'Day' => $startDate->copy()->addDays($index),
-                'Booking Fee' => now(),
+                'Month' => $startDate->copy()->addMonths($index - 1),  // First payment on check-in date
+                'Week' => $startDate->copy()->addWeeks($index - 1),    // First payment on check-in date
+                'Day' => $startDate->copy()->addDays($index - 1),      // First payment on check-in date
                 default => $startDate->copy()
             };
 
             DB::table('booking_payments')->insert([
                 'booking_id' => $booking->id,
                 'milestone_type' => $milestone['type'],
-                'milestone_number' => $index + 1,
+                'milestone_number' => $index,
                 'due_date' => $dueDate,
                 'amount' => $milestone['total'],
                 'payment_status' => 'pending',
@@ -450,9 +465,9 @@ class CheckoutComponent extends Component
                         'price_data' => [
                             'currency' => 'gbp',
                             'product_data' => [
-                                    'name' => $description,
-                                    'description' => "Booking from {$this->fromDate} to {$this->toDate}",
-                                ],
+                                'name' => $description,
+                                'description' => "Booking from {$this->fromDate} to {$this->toDate}",
+                            ],
                             'unit_amount' => (int) ($paymentAmount * 100),
                         ],
                         'quantity' => 1,

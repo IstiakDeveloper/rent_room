@@ -234,7 +234,7 @@ class AdminBookingComponent extends Component
             'booking_id' => $booking->id,
             'milestone_type' => 'Booking Fee',
             'milestone_number' => 0,
-            'due_date' => now(), // Changed to now() for immediate payment
+            'due_date' => now(),
             'amount' => $bookingFee,
             'payment_status' => 'pending',
             'payment_method' => $this->paymentMethod,
@@ -244,10 +244,11 @@ class AdminBookingComponent extends Component
 
         // Create milestone payments for remaining amount
         foreach ($this->priceBreakdown as $index => $milestone) {
+            // Calculate due date based on milestone type
             $dueDate = match ($milestone['type']) {
-                'Month' => $startDate->copy()->addMonths($index + 1),
-                'Week' => $startDate->copy()->addWeeks($index + 1),
-                'Day' => $startDate->copy()->addDays($index + 1)
+                'Month' => $startDate->copy()->addMonths($index),  // First payment on check-in date, then same date next months
+                'Week' => $startDate->copy()->addWeeks($index),    // First payment on check-in date, then same day next weeks
+                'Day' => $startDate->copy()->addDays($index)       // First payment on check-in date, then next days
             };
 
             DB::table('booking_payments')->insert([
@@ -261,6 +262,30 @@ class AdminBookingComponent extends Component
                 'created_at' => now(),
                 'updated_at' => now()
             ]);
+        }
+    }
+
+    private function calculateMilestoneDueDate(Carbon $startDate, $milestoneType, $index)
+    {
+        // Get the day of month from check-in date for monthly payments
+        $checkInDay = $startDate->day;
+
+        switch ($milestoneType) {
+            case 'Month':
+                // For monthly payments, keep the same day of month as check-in
+                return $startDate->copy()->addMonths($index)->setDay($checkInDay);
+
+            case 'Week':
+                // For weekly payments, set due date to the start of next week from check-in
+                $weekStart = $startDate->copy()->addWeeks($index - 1); // Subtract 1 because $index starts from 1
+                return $weekStart;
+
+            case 'Day':
+                // For daily payments, simply add days
+                return $startDate->copy()->addDays($index);
+
+            default:
+                return $startDate->copy()->addDays($index);
         }
     }
 

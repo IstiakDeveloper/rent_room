@@ -1,534 +1,450 @@
-<div class="container my-4">
-    <!-- Alert Messages -->
-    @if (session()->has('message'))
-        <div class="alert alert-success alert-dismissible fade show">
-            <i class="fas fa-check-circle mr-2"></i>{{ session('message') }}
-            <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
-        </div>
-    @endif
+<div>
+    <div class="container py-4">
+        {{-- Alert Messages --}}
+        @if (session()->has('message'))
+            <div class="alert alert-success alert-dismissible fade show mb-4">
+                <i class="fas fa-check-circle mr-2"></i>{{ session('message') }}
+                <button type="button" class="close" data-dismiss="alert">&times;</button>
+            </div>
+        @endif
 
-    <div class="row">
-        <!-- Main Content -->
-        <div class="col-md-8">
-            <!-- Booking Header Card -->
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
-                    <div>
-                        <h5 class="mb-0">Booking #{{ $booking->id }}</h5>
-                        <span class="badge text-white" style="background-color: {{ $this->statusColor }};">
-                            {{ ucfirst($booking->payment_status) }}
-                        </span>
-                    </div>
-                    <div class="text-right">
-                        <strong
-                            class="d-block">£{{ number_format($booking->price + $booking->booking_price, 2) }}</strong>
-                        <small class="text-muted">Total Amount</small>
-                    </div>
-                </div>
-
-                <!-- Quick Info Badges -->
-                <div class="card-body border-bottom">
-                    <div class="row no-gutters text-center">
-                        <div class="col-4 px-2">
-                            <div class="border rounded p-3">
-                                <i class="fas fa-calendar-alt text-primary mb-2"></i>
-                                <div class="small text-muted">Duration</div>
-                                <strong>{{ $booking->number_of_days }} Days</strong>
+        <div class="row">
+            {{-- Main Content Column --}}
+            <div class="col-lg-8">
+                {{-- Booking Overview Card --}}
+                <div class="card mb-4">
+                    <div class="card-header bg-white border-0">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center">
+                                <h4 class="mr-2">Booking #{{ $booking->id }}</h4>
+                                <span class="badge badge-pill px-2 h6 py-1 text-white"
+                                    style="background-color: {{ $this->statusColor }}">
+                                    {{ ucfirst($booking->payment_status) }}
+                                </span>
                             </div>
-                        </div>
-                        <div class="col-4 px-2">
-                            <div class="border rounded p-3">
-                                <i class="fas fa-bed text-primary mb-2"></i>
-                                <div class="small text-muted">Rooms</div>
-                                <strong>{{ count($rooms) }}</strong>
-                            </div>
-                        </div>
-                        <div class="col-4 px-2">
-                            <div class="border rounded p-3">
-                                <i class="fas fa-pound-sign text-primary mb-2"></i>
-                                <div class="small text-muted">Due Amount</div>
-                                <strong>£{{ number_format($dueBill, 2) }}</strong>
+                            <div class="text-right">
+                                <h4 class="mb-1">£{{ number_format($booking->price + $booking->booking_price, 2) }}
+                                </h4>
+                                <small class="text-muted">Total Amount</small>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Customer Information -->
-                <div class="card-body border-bottom">
-                    <h6 class="text-primary mb-3">Customer Information</h6>
-                    <div class="row align-items-center">
-                        <div class="col-auto">
-                            <div class="rounded-circle bg-light p-3">
+
+                    <div class="card-body border-bottom">
+                        <h5 class="text-primary mb-4">Customer</h5>
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle bg-light p-3 mr-3">
                                 <i class="fas fa-user-circle fa-2x text-muted"></i>
                             </div>
-                        </div>
-                        <div class="col">
-                            <h6 class="mb-1">{{ $booking->user->name }}</h6>
-                            <div class="small text-muted">
-                                <i class="fas fa-envelope mr-1"></i>{{ $booking->user->email }}
-                                @if ($booking->user->phone)
-                                    <span class="mx-2">|</span>
-                                    <i class="fas fa-phone mr-1"></i>{{ $booking->user->phone }}
-                                @endif
+                            <div class="flex-grow-1">
+                                <h5 class="mb-1">{{ $booking->user->name }}</h5>
+                                <div class="text-muted">
+                                    <i class="fas fa-envelope mr-2"></i>{{ $booking->user->email }}
+                                    @if ($booking->user->phone)
+                                        <span class="mx-2">•</span>
+                                        <i class="fas fa-phone mr-2"></i>{{ $booking->user->phone }}
+                                    @endif
+                                </div>
                             </div>
-                        </div>
-                        <div class="col-auto">
-                            <button class="btn btn-sm btn-outline-secondary"
-                                onclick="window.location.href='mailto:{{ $booking->user->email }}'">
+                            <a href="mailto:{{ $booking->user->email }}" class="btn btn-outline-primary">
                                 Contact
-                            </button>
+                            </a>
                         </div>
                     </div>
-                </div>
 
-                <!-- Stay Details -->
-                <div class="card-body border-bottom">
-                    <h6 class="text-primary mb-3">Stay Details</h6>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <div class="bg-light p-3 rounded">
-                                <div class="mb-2">
-                                    <small class="text-muted">Check In</small>
-                                    <div class="font-weight-bold">
-                                        {{ \Carbon\Carbon::parse($booking->from_date)->format('D, M d, Y') }}
+                    {{-- Quick Stats --}}
+                    <div class="card-body border-bottom bg-light">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="card h-100 border-0 bg-white">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-calendar-alt fa-2x text-primary mb-3"></i>
+                                        <h6 class="text-muted mb-2">Duration</h6>
+                                        <h5 class="mb-0">{{ $booking->number_of_days }} Days</h5>
                                     </div>
                                 </div>
-                                <div>
-                                    <small class="text-muted">Check Out</small>
-                                    <div class="font-weight-bold">
-                                        {{ \Carbon\Carbon::parse($booking->to_date)->format('D, M d, Y') }}
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card h-100 border-0 bg-white">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-bed fa-2x text-primary mb-3"></i>
+                                        <h6 class="text-muted mb-2">Rooms</h6>
+                                        <h5 class="mb-0">{{ count($rooms) }}</h5>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card h-100 border-0 bg-white">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-pound-sign fa-2x text-primary mb-3"></i>
+                                        <h6 class="text-muted mb-2">Due Amount</h6>
+                                        <h5 class="mb-0">£{{ number_format($dueBill, 2) }}</h5>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <div class="bg-light p-3 rounded">
-                                <div class="mb-2">
-                                    <small class="text-muted">Property</small>
-                                    <div class="font-weight-bold">{{ $booking->package->name }}</div>
-                                </div>
-                                <div>
-                                    <small class="text-muted">Location</small>
-                                    <div class="font-weight-bold">{{ $booking->package->address }}</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-12">
-                            <div class="bg-light p-3 rounded">
-                                <div class="d-flex align-items-center">
-                                    <i class="fas fa-clock text-primary mr-2"></i>
-                                    <div>
-                                        <small class="text-muted d-block">Booking Created</small>
-                                        <div class="font-weight-bold">
-                                            {{ $booking->created_at->format('D, M d, Y \a\t h:i A') }}
+                    </div>
+
+
+
+                    {{-- Stay Details --}}
+                    <div class="card-body border-bottom">
+                        <h5 class="text-primary mb-4">Stay Details</h5>
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <div class="card h-100 bg-light border-0">
+                                    <div class="card-body">
+                                        <div class="mb-4">
+                                            <h6 class="text-muted mb-2">Check In</h6>
+                                            <h5 class="mb-0">
+                                                {{ \Carbon\Carbon::parse($booking->from_date)->format('D, M d, Y') }}
+                                            </h5>
+                                        </div>
+                                        <div>
+                                            <h6 class="text-muted mb-2">Check Out</h6>
+                                            <h5 class="mb-0">
+                                                {{ \Carbon\Carbon::parse($booking->to_date)->format('D, M d, Y') }}
+                                            </h5>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Booked Rooms -->
-                <div class="card-body">
-                    <h6 class="text-primary mb-3">Booked Rooms</h6>
-                    <div class="row">
-                        @foreach ($rooms as $room)
-                            <div class="col-md-6 mb-3">
-                                <div class="border rounded p-3">
-                                    <div class="d-flex justify-content-between align-items-center mb-2">
-                                        <h6 class="mb-0">{{ $room->name }}</h6>
-                                        <span class="badge badge-light">Room {{ $loop->iteration }}</span>
-                                    </div>
-                                    <div class="small text-muted">
-                                        {{ $room->number_of_beds }} Beds • {{ $room->number_of_bathrooms }} Bath
+                            <div class="col-md-6 mb-4">
+                                <div class="card h-100 bg-light border-0">
+                                    <div class="card-body">
+                                        <div class="mb-4">
+                                            <h6 class="text-muted mb-2">Property</h6>
+                                            <h5 class="mb-0">{{ $booking->package->name }}</h5>
+                                        </div>
+                                        <div>
+                                            <h6 class="text-muted mb-2">Location</h6>
+                                            <h5 class="mb-0">{{ $booking->package->address }}</h5>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        @endforeach
-                    </div>
-                </div>
-            </div>
-        </div>
 
-        <!-- Sidebar -->
-        <div class="col-md-4">
-            <!-- Payment Actions -->
-            <div class="card shadow-sm mb-4">
-                <div class="card-body">
-                    <!-- Payment Summary -->
-                    <div class="border-bottom pb-3 mb-3">
-                        <h6 class="text-primary mb-3">Payment Summary</h6>
-                        <div class="d-flex justify-content-between mb-2">
-                            <span>Room Price</span>
-                            <strong>£{{ number_format($booking->price, 2) }}</strong>
-                        </div>
-                        <div class="d-flex justify-content-between mb-2">
-                            <span>Booking Fee</span>
-                            <strong>£{{ number_format($booking->booking_price, 2) }}</strong>
-                        </div>
-                        <div class="d-flex justify-content-between">
-                            <span>Paid Amount</span>
-                            <strong class="text-success">£{{ number_format($booking->total_amount, 2) }}</strong>
-                        </div>
-                    </div>
-
-                    <!-- Action Buttons -->
-                    @if (
-                        $booking->payment_status !== 'cancelled' &&
-                            $booking->payment_status !== 'approved' &&
-                            $booking->payment_status !== 'rejected' &&
-                            $booking->payment_status !== 'paid')
-                        <div class="d-flex flex-column">
-                            <button wire:click="approveBooking" class="btn text-white mb-2"
-                                style="background-color: #252525;">
-                                Approve Booking
-                            </button>
-                            <button wire:click="rejectBooking" class="btn text-white"
-                                style="background-color: #404040;">
-                                Reject Booking
-                            </button>
-                        </div>
-                    @endif
-                </div>
-            </div>
-
-            <!-- Payment History -->
-            <div class="card shadow-sm mb-4">
-                <div class="card-body">
-                    <h6 class="text-primary mb-3">Payment History</h6>
-                    @if ($booking->payments->count() > 0)
-                        @foreach ($booking->payments as $payment)
-                            <div class="border-bottom mb-3 pb-3">
-                                <div class="d-flex justify-content-between align-items-center mb-1">
-                                    <span class="badge"
-                                        style="background-color: {{ $payment->status === 'completed' ? '#252525' : '#404040' }};">
-                                        {{ ucfirst($payment->status) }}
-                                    </span>
-                                    <strong>£{{ number_format($payment->amount, 2) }}</strong>
-                                </div>
-                                <div class="small text-muted">
-                                    {{ ucfirst($payment->payment_method) }} •
-                                    {{ $payment->created_at->format('M d, Y') }}
-                                </div>
-                            </div>
-                        @endforeach
-                    @else
-                        <div class="text-center text-muted py-3">No payments recorded</div>
-                    @endif
-                </div>
-            </div>
-
-            <!-- Auto-Renewal Card -->
-            <div class="card border-0 shadow-sm mb-4">
-                <div class="card-body p-4">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <div>
-                            <h5 class="text-dark mb-1 font-weight-bold">Auto-Renewal</h5>
-                            <p class="text-muted small mb-0">Monthly Package Management</p>
-                        </div>
-
-                        @if ($booking->price_type === 'Month')
-                            <div class="custom-control custom-switch">
-                                <input type="checkbox" class="custom-control-input" id="autoRenewalSwitch"
-                                    wire:click="toggleAutoRenewal" {{ $booking->auto_renewal ? 'checked' : '' }}
-                                    {{ $canManageAutoRenewal ? '' : 'disabled' }}>
-                                <label class="custom-control-label" for="autoRenewalSwitch">
-                                    <span class="switch-status text-muted small">
-                                        {{ $booking->auto_renewal ? 'On' : 'Off' }}
-                                    </span>
-                                </label>
-                            </div>
-                        @endif
-                    </div>
-
-                    <!-- Rest of the card content remains the same as in previous example -->
-                    <div class="bg-light rounded-lg p-3">
-                        @if ($booking->price_type !== 'Month')
-                            <div class="alert alert-info mb-0 d-flex align-items-center">
-                                <i class="fas fa-info-circle mr-2 text-primary"></i>
-                                <span>Auto-renewal is only available for monthly packages.</span>
-                            </div>
-                        @else
-                            @if ($booking->auto_renewal)
-                                <div class="d-flex align-items-center mb-3">
-                                    <span class="badge badge-success mr-2">
-                                        <i class="fas fa-check-circle mr-1"></i> Active
-                                    </span>
-                                    <small class="text-muted">Package will auto-extend</small>
-                                </div>
-
-                                @if ($booking->next_renewal_date)
-                                    <div class="bg-white border rounded p-2 mb-3">
+                            <div class="col-md-6 mb-4">
+                                <div class="card bg-light border-0">
+                                    <div class="card-body">
                                         <div class="d-flex align-items-center">
-                                            <i class="fas fa-calendar-alt text-primary mr-2"></i>
+                                            <i class="fas fa-clock fa-2x text-primary mr-3"></i>
                                             <div>
-                                                <span class="font-weight-bold">
-                                                    {{ Carbon\Carbon::parse($booking->next_renewal_date)->format('M d, Y') }}
-                                                </span>
-                                                <small class="text-muted d-block">
-                                                    {{ Carbon\Carbon::parse($booking->next_renewal_date)->diffForHumans() }}
-                                                </small>
+                                                <h6 class="text-muted mb-2">Booking Created</h6>
+                                                <h5 class="mb-0">
+                                                    {{ $booking->created_at->format('D, M d, Y \a\t h:i A') }}</h5>
                                             </div>
                                         </div>
                                     </div>
-                                @endif
-
-                                <div class="alert alert-soft-info">
-                                    <div class="d-flex align-items-center">
-                                        <i class="fas fa-info-circle mr-2 text-info"></i>
-                                        <span class="small">
-                                            Package will automatically extend 7 days before expiry.
-                                            A new payment milestone will be created.
-                                        </span>
-                                    </div>
-                                </div>
-                            @endif
-                        @endif
-                    </div>
-
-                    @if (!$canManageAutoRenewal && !$booking->auto_renewal && $booking->price_type === 'Month')
-                        <div class="alert alert-warning mt-3">
-                            <div class="d-flex align-items-center">
-                                <i class="fas fa-exclamation-triangle mr-2"></i>
-                                <div>
-                                    <strong>Auto-renewal cannot be managed</strong>
-                                    <ul class="pl-3 mb-0 mt-1 small">
-                                        @if ($booking->payment_status === 'cancelled')
-                                            <li>Booking has been cancelled</li>
-                                        @endif
-                                        @if ($booking->payment_status === 'finished')
-                                            <li>Booking has been marked as finished</li>
-                                        @endif
-                                        @if (!$booking->from_date || !$booking->to_date)
-                                            <li>Booking dates are not properly set</li>
-                                        @endif
-                                        @if ($booking->to_date && Carbon\Carbon::parse($booking->to_date)->isPast())
-                                            <li>Booking has expired</li>
-                                        @endif
-                                    </ul>
                                 </div>
                             </div>
+
+                            <div class="col-md-6 mb-4">
+                                <div class="card bg-light border-0">
+                                    <div class="card-body">
+                                        @foreach ($rooms as $room)
+                                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                                <h5 class="mb-0">{{ $room->name }}</h5>
+                                                <span class="badge badge-light">Room {{ $loop->iteration }}</span>
+                                            </div>
+                                            <div class="text-muted">
+                                                <i class="fas fa-bed mr-2"></i>{{ $room->number_of_beds }} Beds
+                                                <span class="mx-2">•</span>
+                                                <i class="fas fa-bath mr-2"></i>{{ $room->number_of_bathrooms }} Bath
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            </div>
+
                         </div>
-                    @endif
+
+
+                    </div>
+
+                    {{-- Booked Rooms --}}
+
                 </div>
             </div>
 
-            <style>
-                .custom-control-input:checked~.switch-status {
-                    color: #28a745 !important;
-                }
-
-                .custom-control-input:not(:checked)~.switch-status {
-                    color: #6c757d !important;
-                }
-            </style>
-
-            <!-- Cancel Booking -->
-            @if ($booking->payment_status !== 'cancelled')
-                <div class="card shadow-sm">
+            {{-- Sidebar Column --}}
+            <div class="col-lg-4">
+                {{-- Payment Actions Card --}}
+                <div class="card mb-4">
                     <div class="card-body">
-                        <button wire:click="cancelBooking" class="btn btn-danger btn-block">Cancel Booking</button>
+                        <h5 class="text-primary mb-4">Payment Summary</h5>
+                        <div class="border-bottom pb-3 mb-3">
+                            <div class="d-flex justify-content-between mb-3">
+                                <span class="text-muted">Room Price</span>
+                                <h6 class="mb-0">£{{ number_format($booking->price, 2) }}</h6>
+                            </div>
+                            <div class="d-flex justify-content-between mb-3">
+                                <span class="text-muted">Booking Fee</span>
+                                <h6 class="mb-0">£{{ number_format($booking->booking_price, 2) }}</h6>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span class="text-muted">Paid Amount</span>
+                                @php
+                                    $paidAmount = $booking->payments
+                                        ->whereIn('status', ['Paid', 'complete'])
+                                        ->sum('amount');
+                                @endphp
+                                <h6 class="text-success mb-0">£{{ number_format($paidAmount, 2) }}</h6>
+                            </div>
+                        </div>
+
+                        @if (
+                            $booking->payment_status !== 'cancelled' &&
+                                $booking->payment_status !== 'approved' &&
+                                $booking->payment_status !== 'rejected' &&
+                                $booking->payment_status !== 'paid')
+                            <div class="d-grid gap-2">
+                                <button wire:click="approveBooking" class="btn btn-primary btn-lg mb-2">
+                                    Approve Booking
+                                </button>
+                                <button wire:click="rejectBooking" class="btn btn-secondary btn-lg">
+                                    Reject Booking
+                                </button>
+                            </div>
+                        @endif
                     </div>
                 </div>
-            @endif
+
+                {{-- Payment History Card --}}
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="text-primary mb-4">Payment History</h5>
+                        @if ($booking->payments->count() > 0)
+                            @foreach ($booking->payments as $payment)
+                                <div class="border-bottom mb-3 pb-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span
+                                            class="badge badge-{{ $payment->status === 'completed' ? 'success' : 'secondary' }} badge-pill px-3">
+                                            {{ ucfirst($payment->status) }}
+                                        </span>
+                                        <h6 class="mb-0">£{{ number_format($payment->amount, 2) }}</h6>
+                                    </div>
+                                    <div class="text-muted small">
+                                        <i class="fas fa-credit-card mr-2"></i>{{ ucfirst($payment->payment_method) }}
+                                        <span class="mx-2">•</span>
+                                        <i
+                                            class="fas fa-calendar-alt mr-2"></i>{{ $payment->created_at->format('M d, Y') }}
+                                    </div>
+                                </div>
+                            @endforeach
+                        @else
+                            <div class="text-center text-muted py-4">
+                                <i class="fas fa-receipt fa-3x mb-3"></i>
+                                <p class="mb-0">No payments recorded</p>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+
+                {{-- Auto-Renewal Card --}}
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <div>
+                                <h5 class="text-primary mb-1">Auto-Renewal</h5>
+                                <p class="text-muted small mb-0">Monthly Package Management</p>
+                            </div>
+
+                            @if ($booking->price_type === 'Month')
+                                <div class="custom-control custom-switch">
+                                    <input type="checkbox" class="custom-control-input" id="autoRenewalSwitch"
+                                        wire:click="toggleAutoRenewal" {{ $booking->auto_renewal ? 'checked' : '' }}
+                                        {{ $canManageAutoRenewal ? '' : 'disabled' }}>
+                                    <label class="custom-control-label" for="autoRenewalSwitch"></label>
+                                </div>
+                            @endif
+                        </div>
+
+                        <div class="bg-light rounded p-4">
+                            @if ($booking->price_type !== 'Month')
+                                <div class="alert alert-info mb-0">
+                                    <i class="fas fa-info-circle mr-2"></i>
+                                    Auto-renewal is only available for monthly packages.
+                                </div>
+                            @else
+                                @if ($booking->auto_renewal)
+                                    <div class="mb-3">
+                                        <span class="badge badge-success badge-pill mr-2">
+                                            <i class="fas fa-check-circle mr-1"></i> Active
+                                        </span>
+                                        <span class="text-muted">Package will auto-extend</span>
+                                    </div>
+
+                                    @if ($booking->next_renewal_date)
+                                        <div class="card bg-white border-0 mb-3">
+                                            <div class="card-body p-3">
+                                                <div class="d-flex align-items-center">
+                                                    <i class="fas fa-calendar-alt text-primary fa-2x mr-3"></i>
+                                                    <div>
+                                                        <h6 class="mb-1">Next Renewal</h6>
+                                                        <p class="mb-0 text-muted">
+                                                            {{ Carbon\Carbon::parse($booking->next_renewal_date)->format('M d, Y') }}
+                                                            <small class="d-block">
+                                                                {{ Carbon\Carbon::parse($booking->next_renewal_date)->diffForHumans() }}
+                                                            </small>
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endif
+
+                                    <div class="alert alert-info mb-0">
+                                        <i class="fas fa-info-circle mr-2"></i>
+                                        Package will automatically extend 7 days before expiry.
+                                        A new payment milestone will be created.
+                                    </div>
+                                @endif
+                            @endif
+                        </div>
+
+                        @if (!$canManageAutoRenewal && !$booking->auto_renewal && $booking->price_type === 'Month')
+                            <div class="alert alert-warning mt-4 mb-0">
+                                <div class="d-flex">
+                                    <i class="fas fa-exclamation-triangle fa-2x mr-3"></i>
+                                    <div>
+                                        <h6 class="font-weight-bold mb-2">Auto-renewal cannot be managed</h6>
+                                        <ul class="pl-3 mb-0">
+                                            @if ($booking->payment_status === 'cancelled')
+                                                <li>Booking has been cancelled</li>
+                                            @endif
+                                            @if ($booking->payment_status === 'finished')
+                                                <li>Booking has been marked as finished</li>
+                                            @endif
+                                            @if (!$booking->from_date || !$booking->to_date)
+                                                <li>Booking dates are not properly set</li>
+                                            @endif
+                                            @if ($booking->to_date && Carbon\Carbon::parse($booking->to_date)->isPast())
+                                                <li>Booking has expired</li>
+                                            @endif
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+
+                {{-- Cancel Booking Card --}}
+                @if ($booking->payment_status !== 'cancelled')
+                    <div class="card">
+                        <div class="card-body">
+                            <button wire:click="cancelBooking" class="btn btn-danger btn-lg btn-block">
+                                <i class="fas fa-times-circle mr-2"></i>Cancel Booking
+                            </button>
+                        </div>
+                    </div>
+                @endif
+            </div>
         </div>
     </div>
 
     <style>
-        .badge {
-            padding: 0.5em 0.75em;
+        /* Custom Bootstrap 4 Enhancements */
+        .badge-pill {
             font-weight: 500;
         }
 
-        .bg-success {
-            background-color: #252525 !important;
+        .btn-lg {
+            padding: 0.75rem 1.25rem;
+            font-size: 1rem;
+        }
+
+        .card {
+            border: none;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        }
+
+        .custom-switch .custom-control-label::before {
+            height: 1.5rem;
+            width: 2.75rem;
+            border-radius: 1rem;
+        }
+
+        .custom-switch .custom-control-label::after {
+            height: calc(1.5rem - 4px);
+            width: calc(1.5rem - 4px);
+            border-radius: 50%;
+        }
+
+        .custom-switch .custom-control-input:checked~.custom-control-label::after {
+            transform: translateX(1.25rem);
+        }
+
+        /* Alert Styles */
+        .alert {
+            border: none;
+            border-radius: 0.5rem;
+        }
+
+        .alert-info {
+            background-color: rgba(23, 162, 184, 0.1);
+            color: #17a2b8;
         }
 
         .alert-warning {
+            background-color: rgba(255, 193, 7, 0.1);
             color: #856404;
-            background-color: #fff3cd;
-            border-color: #ffeeba;
         }
 
         .alert-warning ul {
-            padding-left: 1.25rem;
+            color: #856404;
         }
 
-        .input-group-sm {
-            min-height: 31px;
+        /* Text Utilities */
+        .text-primary {
+            color: #252525 !important;
         }
 
-        .input-group-sm>.form-control {
-            padding: 0.25rem 0.5rem;
-            font-size: 0.875rem;
-            border-radius: 0.25rem 0 0 0.25rem;
+        .text-success {
+            color: #28a745 !important;
         }
 
-        .input-group-sm>.btn {
-            padding: 0.25rem 0.5rem;
-            font-size: 0.875rem;
-            border-radius: 0 0.25rem 0.25rem 0;
+        /* Custom Spacing */
+        .card-body {
+            padding: 1.5rem;
         }
 
-        /* Additional utility classes for Bootstrap 4 compatibility */
-        .shadow-sm {
-            box-shadow: 0 .125rem .25rem rgba(0, 0, 0, .075) !important;
+        /* Badge Colors */
+        .badge-success {
+            background-color: #28a745;
         }
 
-        /* Custom margins for Bootstrap 4 */
-        .mr-1 {
-            margin-right: 0.25rem !important;
+        .badge-secondary {
+            background-color: #6c757d;
         }
 
-        .mr-2 {
-            margin-right: 0.5rem !important;
+        /* Icon Sizes */
+        .fa-2x {
+            line-height: 1;
         }
 
-        .mr-3 {
-            margin-right: 1rem !important;
+        /* Responsive Adjustments */
+        @media (max-width: 991.98px) {
+            .container {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
         }
 
-        .mb-1 {
-            margin-bottom: 0.25rem !important;
-        }
+        /* Print Styles */
+        @media print {
 
-        .mb-2 {
-            margin-bottom: 0.5rem !important;
-        }
+            .btn,
+            .custom-switch {
+                display: none !important;
+            }
 
-        .mb-3 {
-            margin-bottom: 1rem !important;
-        }
-
-        .mb-4 {
-            margin-bottom: 1.5rem !important;
-        }
-
-        .mt-1 {
-            margin-top: 0.25rem !important;
-        }
-
-        .mt-2 {
-            margin-top: 0.5rem !important;
-        }
-
-        .mt-3 {
-            margin-top: 1rem !important;
-        }
-
-        /* Custom padding utilities */
-        .p-2 {
-            padding: 0.5rem !important;
-        }
-
-        .p-3 {
-            padding: 1rem !important;
-        }
-
-        .py-3 {
-            padding-top: 1rem !important;
-            padding-bottom: 1rem !important;
-        }
-
-        /* Custom text utilities */
-        .text-muted {
-            color: #6c757d !important;
-        }
-
-        .small {
-            font-size: 80%;
-            font-weight: 400;
-        }
-
-        /* Custom border utilities */
-        .border {
-            border: 1px solid #dee2e6 !important;
-        }
-
-        .border-bottom {
-            border-bottom: 1px solid #dee2e6 !important;
-        }
-
-        .rounded {
-            border-radius: 0.25rem !important;
-        }
-
-        .rounded-circle {
-            border-radius: 50% !important;
-        }
-
-        /* Custom background utilities */
-        .bg-light {
-            background-color: #f8f9fa !important;
-        }
-
-        .bg-white {
-            background-color: #fff !important;
-        }
-
-        /* Custom flex utilities */
-        .d-flex {
-            display: flex !important;
-        }
-
-        .flex-column {
-            flex-direction: column !important;
-        }
-
-        .justify-content-between {
-            justify-content: space-between !important;
-        }
-
-        .align-items-center {
-            align-items: center !important;
-        }
-
-        /* Custom button styles */
-        .btn-block {
-            display: block;
-            width: 100%;
-        }
-
-        .btn-sm {
-            padding: 0.25rem 0.5rem;
-            font-size: 0.875rem;
-            line-height: 1.5;
-            border-radius: 0.2rem;
-        }
-
-        /* Input group styles */
-        .input-group-append {
-            margin-left: -1px;
-        }
-
-        .input-group-append .btn {
-            border-top-left-radius: 0;
-            border-bottom-left-radius: 0;
-        }
-
-        /* Alert styles */
-        .alert-dismissible .close {
-            position: absolute;
-            top: 0;
-            right: 0;
-            padding: 0.75rem 1.25rem;
-            color: inherit;
-        }
-
-        /* Font weight utilities */
-        .font-weight-bold {
-            font-weight: 700 !important;
-        }
-
-        /* Text alignment */
-        .text-center {
-            text-align: center !important;
-        }
-
-        .text-right {
-            text-align: right !important;
+            .card {
+                box-shadow: none !important;
+                border: 1px solid #dee2e6 !important;
+            }
         }
     </style>
-
 </div>

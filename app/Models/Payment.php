@@ -14,6 +14,7 @@ class Payment extends Model
         'amount',
         'transaction_id',
         'booking_payment_id',
+        'payment_type',
         'status'
     ];
 

@@ -92,7 +92,7 @@
                         </div>
                         <div class="form-group mb-4">
                             <label class="form-label">Select Payment Method</label>
-                            <select class="form-select" wire:model="selectedPaymentMethod">
+                            <select class="form-select" wire:model.live="selectedPaymentMethod">
                                 <option value="Card">Credit/Debit Card</option>
                                 <option value="BankTransfer">Bank Transfer</option>
                             </select>

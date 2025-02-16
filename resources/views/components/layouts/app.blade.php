@@ -28,6 +28,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
+
     <!-- Themes core CSS -->
     <link rel="stylesheet" href="{{ asset('css/themes.css') }}">
     <link rel="stylesheet" href="{{ asset('css/style.css') }}">
@@ -198,7 +199,7 @@
                                         <h5 class="fs-13 letter-spacing-087 text-muted mb-3 text-uppercase px-3">Main</h5>
                                     @endrole
                                     <ul class="list-group list-group-no-border rounded-lg">
-                                        @role('Super Admin|Admin')
+                                        @role('Super Admin|Partner|User')
                                             @can('dashboard')
                                                 <li class="list-group-item px-3 px-xl-4 py-2 sidebar-item" role="button"
                                                     onclick="window.location='{{ route('dashboard') }}'">

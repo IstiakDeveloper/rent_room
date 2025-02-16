@@ -122,7 +122,7 @@
                                 </td>
                                 <td>
                                     <div>
-                                        <div class="font-weight-bold">£{{ number_format($booking->total_amount, 2) }}
+                                        <div class="font-weight-bold">£{{ number_format($booking->price + $booking->booking_price, 2) }}
                                         </div>
                                         <small class="text-muted">
                                             Room: £{{ number_format($booking->price, 2) }}

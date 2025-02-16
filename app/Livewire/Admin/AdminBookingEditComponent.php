@@ -66,8 +66,6 @@ class AdminBookingEditComponent extends Component
         $this->fetchDisabledDates();
         $this->originalRentAmount = $booking->price;
         $this->customRentAmount = $booking->price;
-
-
     }
 
     public function updated($propertyName)
@@ -499,22 +497,42 @@ class AdminBookingEditComponent extends Component
 
     private function updateMilestonePayments($priceBreakdown)
     {
-        // Only handle payments for the extended period
-        $startDate = Carbon::parse($this->originalToDate);
+        $startDateBooking = Carbon::parse($this->ffromDate); // Original check-in date
+        $startExtension = Carbon::parse($this->originalToDate); // Extension start date
+
+        // Get the existing milestones to find the pattern
+        $existingMilestones = DB::table('booking_payments')
+            ->where('booking_id', $this->booking->id)
+            ->where('milestone_type', '!=', 'Booking Fee')
+            ->orderBy('milestone_number')
+            ->get();
+
+        // Get the day of month from original check-in for monthly payments
+        $checkInDay = $startDateBooking->day;
+
+        // Calculate the next milestone number
+        $nextMilestoneNumber = $this->getNextMilestoneNumber();
 
         foreach ($priceBreakdown as $index => $milestone) {
+            // Calculate the due date based on the original check-in date pattern
             $dueDate = match ($milestone['type']) {
-                'Month' => $startDate->copy()->addMonths($index + 1),
-                'Week' => $startDate->copy()->addWeeks($index + 1),
-                'Day' => $startDate->copy()->addDays($index + 1)
+                'Month' => $startDateBooking->copy()
+                    ->addMonths($nextMilestoneNumber + $index - 1)
+                    ->setDay($checkInDay), // Keep same day of month as check-in
+
+                'Week' => $startDateBooking->copy()
+                    ->addWeeks($nextMilestoneNumber + $index - 1), // Keep same day of week as check-in
+
+                'Day' => $startDateBooking->copy()
+                    ->addDays($nextMilestoneNumber + $index - 1)
             };
 
             // Only create new payments for dates after the original end date
-            if ($dueDate->gt($startDate)) {
+            if ($dueDate->gt($startExtension)) {
                 DB::table('booking_payments')->insert([
                     'booking_id' => $this->booking->id,
                     'milestone_type' => $milestone['type'],
-                    'milestone_number' => $this->getNextMilestoneNumber(),
+                    'milestone_number' => $nextMilestoneNumber + $index,
                     'due_date' => $dueDate,
                     'amount' => $milestone['total'],
                     'payment_status' => 'pending',

@@ -13,7 +13,7 @@ class PaymentComponent extends Component
 {
     public $uniqueId;
     public $paymentLink;
-    public $selectedPaymentMethod = "Card";
+    public $selectedPaymentMethod = "BankTransfer";
     public $bankReference;
     public $showModal = false;
 
@@ -23,22 +23,16 @@ class PaymentComponent extends Component
         $this->paymentLink = PaymentLink::with([
             'user',
             'booking',
-            'bookingPayment' // Add this
+            'bookingPayment'
         ])->where('unique_id', $this->uniqueId)->firstOrFail();
     }
 
-    public function showPaymentModal()
+    protected function determinePaymentType()
     {
-        $this->showModal = true;
-    }
+        // Use the specific booking payment from the payment link
+        $bookingPayment = $this->paymentLink->bookingPayment;
 
-    public function handlePaymentMethod()
-    {
-        if ($this->selectedPaymentMethod === 'Card') {
-            return $this->handleStripePayment();
-        } elseif ($this->selectedPaymentMethod === 'BankTransfer') {
-            return $this->handleBankTransfer();
-        }
+        return $bookingPayment->milestone_type === 'Booking Fee' ? 'booking' : 'rent';
     }
 
     protected function handleBankTransfer()
@@ -49,28 +43,26 @@ class PaymentComponent extends Component
         }
 
         try {
-            // Create payment record
-            $bookingPayment = BookingPayment::where('booking_id', $this->paymentLink->booking_id)
-                ->firstOrFail();
+            $paymentType = $this->determinePaymentType();
 
             // Create payment record
-            $payment = Payment::create([
+            $paymentData = [
                 'booking_id' => $this->paymentLink->booking_id,
                 'payment_method' => 'bank_transfer',
-                'amount' => $this->paymentLink->amount, // Use amount from payment link
+                'payment_type' => $paymentType,
+                'amount' => $this->paymentLink->amount,
                 'transaction_id' => $this->bankReference,
-                'booking_payment_id' => $bookingPayment->id, // Use the found booking_payment_id
                 'status' => 'pending',
-            ]);
+                'booking_payment_id' => $this->paymentLink->booking_payment_id
+            ];
 
-            // Update payment link status
+            // Create payment record
+            $payment = Payment::create($paymentData);
+
+            // Update payment link status - removed transaction_id
             $this->paymentLink->update([
-                'status' => 'pending_bank_transfer',
-                'transaction_id' => $this->bankReference,
+                'status' => 'pending_bank_transfer'
             ]);
-
-            // Update booking payment status
-            // $this->updateBookingPaymentStatus($this->paymentLink->booking_id);
 
             session()->flash('message', 'Bank transfer initiated. Please contact admin with transfer details.');
             return redirect()->route('payment.page', $this->paymentLink->unique_id);
@@ -85,16 +77,23 @@ class PaymentComponent extends Component
         $stripe = new StripeClient(config('stripe.stripe_sk'));
 
         try {
+            $paymentType = $this->determinePaymentType();
+            $bookingPayment = $this->paymentLink->bookingPayment;
+
+            $itemName = $paymentType === 'booking'
+                ? "Booking Payment #" . $this->paymentLink->booking->id
+                : "Rent Payment #" . $this->paymentLink->booking->id;
+
             $session = $stripe->checkout->sessions->create([
                 'payment_method_types' => ['card'],
                 'line_items' => [[
                     'price_data' => [
                         'currency' => 'gbp',
                         'product_data' => [
-                            'name' => "Booking Payment #" . $this->paymentLink->booking->id,
-                            'description' => "Payment for booking",
+                            'name' => $itemName,
+                            'description' => "Payment for milestone: " . $bookingPayment->milestone_type,
                         ],
-                        'unit_amount' => (int)($this->paymentLink->amount * 100), // Use amount from payment link
+                        'unit_amount' => (int)($this->paymentLink->amount * 100),
                     ],
                     'quantity' => 1,
                 ]],
@@ -103,7 +102,9 @@ class PaymentComponent extends Component
                 'cancel_url' => route('payment.cancel') . '?payment_link=' . $this->uniqueId,
                 'metadata' => [
                     'payment_link_id' => $this->paymentLink->id,
+                    'payment_type' => $paymentType,
                     'booking_id' => $this->paymentLink->booking_id,
+                    'booking_payment_id' => $this->paymentLink->booking_payment_id,
                     'amount' => $this->paymentLink->amount
                 ],
             ]);
@@ -115,23 +116,19 @@ class PaymentComponent extends Component
         }
     }
 
-    // protected function updateBookingPaymentStatus($bookingId)
-    // {
-    //     $booking = Booking::find($bookingId);
-    //     if (!$booking) return;
+    public function handlePaymentMethod()
+    {
+        if ($this->selectedPaymentMethod === 'Card') {
+            return $this->handleStripePayment();
+        } elseif ($this->selectedPaymentMethod === 'BankTransfer') {
+            return $this->handleBankTransfer();
+        }
+    }
 
-    //     $totalPaid = $booking->payments()->where('status', 'success')->sum('amount');
-    //     $totalAmount = $booking->price + $booking->booking_price;
-
-    //     $status = 'pending';
-    //     if ($totalPaid >= $totalAmount) {
-    //         $status = 'paid';
-    //     } elseif ($totalPaid > 0) {
-    //         $status = 'partial';
-    //     }
-
-    //     $booking->update(['payment_status' => $status]);
-    // }
+    public function showPaymentModal()
+    {
+        $this->showModal = true;
+    }
 
     public function render()
     {

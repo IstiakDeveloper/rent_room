@@ -19,7 +19,7 @@ class ShowBooking extends Component
     public $showRenewalModal = false;
     public $paymentMethod = 'bank_transfer';
     public $bankTransferReference;
-    public $bankDetails = 'Bank: ABC Bank, Account Number: 12345678, Sort Code: 12-34-56';
+    public $bankDetails = 'Netsoftuk Solution A/C 17855008 S/C 04-06-05';
     public $newFromDate;
     public $newToDate;
     public $paymentPercentage;
@@ -169,7 +169,6 @@ class ShowBooking extends Component
                     : 'Auto-renewal disabled successfully.',
                 'type' => 'success'
             ]);
-
         } catch (\Exception $e) {
             // Reset local state and show error
             $this->autoRenewal = $this->booking->auto_renewal;
@@ -326,25 +325,6 @@ class ShowBooking extends Component
         }
     }
 
-    protected function handlePaymentSuccess($payment)
-    {
-        if ($this->currentMilestone) {
-            $this->currentMilestone->update([
-                'payment_status' => 'paid',
-                'paid_at' => now(),
-                'payment_method' => $payment->payment_method,
-                'transaction_reference' => $payment->transaction_id
-            ]);
-
-            $this->calculatePayments();
-
-            // Check if all milestones are paid
-            if (!$this->currentMilestone) {
-                $this->booking->update(['payment_status' => 'paid']);
-            }
-        }
-    }
-
     public function proceedPayment()
     {
         try {
@@ -375,6 +355,11 @@ class ShowBooking extends Component
         }
     }
 
+    protected function determinePaymentType()
+    {
+        return $this->currentMilestone->milestone_type === 'Booking Fee' ? 'booking' : 'rent';
+    }
+
     protected function handleBankTransfer()
     {
         try {
@@ -385,10 +370,13 @@ class ShowBooking extends Component
             // Begin transaction
             \DB::beginTransaction();
 
+            $paymentType = $this->determinePaymentType();
+
             // Create payment record
             $payment = Payment::create([
                 'booking_id' => $this->booking->id,
                 'payment_method' => 'bank_transfer',
+                'payment_type' => $paymentType,  // Add payment type
                 'amount' => $this->currentMilestone->amount,
                 'transaction_id' => $this->bankTransferReference,
                 'booking_payment_id' => $this->currentMilestone->id,
@@ -427,6 +415,13 @@ class ShowBooking extends Component
             // Begin transaction
             \DB::beginTransaction();
 
+            $paymentType = $this->determinePaymentType();
+
+            // Prepare payment description
+            $description = $paymentType === 'booking'
+                ? "Booking Fee Payment"
+                : "Rent Payment for " . $this->currentMilestone->milestone_number;
+
             $session = $stripe->checkout->sessions->create([
                 'payment_method_types' => ['card'],
                 'line_items' => [
@@ -434,9 +429,10 @@ class ShowBooking extends Component
                         'price_data' => [
                             'currency' => 'gbp',
                             'product_data' => [
-                                'name' => "Booking Payment #" . $this->booking->id,
-                                'description' => "Payment for " . $this->currentMilestone->milestone_type .
-                                    " " . $this->currentMilestone->milestone_number,
+                                'name' => $paymentType === 'booking'
+                                    ? "Booking Payment #" . $this->booking->id
+                                    : "Rent Payment #" . $this->booking->id,
+                                'description' => $description,
                             ],
                             'unit_amount' => (int) ($this->currentMilestone->amount * 100),
                         ],
@@ -449,6 +445,7 @@ class ShowBooking extends Component
                 'metadata' => [
                     'booking_id' => $this->booking->id,
                     'booking_payment_id' => $this->currentMilestone->id,
+                    'payment_type' => $paymentType,
                     'amount' => $this->currentMilestone->amount
                 ],
             ]);
@@ -457,6 +454,7 @@ class ShowBooking extends Component
             Payment::create([
                 'booking_id' => $this->booking->id,
                 'payment_method' => 'card',
+                'payment_type' => $paymentType,  // Add payment type
                 'amount' => $this->currentMilestone->amount,
                 'status' => 'pending',
                 'booking_payment_id' => $this->currentMilestone->id,
@@ -475,6 +473,25 @@ class ShowBooking extends Component
             \DB::rollBack();
             session()->flash('error', 'Stripe payment failed: ' . $e->getMessage());
             return redirect()->back();
+        }
+    }
+
+    protected function handlePaymentSuccess($payment)
+    {
+        if ($this->currentMilestone) {
+            $this->currentMilestone->update([
+                'payment_status' => 'paid',
+                'paid_at' => now(),
+                'payment_method' => $payment->payment_method,
+                'transaction_reference' => $payment->transaction_id
+            ]);
+
+            $this->calculatePayments();
+
+            // Check if all milestones are paid
+            if (!$this->currentMilestone) {
+                $this->booking->update(['payment_status' => 'paid']);
+            }
         }
     }
 
