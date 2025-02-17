@@ -56,7 +56,7 @@
                             <div class="d-flex flex-column h-100 justify-content-between">
                                 <div class="text-right">
                                     @php
-                                        $statusColor = match ($booking->payment_status) {
+                                        $statusColor = match ($booking->status) {
                                             'finished' => '#252525',
                                             'cancelled' => '#404040',
                                             'pending' => '#666666',
@@ -64,7 +64,7 @@
                                         };
                                     @endphp
                                     <span class="badge text-white" style="background-color: {{ $statusColor }};">
-                                        {{ ucfirst($booking->payment_status) }}
+                                        {{ ucfirst($booking->status) }}
                                     </span>
                                 </div>
                                 <div class="mt-2">

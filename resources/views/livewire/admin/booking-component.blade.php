@@ -131,13 +131,13 @@
                                 </td>
                                 <td>
                                     @php
-                                        $statusColor = match (strtolower($booking->payment_status)) {
+                                        $statusColor = match (strtolower($booking->status)) {
                                             'pending' => 'warning',
                                             'approved', 'paid' => 'success',
                                             'cancelled' => 'danger',
                                             default => 'secondary',
                                         };
-                                        $statusIcon = match (strtolower($booking->payment_status)) {
+                                        $statusIcon = match (strtolower($booking->status)) {
                                             'pending' => 'clock',
                                             'approved', 'paid' => 'check-circle',
                                             'cancelled' => 'times-circle',
@@ -146,7 +146,7 @@
                                     @endphp
                                     <span class="badge badge-{{ $statusColor }} badge-pill">
                                         <i class="fas fa-{{ $statusIcon }} mr-1"></i>
-                                        {{ ucfirst($booking->payment_status) }}
+                                        {{ ucfirst($booking->status) }}
                                     </span>
                                 </td>
 

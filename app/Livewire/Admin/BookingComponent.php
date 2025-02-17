@@ -72,7 +72,7 @@ class BookingComponent extends Component
         }
 
         if ($this->filters['status']) {
-            $query->where('payment_status', $this->filters['status']);
+            $query->where('status', $this->filters['status']);
         }
 
         $bookings = $query->orderBy($this->sortField, $this->sortDirection)

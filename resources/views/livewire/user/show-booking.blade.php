@@ -80,10 +80,10 @@
                                     <i class="fas fa-exclamation-triangle mr-1"></i>
                                     Auto-renewal cannot be managed because:
                                     <ul class="mb-0 mt-1">
-                                        @if ($booking->payment_status === 'cancelled')
+                                        @if ($booking->status === 'cancelled')
                                             <li>This booking has been cancelled</li>
                                         @endif
-                                        @if ($booking->payment_status === 'finished')
+                                        @if ($booking->status === 'finished')
                                             <li>This booking has been marked as finished</li>
                                         @endif
                                         @if (!$booking->from_date || !$booking->to_date)
@@ -118,8 +118,8 @@
                     <small>{{ $booking->package->name }}</small>
                 </div>
                 <div class="d-flex align-items-center">
-                    <span class="badge badge-{{ $booking->payment_status === 'paid' ? 'success' : 'warning' }} mr-3">
-                        {{ ucfirst($booking->payment_status) }}
+                    <span class="badge badge-{{ $booking->status === 'paid' ? 'success' : 'warning' }} mr-3">
+                        {{ ucfirst($booking->status) }}
                     </span>
                     <button type="button" wire:click="showAutoRenewalSettings" class="btn btn-sm btn-outline-light">
                         <i class="fas fa-sync-alt mr-1"></i>Auto-Renewal

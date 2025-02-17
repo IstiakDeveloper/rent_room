@@ -68,7 +68,7 @@ class ShowBooking extends Component
         $toDate = Carbon::parse($this->booking->to_date);
 
         return $this->booking
-            && !in_array($this->booking->payment_status, ['cancelled', 'finished'])
+            && !in_array($this->booking->status, ['cancelled', 'finished', 'rejected'])
             && $this->booking->from_date
             && $this->booking->to_date
             && $toDate->isFuture();
@@ -114,7 +114,7 @@ class ShowBooking extends Component
 
         $this->canManageAutoRenewal =
             $this->booking->price_type === 'Month' && // Only for monthly packages
-            !in_array($this->booking->payment_status, ['cancelled', 'finished']) &&
+            !in_array($this->booking->status, ['cancelled', 'finished', 'rejected']) &&
             $this->booking->from_date &&
             $this->booking->to_date &&
             $toDate->isFuture();
@@ -217,11 +217,11 @@ class ShowBooking extends Component
             return 'Booking not found.';
         }
 
-        if ($this->booking->payment_status === 'cancelled') {
+        if ($this->booking->status === 'cancelled') {
             return 'Auto-renewal is not available for cancelled bookings.';
         }
 
-        if ($this->booking->payment_status === 'finished') {
+        if ($this->booking->status === 'finished') {
             return 'Auto-renewal is not available for finished bookings.';
         }
 
@@ -507,7 +507,7 @@ class ShowBooking extends Component
         $this->booking->update([
             'from_date' => null,
             'to_date' => null,
-            'payment_status' => 'cancelled',
+            'status' => 'cancelled',
         ]);
 
         // Optionally, you may want to remove or handle associated payments here

@@ -23,6 +23,7 @@ class Booking extends Model
         'booking_price',
         'payment_option',
         'total_amount',
+        'status',
         'payment_status',
         'auto_renewal',
         'renewal_period_days',

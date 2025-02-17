@@ -44,6 +44,7 @@ class AdminBookingComponent extends Component
     public $milestone_breakdown;
     public $total_milestones;
     public $milestone_amount;
+    public $isSubmitting = false;
     protected $listeners = ['dates-selected' => 'calculateTotals'];
 
     protected $rules = [
@@ -60,6 +61,8 @@ class AdminBookingComponent extends Component
     public function mount()
     {
         $this->packages = Package::with(['rooms.roomPrices'])->get();
+        $this->isSubmitting = false;
+
     }
 
     private function calculateRoomTotal()
@@ -346,10 +349,14 @@ class AdminBookingComponent extends Component
                 $this->phone = $this->selectedUser->phone;
             }
 
+            // Update available rooms based on new date range
+            $this->fetchAvailableRooms();
+
             // Dispatch event to re-render component
             $this->dispatch('dates-selected');
         }
     }
+
 
     public function updatedPhone()
     {
@@ -359,19 +366,35 @@ class AdminBookingComponent extends Component
 
     public function validateDateRange()
     {
-        if (!$this->fromDate || !$this->toDate) return;
+        if (!$this->fromDate || !$this->toDate) return false;
 
-        $from = Carbon::parse($this->fromDate);
-        $to = Carbon::parse($this->toDate);
+        try {
+            $this->validateOnly('fromDate');
+            $this->validateOnly('toDate');
 
-        foreach ($this->disabledDates as $disabledDate) {
-            $checkDate = Carbon::parse($disabledDate);
-            if ($checkDate->between($from, $to)) {
-                $this->addError('dateRange', 'Some dates in your selection are already booked.');
+            $from = Carbon::parse($this->fromDate);
+            $to = Carbon::parse($this->toDate);
+
+            // Check for maximum stay duration (if needed)
+            if ($to->diffInDays($from) > 30) {
+                $this->addError('dateRange', 'Booking duration cannot exceed 30 days.');
                 return false;
             }
+
+            // Check for disabled dates
+            foreach ($this->disabledDates as $disabledDate) {
+                $checkDate = Carbon::parse($disabledDate);
+                if ($checkDate->between($from, $to)) {
+                    $this->addError('dateRange', 'Some dates in your selection are already booked.');
+                    return false;
+                }
+            }
+
+            return true;
+        } catch (\Exception $e) {
+            $this->addError('dateRange', 'Invalid date selection.');
+            return false;
         }
-        return true;
     }
 
     public function fetchDisabledDates()
@@ -620,7 +643,6 @@ class AdminBookingComponent extends Component
         ];
     }
 
-    // Also add these helper methods if not already present
 
 
     public function render()

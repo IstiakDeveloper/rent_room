@@ -343,9 +343,6 @@ class PackageShow extends Component
         return round($total);
     }
 
-
-
-
     public function submit()
     {
         try {
@@ -379,13 +376,25 @@ class PackageShow extends Component
         }
     }
 
+
+
+    public function updateCheckInDate($date)
+    {
+        $this->fromDate = $date;
+        $this->toDate = null; // Reset checkout date when check-in date changes
+        $this->validateOnly('fromDate');
+    }
+
     public function selectDates($dates)
     {
         $this->fromDate = $dates['start'];
         $this->toDate = $dates['end'];
-        $this->fetchAvailableRooms();
+
         $this->validateDateRange();
+        $this->fetchAvailableRooms();
     }
+
+
 
     public function validateDateRange()
     {

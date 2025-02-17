@@ -40,6 +40,7 @@ class BookingShowComponent extends Component
             'user.bookings' // Add this for booking stats
         ])->findOrFail($id);
 
+
         $this->renewalPeriodDays = (int) ($this->booking->renewal_period_days ?? 30);
         $this->updateCanManageAutoRenewal();
 
@@ -192,7 +193,7 @@ class BookingShowComponent extends Component
 
         $this->canManageAutoRenewal =
             $this->booking->price_type === 'Month' && // Only for monthly packages
-            !in_array($this->booking->payment_status, ['cancelled', 'finished']) &&
+            !in_array($this->booking->status, ['cancelled', 'rejected']) &&
             $this->booking->from_date &&
             $this->booking->to_date &&
             $toDate->isFuture();
@@ -203,7 +204,7 @@ class BookingShowComponent extends Component
         $this->validate();
 
         $this->booking->update([
-            'payment_status' => $this->selectedStatus,
+            'status' => $this->selectedStatus,
         ]);
 
         flash()->success('Booking status updated successfully!');
@@ -211,12 +212,12 @@ class BookingShowComponent extends Component
 
     public function cancelBooking()
     {
-        if ($this->booking->payment_status === 'cancelled') {
+        if ($this->booking->status === 'cancelled') {
             flash()->error('Booking is already cancelled.');
             return;
         }
 
-        $this->booking->update(['payment_status' => 'cancelled']);
+        $this->booking->update(['status' => 'cancelled']);
         flash()->success('Booking cancelled successfully!');
     }
 
@@ -287,7 +288,7 @@ class BookingShowComponent extends Component
     {
         try {
             $this->booking->update([
-                'payment_status' => 'approved'
+                'status' => 'approved'
             ]);
 
             session()->flash('message', 'Booking has been approved successfully.');
@@ -300,7 +301,7 @@ class BookingShowComponent extends Component
     {
         try {
             $this->booking->update([
-                'payment_status' => 'rejected'
+                'status' => 'rejected'
             ]);
 
             session()->flash('message', 'Booking has been rejected successfully.');
@@ -311,7 +312,7 @@ class BookingShowComponent extends Component
 
     public function getStatusColorProperty()
     {
-        return match ($this->booking->payment_status) {
+        return match ($this->booking->status) {
             'approved', 'paid' => '#252525',
             'pending' => '#404040',
             'cancelled', 'rejected' => '#666666',
@@ -333,7 +334,7 @@ class BookingShowComponent extends Component
 
         $toDate = \Carbon\Carbon::parse($this->booking->to_date);
 
-        return !in_array($this->booking->payment_status, ['cancelled', 'finished']) &&
+        return !in_array($this->booking->status, ['cancelled', 'finished']) &&
             $this->booking->from_date &&
             $this->booking->to_date &&
             $toDate->isFuture();

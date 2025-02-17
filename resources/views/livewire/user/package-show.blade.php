@@ -944,42 +944,74 @@
 
                                             @if ($selectedRoom && $calendarView)
                                                 <div x-data="datePickerComponent({{ json_encode($disabledDates) }})" wire:ignore.self class="mt-4">
-                                                    <label class="mb-2">Select Check-in and Check-out Dates</label>
-                                                    <input x-ref="dateRangePicker" type="text"
-                                                        class="form-control" placeholder="Select dates" readonly
-                                                        {{ !Auth::check() ? 'disabled' : '' }}>
-                                                    @error('dateRange')
-                                                        <span class="text-danger small">{{ $message }}</span>
-                                                    @enderror
+                                                    <div class="row">
+                                                        <div class="col-md-6">
+                                                            <label class="mb-2">Check-in Date</label>
+                                                            <input x-ref="checkInPicker" type="text"
+                                                                class="form-control"
+                                                                placeholder="Select check-in date" readonly
+                                                                {{ !Auth::check() ? 'disabled' : '' }}>
+                                                            @error('fromDate')
+                                                                <span class="text-danger small">{{ $message }}</span>
+                                                            @enderror
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <label class="mb-2">Check-out Date</label>
+                                                            <input x-ref="checkOutPicker" type="text"
+                                                                class="form-control"
+                                                                placeholder="Select check-out date" readonly
+                                                                {{ !Auth::check() ? 'disabled' : '' }}>
+                                                            @error('toDate')
+                                                                <span class="text-danger small">{{ $message }}</span>
+                                                            @enderror
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             @endif
-
-
 
                                             <script>
                                                 function datePickerComponent(disabledDates) {
                                                     return {
                                                         disabledDates: disabledDates,
+                                                        checkInDate: null,
                                                         init() {
-                                                            const picker = flatpickr(this.$refs.dateRangePicker, {
-                                                                mode: 'range',
+                                                            // Initialize check-in picker
+                                                            const checkInPicker = flatpickr(this.$refs.checkInPicker, {
                                                                 dateFormat: 'Y-m-d',
                                                                 minDate: 'today',
                                                                 disable: this.disabledDates.map(date => new Date(date)),
                                                                 onChange: (selectedDates) => {
-                                                                    if (selectedDates.length === 2) {
+                                                                    if (selectedDates.length > 0) {
+                                                                        this.checkInDate = selectedDates[0];
+                                                                        // Update check-out picker min date
+                                                                        checkOutPicker.set('minDate', selectedDates[0]);
+                                                                        // Call Livewire method with selected check-in date
+                                                                        @this.call('updateCheckInDate', selectedDates[0].toISOString().split('T')[0]);
+                                                                    }
+                                                                }
+                                                            });
+
+                                                            // Initialize check-out picker
+                                                            const checkOutPicker = flatpickr(this.$refs.checkOutPicker, {
+                                                                dateFormat: 'Y-m-d',
+                                                                minDate: 'today',
+                                                                disable: this.disabledDates.map(date => new Date(date)),
+                                                                onChange: (selectedDates) => {
+                                                                    if (selectedDates.length > 0 && this.checkInDate) {
                                                                         // Call Livewire method with selected dates
                                                                         @this.call('selectDates', {
-                                                                            start: selectedDates[0].toISOString().split('T')[0],
-                                                                            end: selectedDates[1].toISOString().split('T')[0]
+                                                                            start: this.checkInDate.toISOString().split('T')[0],
+                                                                            end: selectedDates[0].toISOString().split('T')[0]
                                                                         });
                                                                     }
                                                                 }
                                                             });
 
-                                                            // Watch for changes in disabled dates and update picker
+                                                            // Watch for changes in disabled dates and update both pickers
                                                             this.$watch('disabledDates', (newValue) => {
-                                                                picker.set('disable', newValue.map(date => new Date(date)));
+                                                                const disabledDatesArray = newValue.map(date => new Date(date));
+                                                                checkInPicker.set('disable', disabledDatesArray);
+                                                                checkOutPicker.set('disable', disabledDatesArray);
                                                             });
                                                         }
                                                     };

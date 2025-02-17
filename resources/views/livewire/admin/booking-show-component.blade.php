@@ -19,7 +19,7 @@
                                 <h4 class="mr-2">Booking #{{ $booking->id }}</h4>
                                 <span class="badge badge-pill px-2 h6 py-1 text-white"
                                     style="background-color: {{ $this->statusColor }}">
-                                    {{ ucfirst($booking->payment_status) }}
+                                    {{ ucfirst($booking->status) }}
                                 </span>
                             </div>
                             <div class="text-right">
@@ -195,10 +195,10 @@
                         </div>
 
                         @if (
-                            $booking->payment_status !== 'cancelled' &&
-                                $booking->payment_status !== 'approved' &&
-                                $booking->payment_status !== 'rejected' &&
-                                $booking->payment_status !== 'paid')
+                            $booking->status !== 'cancelled' &&
+                                $booking->status !== 'approved' &&
+                                $booking->status !== 'rejected' &&
+                                $booking->status !== 'paid')
                             <div class="d-grid gap-2">
                                 <button wire:click="approveBooking" class="btn btn-primary btn-lg mb-2">
                                     Approve Booking
@@ -311,7 +311,7 @@
                                     <div>
                                         <h6 class="font-weight-bold mb-2">Auto-renewal cannot be managed</h6>
                                         <ul class="pl-3 mb-0">
-                                            @if ($booking->payment_status === 'cancelled')
+                                            @if ($booking->status === 'cancelled')
                                                 <li>Booking has been cancelled</li>
                                             @endif
                                             @if ($booking->payment_status === 'finished')
@@ -332,7 +332,7 @@
                 </div>
 
                 {{-- Cancel Booking Card --}}
-                @if ($booking->payment_status !== 'cancelled')
+                @if ($booking->status !== 'cancelled')
                     <div class="card">
                         <div class="card-body">
                             <button wire:click="cancelBooking" class="btn btn-danger btn-lg btn-block">
